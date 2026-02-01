@@ -63,10 +63,7 @@ export default function Desktop() {
       <Folder x="calc(max(50vw, 750px) - 689px)" y="113px" label="Sophisticated Brilliance" onClick={() => openMasterWithFolder("sophisticated-brilliance")} />
       <Folder x="calc(max(50vw, 750px) - 571px)" y="95px" label="Sophisticated Ignorance" onClick={() => openMasterWithFolder("sophisticated-ignorance")} />
       <Folder x="calc(max(50vw, 750px) - 539px)" y="204px" label="*COMING SOON*" onClick={() => openMasterWithFolder("coming-soon")} />
-      <Folder x="calc(max(50vw, 750px) - 700px)" y="252px" label="Maison Manifest" onClick={() => openMasterWithFolder("maison")} />
       <Folder x="calc(max(50vw, 750px) - 582px)" y="332px" label="Curated Content" onClick={() => openMasterWithFolder("curated")} />
-      <Folder x="calc(max(50vw, 750px) - 662px)" y="395px" label="Transcendence of Man" onClick={() => openMasterWithFolder("video")} />
-      <Folder x="calc(max(50vw, 750px) - 571px)" y="428px" label="Power Perfected in Position" onClick={() => openMasterWithFolder("power")} />
 
       {windows.map((win) => {
         const Content = windowContentMap[win.contentKey] || (() => null);

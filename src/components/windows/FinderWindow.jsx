@@ -37,21 +37,50 @@ export default function FinderWindow() {
             { name: 'maison overview.rtf', type: 'document' },
             { name: 'art house.png', type: 'image' },
             { name: 'fashion house.png', type: 'image' },
+            { name: 'Maison Manifest', type: 'folder' },
         ],
         'sophisticated-brilliance': [
             { name: 'collection 1 teaser.mp4', type: 'video' },
+            { name: 'Transcendence of Man', type: 'folder' },
         ],
         'sophisticated-ignorance': [
-            { name: 'research_notes.txt', type: 'document' },
-            { name: 'philosophy.pdf', type: 'document' },
+            { name: 'Power Perfected in Position', type: 'folder' },
         ],
         video: [
             { name: 'teaser.mp4', type: 'video' },
         ],
         'coming-soon': [],
-        maison: [],
+        maison: [
+            { name: 'Power Perfected in Position', type: 'folder' },
+        ],
         curated: [],
-        power: [],
+        power: [
+            { name: 'Power Perfected in Position.rfd', type: 'document' },
+            { name: 'Foundations', type: 'folder' },
+            { name: 'Fortifications', type: 'folder' },
+            { name: 'Relics', type: 'folder' },
+            { name: 'Dominion', type: 'folder' },
+            { name: 'Adornments', type: 'folder' },
+            { name: 'Crownworks', type: 'folder' },
+        ],
+        foundations: [
+            { name: 'foundations.rfd', type: 'document' },
+        ],
+        fortifications: [
+            { name: 'fortifications.rfd', type: 'document' },
+        ],
+        relics: [
+            { name: 'relics.rfd', type: 'document' },
+        ],
+        dominion: [
+            { name: 'dominion.rfd', type: 'document' },
+        ],
+        adornments: [
+            { name: 'adornments.rfd', type: 'document' },
+        ],
+        crownworks: [
+            { name: 'crownworks.rfd', type: 'document' },
+        ],
     };
 
     // Map files to window actions
@@ -62,6 +91,23 @@ export default function FinderWindow() {
         'fashion house.png': () => openFileWindow('fashion house.png', '/fashion house.png'),
         'collection 1 teaser.mp4': () => openWindow('video'),
         'teaser.mp4': () => openWindow('video'),
+        'Power Perfected in Position.rfd': () => openFileWindow('Power Perfected in Position.rfd', '/Power Perfected in Position.rfd'),
+        'foundations.rfd': () => openFileWindow('foundations.rfd', '/foundations.rfd'),
+        'fortifications.rfd': () => openFileWindow('fortifications.rfd', '/fortifications.rfd'),
+        'relics.rfd': () => openFileWindow('relics.rfd', '/relics.rfd'),
+        'dominion.rfd': () => openFileWindow('dominion.rfd', '/dominion.rfd'),
+        'adornments.rfd': () => openFileWindow('adornments.rfd', '/adornments.rfd'),
+        'crownworks.rfd': () => openFileWindow('crownworks.rfd', '/crownworks.rfd'),
+        // Folder navigation
+        'Maison Manifest': () => setSelectedFolder('maison'),
+        'Transcendence of Man': () => setSelectedFolder('video'),
+        'Power Perfected in Position': () => setSelectedFolder('power'),
+        'Foundations': () => setSelectedFolder('foundations'),
+        'Fortifications': () => setSelectedFolder('fortifications'),
+        'Relics': () => setSelectedFolder('relics'),
+        'Dominion': () => setSelectedFolder('dominion'),
+        'Adornments': () => setSelectedFolder('adornments'),
+        'Crownworks': () => setSelectedFolder('crownworks'),
     };
 
     const handleFileClick = (fileName) => {
@@ -78,17 +124,15 @@ export default function FinderWindow() {
         { label: 'CIRE', key: 'archive', count: filesByFolder.archive?.length || 0 },
         { label: 'Sophisticated Brilliance', key: 'sophisticated-brilliance', count: filesByFolder['sophisticated-brilliance']?.length || 0 },
         { label: 'Sophisticated Ignorance', key: 'sophisticated-ignorance', count: filesByFolder['sophisticated-ignorance']?.length || 0 },
-        { label: 'Transcendence of Man', key: 'video', count: filesByFolder.video?.length || 0 },
         { label: '*COMING SOON*', key: 'coming-soon', count: 0 },
-        { label: 'Maison Manifest', key: 'maison', count: 0 },
         { label: 'Curated Content', key: 'curated', count: 0 },
-        { label: 'Power Perfected in Position', key: 'power', count: 0 },
     ];
 
     const files = filesByFolder[selectedFolder] || [];
     const selectedFile = files[selectedGalleryIndex] || files[0];
 
     const getFileIcon = (type) => {
+        if (type === 'folder') return { class: 'fas fa-folder', color: '#5ac8fa' };
         if (type === 'image') return { class: 'far fa-image', color: '#30d158' };
         if (type === 'video') return { class: 'fas fa-film', color: '#ff375f' };
         return { class: 'far fa-file-alt', color: '#aaa' };

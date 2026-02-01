@@ -862,6 +862,8 @@
         .popup-controls {
             display: flex;
             gap: 8px;
+            position: relative;
+            z-index: 2;
         }
 
         .popup-control {
@@ -885,8 +887,9 @@
 
         .popup-title {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            padding-left: 52px;
             font-size: 12px;
             color: #888;
             text-transform: uppercase;
@@ -895,7 +898,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 80%;
             text-align: center;
             user-select: none;
         }
@@ -929,18 +931,18 @@
 
         /* Graphite/Fullscreen mode for popups */
         .popup-window.graphite-mode {
-            width: 100vw !important;
-            height: 100vh !important;
-            top: 0 !important;
-            left: 0 !important;
-            border-radius: 0;
+            width: calc(100vw - 80px) !important;
+            height: calc(100vh - 80px) !important;
+            top: 40px !important;
+            left: 40px !important;
+            border-radius: 4px;
             z-index: 99999 !important;
             background-color: #2c2c2e !important;
             /* Graphite filled backdrop overrides light mode */
         }
 
         .popup-window.graphite-mode .popup-content {
-            height: calc(100vh - 32px);
+            height: calc(100vh - 80px - 32px);
             overflow-y: auto;
         }
 
@@ -1295,6 +1297,122 @@
         .dock-item i {
             font-size: 14px;
         }
+
+        /* Coming Soon Popup Styles */
+        .coming-soon-body {
+            background-color: #05ff00;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            color: black;
+        }
+
+        .marquee-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .marquee-track {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-scroll 10s linear infinite;
+        }
+
+        .marquee-item {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 64px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            padding-right: 60px;
+            letter-spacing: -2px;
+        }
+
+        .nike-arch {
+            height: 50px;
+            margin-left: 15px;
+            image-rendering: pixelated;
+        }
+
+        .coming-soon-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.2;
+            z-index: 10;
+        }
+
+        @keyframes marquee-scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Bottom Banner styles */
+        /* Bottom Banner styles - Blackscale Construction Site Aesthetic */
+        .coming-soon-banner {
+            background: repeating-linear-gradient(45deg,
+                    #000,
+                    #000 20px,
+                    #222 20px,
+                    #222 40px);
+            height: 80px;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            border-top: 2px solid #333;
+        }
+
+        .banner-track {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-scroll 8s linear infinite;
+        }
+
+        .banner-item {
+            font-family: 'Helvetica Neue', Helvetica, 'Arial Black', sans-serif;
+            font-weight: 900;
+            font-size: 32px;
+            text-transform: uppercase;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            margin-right: 60px;
+            letter-spacing: 1px;
+        }
+
+        .banner-logo {
+            height: 40px;
+            margin-left: 15px;
+            animation: rotate-logo 10s linear infinite;
+        }
+
+        @keyframes rotate-logo {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -1309,51 +1427,34 @@
         </div>
 
         <!-- Desktop Folders - matching your existing layout -->
-        <div class="desktop-folder" id="macintosh-hd" style="left: calc(max(50vw, 750px) + 450px); top: 346px;">
+        <div class="desktop-folder" id="macintosh-hd">
             <i class="fas fa-desktop icon gray"></i>
             <div class="label">Macintosh HD</div>
         </div>
 
-        <div class="desktop-folder" data-folder="archive" style="left: calc(max(50vw, 750px) - 636px); top: 27px;">
+        <div class="desktop-folder" data-folder="archive">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">CIRE</div>
         </div>
 
-        <div class="desktop-folder" data-folder="sophisticated-brilliance"
-            style="left: calc(max(50vw, 750px) - 689px); top: 113px;">
+        <div class="desktop-folder" data-folder="sophisticated-brilliance">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Sophisticated Brilliance</div>
         </div>
 
-        <div class="desktop-folder" data-folder="sophisticated-ignorance"
-            style="left: calc(max(50vw, 750px) - 571px); top: 95px;">
+        <div class="desktop-folder" data-folder="sophisticated-ignorance">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Sophisticated Ignorance</div>
         </div>
 
-        <div class="desktop-folder" data-folder="coming-soon" style="left: calc(max(50vw, 750px) - 539px); top: 204px;">
+        <div class="desktop-folder" data-folder="coming-soon">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">*COMING SOON*</div>
         </div>
 
-        <div class="desktop-folder" data-folder="maison" style="left: calc(max(50vw, 750px) - 700px); top: 252px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Maison Manifest</div>
-        </div>
-
-        <div class="desktop-folder" data-folder="curated" style="left: calc(max(50vw, 750px) - 582px); top: 332px;">
+        <div class="desktop-folder" data-folder="curated">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Curated Content</div>
-        </div>
-
-        <div class="desktop-folder" data-folder="video" style="left: calc(max(50vw, 750px) - 662px); top: 395px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Transcendence of Man</div>
-        </div>
-
-        <div class="desktop-folder" data-folder="power" style="left: calc(max(50vw, 750px) - 571px); top: 428px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Power Perfected in Position</div>
         </div>
 
         <!-- Finder Window -->
@@ -1376,15 +1477,15 @@
                     <i class="fas fa-chevron-right"></i>
                 </div>
                 <div class="toolbar-button" id="view-btn">
-                    <i class="fas fa-th-large" id="view-icon"></i> <span id="view-label">Icons</span>
+                    <i class="fas fa-columns" id="view-icon"></i> <span id="view-label">Columns</span>
                     <div class="view-menu" id="view-menu">
-                        <div class="view-menu-item selected" data-view="icons">
+                        <div class="view-menu-item" data-view="icons">
                             <i class="fas fa-th-large"></i> Icons
                         </div>
                         <div class="view-menu-item" data-view="list">
                             <i class="fas fa-th-list"></i> List
                         </div>
-                        <div class="view-menu-item" data-view="columns">
+                        <div class="view-menu-item selected" data-view="columns">
                             <i class="fas fa-columns"></i> Columns
                         </div>
                         <div class="view-menu-item" data-view="gallery">
@@ -1518,6 +1619,364 @@
             </div>
         </div>
 
+        <div class="popup-window" id="popup-power" style="top: 120px; left: 250px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-power')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-power')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-power')"></div>
+                </div>
+                <span class="popup-title">POWER PERFECTED IN POSITION</span>
+            </div>
+            <div class="popup-content">
+                <h1>Power Perfected in Position</h1>
+                <p style="text-indent: 2em;">Every position holds potential — not as limitation, but as leverage.
+                    <strong>Sophisticated Ignorance</strong> is built on the belief that elevation is earned through
+                    conviction, not circumstance. Whether one begins at <strong>Foundations</strong> or reigns within
+                    <strong>Crownworks</strong>, each tier represents a stage of growth — a moment to master before
+                    advancing to the next. To wear the brand is to embrace progression: to elevate within your means,
+                    and to build power through a solid foundation and discipline. Because ascension is not promised —
+                    it's pursued. And through conviction, <em>Power is Perfected in Position</em>.
+                </p>
+                <br>
+                <p style="text-indent: 2em;">At its core, the collection is organized through a <strong>symbolic
+                        classification system</strong> that quietly structures the brand's universe of garments.
+                    Categories are defined by function and refinement, each occupying a distinct role within the
+                    wardrobe. The symbols that
+                    accompany them serve as markers of position and progression, not spectacle. Because power is not
+                    loud, it is precise, therefore, is perfected in position.</p>
+            </div>
+        </div>
+
+        <!-- NEW DOCUMENTS -->
+        <div class="popup-window" id="popup-foundations" style="top: 130px; left: 260px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-foundations')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-foundations')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-foundations')"></div>
+                </div>
+                <span class="popup-title">FOUNDATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1><b>Foundations</b> — The Architecture of Self</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Establish identity and structure —
+                    the groundwork of sophistication.</p>
+                <br>
+                <p style="text-indent: 2em;"><b>Foundations</b> serves as the base layer of refinement: the stepping
+                    stones of
+                    your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and
+                    precision, <b>Foundations</b> defines the essentials that ground identity — where form takes shape
+                    and
+                    sophistication begins.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-fortifications" style="top: 140px; left: 270px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-fortifications')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-fortifications')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-fortifications')"></div>
+                </div>
+                <span class="popup-title">FORTIFICATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1><b>Fortifications</b> — The Shield of Style</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Protect, reinforce, and define.</p>
+                <br>
+                <p style="text-indent: 2em;"><b>Fortifications</b> represents defense through design — luxurious
+                    garments built
+                    as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure,
+                    engineered to impress.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-relics" style="top: 150px; left: 280px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-relics')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-relics')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-relics')"></div>
+                </div>
+                <span class="popup-title">RELICS</span>
+            </div>
+            <div class="popup-content">
+                <h1><b>Relics</b> — The Creed of Craft</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Carry heirlooms that endure —
+                    crafted in devotion to quality.</p>
+                <br>
+                <p style="text-indent: 2em;"><b>Relics</b> serve as the tactile memory of the brand: timeless leather
+                    goods
+                    that embody strength through subtlety and refinement through utility. Each piece is designed to be
+                    carried, aged, and remembered.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-dominion" style="top: 160px; left: 290px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-dominion')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-dominion')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-dominion')"></div>
+                </div>
+                <span class="popup-title">DOMINION</span>
+            </div>
+            <div class="popup-content">
+                <h1>Dominion — The Path of Conquest</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Stride with intent. Advance with
+                    purpose.</p>
+            </div>
+            <div class="coming-soon-banner">
+                <div class="banner-track">
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-adornments" style="top: 170px; left: 300px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-adornments')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-adornments')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-adornments')"></div>
+                </div>
+                <span class="popup-title">ADORNMENTS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Adornments — The Reign of Detail</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Elevate your expression. Define
+                    your distinction.</p>
+            </div>
+            <div class="coming-soon-banner">
+                <div class="banner-track">
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-crownworks" style="top: 180px; left: 310px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-crownworks')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-crownworks')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-crownworks')"></div>
+                </div>
+                <span class="popup-title">CROWNWORKS</span>
+            </div>
+            <div class="popup-content">
+                <h1><b>Crownworks</b> — The Pinnacle of Refinement</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">The ultimate articulation of
+                    mastery and rule.</p>
+                <br>
+                <p style="text-indent: 2em;"><b>Crownworks</b> represents the embodiment of power perfected in
+                    presentation:
+                    garments crafted for moments of command, ceremony, and consequence. Each creation in this tier
+                    signifies composure under pressure — the discipline to remain regal, the elegance to move with
+                    authority.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-trials" style="top: 160px; left: 320px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-trials')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-trials')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-trials')"></div>
+                </div>
+                <span class="popup-title">TRIALS INTO BRILLIANCE</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;"><em>Sophisticated Brilliance</em>'s debut collection, <strong>Transcendence
+                        of
+                        Man</strong>, explores the journey of refinement through experience. Each piece reflects a stage
+                    of
+                    healing — where scars are to be embraced as evidence of resilience against trials and tribulations.
+                    Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship
+                    refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is
+                    built through trials, and refinement is earned through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-collection-overview" style="top: 170px; left: 330px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-collection-overview')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-collection-overview')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-collection-overview')"></div>
+                </div>
+                <span class="popup-title">COLLECTION OVERVIEW</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">The debut collection from <em>Sophisticated Brilliance</em> reinterprets
+                    sacred iconography as a reflection of the human condition via trials and revelations. Each piece
+                    examines the tension between scars and magnificence, elaborating on the paradox of endurance:
+                    suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not
+                    the absence of damage, but the result of having endured it.</p>
+                <br>
+                <p style="text-indent: 2em;">As a whole, the collection invites reflection on scars not as
+                    disfigurements, but as evidence of transformation. These works of art crafted out of precious
+                    gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a
+                    process, and brilliance is achieved through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-beast" style="top: 180px; left: 340px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-beast')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-beast')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-beast')"></div>
+                </div>
+                <span class="popup-title">BEAST</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant I: <strong>Beast</strong> explores the instinct to conceal pain
+                    rather
+                    than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts
+                    to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface
+                    representing the "rough around the edges" nature of the unhealed man.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-metamorphosis" style="top: 190px; left: 350px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-metamorphosis')"></div>
+                </div>
+                <span class="popup-title">METAMORPHOSIS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant II: <strong>Metamorphosis</strong> represents movement between
+                    denial and
+                    acceptance. The more traditional stone-setting arrangement introduces structure and order,
+                    signifying discipline, self-awareness, and progression along the journey of refinement.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-humble" style="top: 200px; left: 360px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-humble')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-humble')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-humble')"></div>
+                </div>
+                <span class="popup-title">HUMBLE</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant III: <strong>Humble</strong> embodies acceptance. The wounds remain
+                    visible and unembellished, free of excess. With no stones present, the piece depicts resilience
+                    shown through transparency rather than display.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-nails" style="top: 210px; left: 370px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-nails')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-nails')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-nails')"></div>
+                </div>
+                <span class="popup-title">THE NAILS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Earrings: <strong>The Nails</strong> transform symbols of suffering into
+                    emblems
+                    of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while
+                    maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing,
+                    secured with a screw mechanism and fully pavé-set, references the transformation of an object once
+                    associated with force and cruelty into an ornament of intention.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-celestial" style="top: 220px; left: 380px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-celestial')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-celestial')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-celestial')"></div>
+                </div>
+                <span class="popup-title">CELESTIAL SCARS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Cuban Chain: <strong>Celestial Scars - Forged Link</strong> a reimagined,
+                    reversible interpretation of the Cuban link. One side bears intentional surface scarring with a
+                    satin or sandblasted finish; the other remains smooth and polished. The duality represents the
+                    coexistence of damage and refinement — the choice to reveal or conceal, without denying either.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-coming-soon" style="top: 200px; left: 400px; width: 600px; height: 400px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-coming-soon')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-coming-soon')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-coming-soon')"></div>
+                </div>
+                <span class="popup-title">COMING SOON</span>
+            </div>
+            <div class="popup-content coming-soon-body" style="padding: 0;">
+                <div class="marquee-container">
+                    <div class="marquee-track">
+                        <!-- Duplicated content for seamless loop (enough to cover wide screens) -->
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                    </div>
+                </div>
+                <div class="coming-soon-footer">
+                    ARCHIVE<br>LAUNCHING SOON
+                </div>
+            </div>
+        </div>
+
         <!-- Carousels -->
         <div class="carousel-container">
             <div class="carousel-track-wrapper">
@@ -1560,62 +2019,100 @@
             archive: {
                 label: 'CIRE',
                 files: [
-                    { name: 'blackscale CIRE logo.png', type: 'image', src: '/blackscale CIRE logo.png' },
-                    { name: 'maison overview.rfd', type: 'document', textContent: 'CIRE Conglomerate is a visionary luxury maison built on the philosophy of cultivating influence, refinement, and excellence. Serving as the parent entity to Sophisticated Brilliance and Sophisticated Ignorance, CIRE operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified language of modern luxury.' },
+                    { name: 'blackscale_logo_white.png', type: 'image', src: '/blackscale_logo_white.png' },
                     { name: 'art house.png', type: 'image', src: '/art house.png' },
-                    { name: 'fashion house.png', type: 'image', src: '/fashion house.png' }
+                    { name: 'fashion house.png', type: 'image', src: '/fashion house.png' },
+                    { name: 'maison manifest', type: 'folder', targetFolder: 'maison' }
                 ]
             },
             'sophisticated-brilliance': {
                 label: 'Sophisticated Brilliance',
                 files: [
-                    { name: 'collection 1 teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
-                    { name: 'collection 1 logo.mp4', type: 'video', src: '/SB Rotating Logo.mp4' },
-                    { name: 'Sophisticated Brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
-                    // Carousel content - The Nails
-                    { name: 'sketch: the nails.png', type: 'image', src: '/sketch: the nails.png' },
-                    { name: 'cad: the nails.mp4', type: 'video', src: '/cad: the nails.mp4' },
-                    { name: 'wax model: the nails.png', type: 'image', src: '/wax model: the nails.png' },
-                    { name: 'rendering: the nails.mp4', type: 'video', src: '/rendering: the nails.mp4' },
-                    { name: 'finished product: the nails.mp4', type: 'video', src: '/finished product: the nails.mp4' },
-                    // Carousel content - Beast (first set)
-                    { name: 'sketch: beast.png', type: 'image', src: '/sketch: beast.png' },
-                    { name: 'cad: beast.mp4', type: 'video', src: '/cad: beast.mp4' },
-                    { name: 'wax model: beast.png', type: 'image', src: '/wax model: beast.png' },
-                    { name: 'rendering: beast.mp4', type: 'video', src: '/rendering: beast.mp4' },
-                    { name: 'finished product: beast.mp4', type: 'video', src: '/finished product: beast.mp4' },
-                    // Carousel content - Metamorphosis
-                    { name: 'sketch: metamorphosis.png', type: 'image', src: '/sketch: metamorphosis.png' },
-                    { name: 'cad: metamorphosis.mp4', type: 'video', src: '/cad: metamorphosis.mp4' },
-                    { name: 'wax model: metamorphosis.png', type: 'image', src: '/wax model: metamorphosis.png' },
-                    { name: 'rendering: metamorphosis.mp4', type: 'video', src: '/rendering: metamorphosis.mp4' },
-                    { name: 'finished product: metamorphosis.mp4', type: 'video', src: '/finished product: metamorphosis.mp4' },
-                    // Carousel content - Beast (second set)
-                    { name: 'sketch: beast 2.png', type: 'image', src: '/sketch: beast.png' },
-                    { name: 'cad: beast 2.mp4', type: 'video', src: '/cad: beast.mp4' },
-                    { name: 'wax model: beast 2.png', type: 'image', src: '/wax model: beast.png' },
-                    { name: 'rendering: beast 2.mp4', type: 'video', src: '/rendering: beast.mp4' },
-                    { name: 'finished product: beast 2.mp4', type: 'video', src: '/finished product: beast.mp4' },
-                    // Carousel content - Celestial Scar
-                    { name: 'sketch: the celestial scar.png', type: 'image', src: '/sketch: the celestial scar.png' },
-                    { name: 'cad: the celestial scar.mp4', type: 'video', src: '/cad: the celestial scar.mp4' },
-                    { name: 'wax model: the celestial scar.png', type: 'image', src: '/wax model: the celestial scar.png' },
-                    { name: 'rendering: the celestial scar.mp4', type: 'video', src: '/rendering: the celestial scar.mp4' },
-                    { name: 'finished product: the celestial scar.mp4', type: 'video', src: '/finished product: the celestial scar.mp4' }
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'logo.mp4', type: 'video', src: '/SB Rotating Logo.mp4' },
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'trials into brilliance.rfd', type: 'document', textContent: '*Sophisticated Brilliance*\'s debut collection, **Transcendence of Man**, explores the journey of refinement through experience. Each piece reflects a stage of healing — where scars are to be embraced as evidence of resilience against trials and tribulations. Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is built through trials, and refinement is earned through endurance.' },
+                    { name: 'collection overview.rfd', type: 'document', textContent: 'The debut collection from *Sophisticated Brilliance* reinterprets sacred iconography as a reflection of the human condition via trials and revelations. Each piece examines the tension between scars and magnificence, elaborating on the paradox of endurance: suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not the absence of damage, but the result of having endured it.\\n\\nAs a whole, the collection invites reflection on scars not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.' },
+                    { name: 'beast.rfd', type: 'document', textContent: 'Pendant I: **Beast** explores the instinct to conceal pain rather than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface representing the "rough around the edges" nature of the unhealed man.' },
+                    { name: 'metamorphosis.rfd', type: 'document', textContent: 'Pendant II: **Metamorphosis** represents movement between denial and acceptance. The more traditional stone-setting arrangement introduces structure and order, signifying discipline, self-awareness, and progression along the journey of refinement.' },
+                    { name: 'humble.rfd', type: 'document', textContent: 'Pendant III: **Humble** embodies acceptance. The wounds remain visible and unembellished, free of excess. With no stones present, the piece depicts resilience shown through transparency rather than display.' },
+                    { name: 'the nails.rfd', type: 'document', textContent: 'Earrings: **The Nails** transform symbols of suffering into emblems of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing, secured with a screw mechanism and fully pavé-set, references the transformation of an object once associated with force and cruelty into an ornament of intention.' },
+                    { name: 'celestial scars.rfd', type: 'document', textContent: 'Cuban Chain: **Celestial Scars - Forged Link** a reimagined, reversible interpretation of the Cuban link. One side bears intentional surface scarring with a satin or sandblasted finish; the other remains smooth and polished. The duality represents the coexistence of damage and refinement — the choice to reveal or conceal, without denying either.' },
+                    { name: 'transcendence of man', type: 'folder', targetFolder: 'video' }
                 ]
             },
             'sophisticated-ignorance': {
                 label: 'Sophisticated Ignorance',
                 files: [
-                    { name: 'research_notes.txt', type: 'document', textContent: 'Research Notes:\n\nThe concept of Sophisticated Ignorance explores the deliberate choice to remain unburdened by conventional expectations while maintaining an air of refined taste.' },
-                    { name: 'philosophy.pdf', type: 'document', textContent: 'Philosophy Document:\n\nTo be sophisticated in ones ignorance is to understand that wisdom often lies in knowing what not to engage with.' },
-                    { name: 'Sophisticated Ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' }
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'power perfected in position.rfd', type: 'document', textContent: 'Every position holds potential — not as limitation, but as leverage. **Sophisticated Ignorance** is built on the belief that elevation is earned through conviction, not circumstance. Whether one begins at **Foundations** or reigns within **Crownworks**, each tier represents a stage of growth — a moment to master before advancing to the next. To wear the brand is to embrace progression: to elevate within your means, and to build power through a solid foundation and discipline. Because ascension is not promised — it\'s pursued. And through conviction, *Power is **Perfected in Position***.\n\nAt its core, the collection is organized through a **symbolic classification system** that quietly structures the brand\'s universe of garments. Categories are defined by function and refinement, each occupying a distinct role within the wardrobe. The symbols that accompany them serve as markers of position and progression, not spectacle. Because power is not loud, it is precise, therefore, is **perfected in position**.' },
+                    { name: 'foundations', type: 'folder', targetFolder: 'si-foundations' },
+                    { name: 'fortifications', type: 'folder', targetFolder: 'si-fortifications' },
+                    { name: 'relics', type: 'folder', targetFolder: 'si-relics' },
+                    { name: 'dominion', type: 'folder', targetFolder: 'si-dominion' },
+                    { name: 'adornments', type: 'folder', targetFolder: 'si-adornments' },
+                    { name: 'crownworks', type: 'folder', targetFolder: 'si-crownworks' }
                 ]
             },
             video: {
-                label: 'Transcendence of Man',
+                label: 'transcendence of man',
                 files: [
-                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' }
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'sketches', type: 'folder', targetFolder: 'tom-sketches' },
+                    { name: 'cads', type: 'folder', targetFolder: 'tom-cads' },
+                    { name: 'renderings', type: 'folder', targetFolder: 'tom-renderings' },
+                    { name: 'wax models', type: 'folder', targetFolder: 'tom-wax' },
+                    { name: 'final', type: 'folder', targetFolder: 'tom-final' }
+                ]
+            },
+            'tom-sketches': {
+                label: 'sketches',
+                files: [
+                    { name: 'sketch: the nails.png', type: 'image', src: '/sketch: the nails.png' },
+                    { name: 'sketch: beast.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: metamorphosis.png', type: 'image', src: '/sketch: metamorphosis.png' },
+                    { name: 'sketch: beast 2.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: the celestial scar.png', type: 'image', src: '/sketch: the celestial scar.png' }
+                ]
+            },
+            'tom-cads': {
+                label: 'cads',
+                files: [
+                    { name: 'cad: the nails.mp4', type: 'video', src: '/cad: the nails.mp4' },
+                    { name: 'cad: beast.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: metamorphosis.mp4', type: 'video', src: '/cad: metamorphosis.mp4' },
+                    { name: 'cad: beast 2.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: the celestial scar.mp4', type: 'video', src: '/cad: the celestial scar.mp4' }
+                ]
+            },
+            'tom-renderings': {
+                label: 'renderings',
+                files: [
+                    { name: 'rendering: the nails.mp4', type: 'video', src: '/rendering: the nails.mp4' },
+                    { name: 'rendering: beast.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: metamorphosis.mp4', type: 'video', src: '/rendering: metamorphosis.mp4' },
+                    { name: 'rendering: beast 2.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: the celestial scar.mp4', type: 'video', src: '/rendering: the celestial scar.mp4' }
+                ]
+            },
+            'tom-wax': {
+                label: 'wax models',
+                files: [
+                    { name: 'wax model: the nails.png', type: 'image', src: '/wax model: the nails.png' },
+                    { name: 'wax model: beast.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: metamorphosis.png', type: 'image', src: '/wax model: metamorphosis.png' },
+                    { name: 'wax model: beast 2.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: the celestial scar.png', type: 'image', src: '/wax model: the celestial scar.png' }
+                ]
+            },
+            'tom-final': {
+                label: 'final',
+                files: [
+                    { name: 'final: the nails.mp4', type: 'video', src: '/final: the nails.mp4' },
+                    { name: 'final: beast.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: metamorphosis.mp4', type: 'video', src: '/final: metamorphosis.mp4' },
+                    { name: 'final: beast 2.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: the celestial scar.mp4', type: 'video', src: '/final: the celestial scar.mp4' }
                 ]
             },
             'coming-soon': {
@@ -1623,23 +2120,64 @@
                 files: []
             },
             maison: {
-                label: 'Maison Manifest',
-                files: []
+                label: 'maison manifest',
+                files: [
+                    { name: 'maison overview.rfd', type: 'document', textContent: 'CIRE Conglomerate is a visionary luxury maison built on the philosophy of cultivating influence, refinement, and excellence. Serving as the parent entity to Sophisticated Brilliance and Sophisticated Ignorance, CIRE operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified language of modern luxury.' },
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'archive.rfd', type: 'document', textContent: 'ARCHIVE LAUNCHING SOON' }
+                ]
+            },
+            'si-foundations': {
+                label: 'foundations',
+                files: [
+                    { name: 'foundations.rfd', type: 'document', textContent: '**Foundations** — The Architecture of Self\\nEstablish identity and structure — the groundwork of sophistication.\\n\\n**Foundations** serves as the base layer of refinement: the stepping stones of your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and precision, **Foundations** defines the essentials that ground identity — where form takes shape and sophistication begins.' }
+                ]
+            },
+            'si-fortifications': {
+                label: 'fortifications',
+                files: [
+                    { name: 'fortifications.rfd', type: 'document', textContent: '**Fortifications** — The Shield of Style\\nProtect, reinforce, and define.\\n\\n**Fortifications** represents defense through design — luxurious garments built as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure, engineered to impress.' }
+                ]
+            },
+            'si-relics': {
+                label: 'relics',
+                files: [
+                    { name: 'relics.rfd', type: 'document', textContent: '**Relics** — The Creed of Craft\\nCarry heirlooms that endure — crafted in devotion to quality.\\n\\n**Relics** serve as the tactile memory of the brand: timeless leather goods that embody strength through subtlety and refinement through utility. Each piece is designed to be carried, aged, and remembered.' }
+                ]
+            },
+            'si-dominion': {
+                label: 'dominion',
+                files: [
+                    { name: 'dominion.rfd', type: 'document', textContent: '**Dominion** — The Path of Conquest\\nStride with intent. Advance with purpose.' }
+                ]
+            },
+            'si-adornments': {
+                label: 'adornments',
+                files: [
+                    { name: 'adornments.rfd', type: 'document', textContent: '**Adornments** — The Reign of Detail\\nElevate your expression. Define your distinction.' }
+                ]
+            },
+            'si-crownworks': {
+                label: 'crownworks',
+                files: [
+                    { name: 'crownworks.rfd', type: 'document', textContent: '**Crownworks** — The Pinnacle of Refinement\\nThe ultimate articulation of mastery and rule.\\n\\n**Crownworks** represents the embodiment of power perfected in presentation: garments crafted for moments of command, ceremony, and consequence. Each creation in this tier signifies composure under pressure — the discipline to remain regal, the elegance to move with authority.' }
+                ]
             },
             curated: {
                 label: 'Curated Content',
-                files: []
-            },
-            power: {
-                label: 'Power Perfected in Position',
                 files: []
             }
         };
 
         let selectedFolder = 'archive';
-        let currentView = 'icons';
+        let currentView = 'columns';
         let selectedGalleryIndex = 0;
         let selectedColumnIndex = -1;
+
+        // Navigation history for back/forward buttons
+        let navigationHistory = ['archive']; // Start with initial folder
+        let historyIndex = 0; // Current position in history
 
         const desktop = document.getElementById('desktop');
         const finderWindow = document.getElementById('finder-window');
@@ -1680,7 +2218,7 @@
             'popup-maison': 'Maison Overview',
             'popup-brilliance': 'Sophisticated Brilliance',
             'popup-ignorance': 'Sophisticated Ignorance',
-            'popup-transcendence': 'Transcendence of Man',
+            'popup-transcendence': 'transcendence of man',
             'popup-sb-logo': 'Collection 1 Logo'
         };
 
@@ -1796,32 +2334,186 @@
         // Select column item (single click) - shows preview
         function selectColumnItem(index) {
             selectedColumnIndex = index;
-            populateContent();
+            // Update selection state without regenerating entire list
+            const items = document.querySelectorAll('.column-item');
+            items.forEach((item, i) => {
+                item.classList.toggle('selected', i === index);
+            });
+            // Only update the preview panel
+            updateColumnPreview();
+        }
+
+        // Update only the column preview panel
+        function updateColumnPreview() {
+            const files = folderData[selectedFolder]?.files || [];
+            const selectedFile = selectedColumnIndex >= 0 ? files[selectedColumnIndex] : null;
+            const selectedIcon = selectedFile ? getFileIcon(selectedFile.type) : null;
+            const fileTypeLabel = selectedFile ? (selectedFile.type === 'image' ? 'PNG image' : selectedFile.type === 'video' ? 'MPEG-4 Video' : 'Document') : '';
+
+            let previewContent = '';
+            if (selectedFile?.type === 'image' && selectedFile?.src) {
+                previewContent = `<img src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            } else if (selectedFile?.type === 'video' && selectedFile?.src) {
+                previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
+            } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
+                previewContent = `
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; max-height: 140px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
+                        <div style="font-size: 10px; color: #888; margin-bottom: 6px;">📄 ${selectedFile.name}</div>
+                        <div style="font-size: 11px; color: #ddd; line-height: 1.4;">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
+                    </div>`;
+            } else if (selectedFile) {
+                previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
+            }
+
+            const previewPanel = document.querySelector('.column-preview');
+            if (previewPanel) {
+                previewPanel.innerHTML = selectedFile ? `
+                    <div class="column-preview-image">
+                        ${previewContent}
+                    </div>
+                    <div class="column-preview-header">
+                        <div class="column-preview-name">${selectedFile.name}</div>
+                        <div class="column-preview-type">${fileTypeLabel} - 256 KB</div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">
+                            Information
+                            <span class="show-more">Show Less</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Modified</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Last opened</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Content created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">Tags</div>
+                        <div style="color: #888; font-size: 12px; padding: 5px 0;">Add Tags...</div>
+                    </div>
+                    <div class="gallery-actions">
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-undo"></i>
+                            <span>Rotate Left</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-marker"></i>
+                            <span>Markup</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>More...</span>
+                        </div>
+                    </div>
+                ` : `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">
+                        Select a file to preview
+                    </div>
+                `;
+            }
         }
 
         function handleFileClick(fileName) {
+            // Check if it's a folder - navigate to it
+            const currentFiles = folderData[selectedFolder]?.files || [];
+            const clickedFile = currentFiles.find(f => f.name === fileName);
+            if (clickedFile && clickedFile.type === 'folder' && clickedFile.targetFolder) {
+                selectFolder(clickedFile.targetFolder);
+                return;
+            }
+
             // RFD Document triggers
             if (fileName === 'maison overview.rfd') {
                 openPopup('popup-maison');
                 return;
             }
-            if (fileName === 'Sophisticated Brilliance.rfd') {
+            if (fileName === 'sophisticated brilliance.rfd') {
                 openPopup('popup-brilliance');
                 return;
             }
-            if (fileName === 'Sophisticated Ignorance.rfd') {
+            if (fileName === 'sophisticated ignorance.rfd') {
                 openPopup('popup-ignorance');
+                return;
+            }
+            if (fileName === 'power perfected in position.rfd') {
+                openPopup('popup-power');
+                return;
+            }
+            if (fileName === 'foundations.rfd') {
+                openPopup('popup-foundations');
+                return;
+            }
+            if (fileName === 'fortifications.rfd') {
+                openPopup('popup-fortifications');
+                return;
+            }
+            if (fileName === 'relics.rfd') {
+                openPopup('popup-relics');
+                return;
+            }
+            if (fileName === 'dominion.rfd') {
+                openPopup('popup-dominion');
+                return;
+            }
+            if (fileName === 'adornments.rfd') {
+                openPopup('popup-adornments');
+                return;
+            }
+            if (fileName === 'crownworks.rfd') {
+                openPopup('popup-crownworks');
+                return;
+            }
+            if (fileName === 'archive.rfd') {
+                openPopup('popup-coming-soon');
+                return;
+            }
+            if (fileName === 'trials into brilliance.rfd') {
+                openPopup('popup-trials');
+                return;
+            }
+            if (fileName === 'collection overview.rfd') {
+                openPopup('popup-collection-overview');
+                return;
+            }
+            if (fileName === 'beast.rfd') {
+                openPopup('popup-beast');
+                return;
+            }
+            if (fileName === 'metamorphosis.rfd') {
+                openPopup('popup-metamorphosis');
+                return;
+            }
+            if (fileName === 'humble.rfd') {
+                openPopup('popup-humble');
+                return;
+            }
+            if (fileName === 'the nails.rfd') {
+                openPopup('popup-nails');
+                return;
+            }
+            if (fileName === 'celestial scars.rfd') {
+                openPopup('popup-celestial');
                 return;
             }
 
             // Video trigger
-            if (fileName === 'collection 1 teaser.mp4') {
+            if (fileName === 'teaser.mp4') {
                 openPopup('popup-transcendence');
                 return;
             }
 
             // SB Logo video trigger
-            if (fileName === 'collection 1 logo.mp4') {
+            if (fileName === 'logo.mp4') {
                 openPopup('popup-sb-logo');
                 return;
             }
@@ -1934,15 +2626,15 @@
             // Top carousel: 25 SB jewelry pieces
             // File associations (for when media is uploaded):
             // Item 1: sketch: the nails.png | Item 2: cad: the nails.mp4 | Item 3: wax model: the nails.png
-            // Item 4: rendering: the nails.mp4 | Item 5: finished product: the nails.mp4
+            // Item 4: rendering: the nails.mp4 | Item 5: final: the nails.mp4
             // Item 6: sketch: beast.png | Item 7: cad: beast.mp4 | Item 8: wax model: beast.png
-            // Item 9: rendering: beast.mp4 | Item 10: finished product: beast.mp4
+            // Item 9: rendering: beast.mp4 | Item 10: final: beast.mp4
             // Item 11: sketch: metamorphosis.png | Item 12: cad: metamorphosis.mp4 | Item 13: wax model: metamorphosis.png
-            // Item 14: rendering: metamorphosis.mp4 | Item 15: finished product: metamorphosis.mp4
+            // Item 14: rendering: metamorphosis.mp4 | Item 15: final: metamorphosis.mp4
             // Item 16: sketch: beast.png | Item 17: cad: beast.mp4 | Item 18: wax model: beast.png
-            // Item 19: rendering: beast.mp4 | Item 20: finished product: beast.mp4
+            // Item 19: rendering: beast.mp4 | Item 20: final: beast.mp4
             // Item 21: sketch: the celestial scar.png | Item 22: cad: the celestial scar.mp4 | Item 23: wax model: the celestial scar.png
-            // Item 24: rendering: the celestial scar.mp4 | Item 25: finished product: the celestial scar.mp4
+            // Item 24: rendering: the celestial scar.mp4 | Item 25: final: the celestial scar.mp4
             const topItems = Array.from({ length: 25 }).map((_, i) => ({
                 id: i,
                 title: `Item ${i + 1}`,
@@ -1983,6 +2675,9 @@
         }
 
         // Populate sidebar
+        // Folders that are now nested inside other folders (not shown in sidebar)
+        const nestedFolders = ['video', 'maison', 'power', 'tom-sketches', 'tom-cads', 'tom-renderings', 'tom-wax', 'tom-final'];
+
         function populateSidebar() {
             sidebar.innerHTML = `
                 <div class="sidebar-section">
@@ -1993,6 +2688,9 @@
             const section = sidebar.querySelector('.sidebar-section');
 
             Object.keys(folderData).forEach(key => {
+                // Skip nested folders - they're inside other folders now
+                if (nestedFolders.includes(key)) return;
+
                 const folder = folderData[key];
                 const item = document.createElement('div');
                 item.className = 'sidebar-item' + (key === selectedFolder ? ' active' : '');
@@ -2011,9 +2709,23 @@
         }
 
         // Select folder
-        function selectFolder(folderKey) {
+        function selectFolder(folderKey, fromHistory = false) {
             selectedFolder = folderKey;
             selectedColumnIndex = -1; // Reset column selection
+
+            // Update navigation history (only if not navigating from history)
+            if (!fromHistory) {
+                // Remove any forward history if we're navigating from middle of stack
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+                // Only add to history if it's different from the current folder
+                const currentFolder = navigationHistory[historyIndex];
+                if (currentFolder !== folderKey) {
+                    navigationHistory.push(folderKey);
+                    historyIndex = navigationHistory.length - 1;
+                }
+                // Update button states
+                updateNavigationButtons();
+            }
 
             // Update sidebar active state
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -2033,11 +2745,72 @@
             populateContent();
         }
 
+        // Update navigation button states
+        function updateNavigationButtons() {
+            const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+            const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+
+            if (backBtn) {
+                if (historyIndex > 0) {
+                    backBtn.style.opacity = '1';
+                    backBtn.style.cursor = 'pointer';
+                    backBtn.style.pointerEvents = 'auto';
+                } else {
+                    backBtn.style.opacity = '0.3';
+                    backBtn.style.cursor = 'not-allowed';
+                    backBtn.style.pointerEvents = 'none';
+                }
+            }
+
+            if (forwardBtn) {
+                if (historyIndex < navigationHistory.length - 1) {
+                    forwardBtn.style.opacity = '1';
+                    forwardBtn.style.cursor = 'pointer';
+                    forwardBtn.style.pointerEvents = 'auto';
+                } else {
+                    forwardBtn.style.opacity = '0.3';
+                    forwardBtn.style.cursor = 'not-allowed';
+                    forwardBtn.style.pointerEvents = 'none';
+                }
+            }
+        }
+
+        // Navigate back in history
+        function navigateBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
+        // Navigate forward in history
+        function navigateForward() {
+            if (historyIndex < navigationHistory.length - 1) {
+                historyIndex++;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
         // Get file icon
         function getFileIcon(type) {
+            if (type === 'folder') return { class: 'fas fa-folder', color: '#5ac8fa' };
             if (type === 'image') return { class: 'far fa-image image-icon', color: '#30d158' };
             if (type === 'video') return { class: 'fas fa-film video-icon', color: '#ff375f' };
             return { class: 'far fa-file-alt file-icon', color: '#aaa' };
+        }
+
+        // Render markdown to HTML
+        function renderMarkdown(text) {
+            if (!text) return '';
+            // Convert **bold** to <strong>
+            text = text.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+            // Convert *italic* to <em>
+            text = text.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+            // Convert newlines to <br>
+            text = text.replace(/\\n/g, '<br>');
+            return text;
         }
 
         // Populate content based on view
@@ -2064,7 +2837,7 @@
                     } else if (file.type === 'document' && file.textContent) {
                         previewHtml = `
                             <div style="width: 16px; height: 20px; background: white; color: black; font-size: 2px; overflow: hidden; padding: 1px; margin-right: 10px; font-family: sans-serif; opacity: 0.9; border: 1px solid #ccc;">
-                                ${file.textContent}
+                                ${renderMarkdown(file.textContent)}
                             </div>
                         `;
                     } else {
@@ -2129,7 +2902,7 @@
                     previewContent = `
                         <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; max-height: 140px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
                             <div style="font-size: 10px; color: #888; margin-bottom: 6px;">📄 ${selectedFile.name}</div>
-                            <div style="font-size: 11px; color: #ddd; line-height: 1.4; white-space: pre-wrap;">${selectedFile.textContent.substring(0, 200)}...</div>
+                            <div style="font-size: 11px; color: #ddd; line-height: 1.4;">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
                         </div>`;
                 } else if (selectedFile) {
                     previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
@@ -2279,7 +3052,7 @@
                     previewContent = `
                         <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px; max-width: 300px; max-height: 250px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
                             <div style="font-size: 11px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">📄 ${selectedFile.name}</div>
-                            <div style="font-size: 13px; color: #ddd; line-height: 1.6; white-space: pre-wrap;">${selectedFile.textContent}</div>
+                            <div style="font-size: 13px; color: #ddd; line-height: 1.6;">${renderMarkdown(selectedFile.textContent)}</div>
                         </div>`;
                 } else {
                     previewContent = `<i class="${icon.class}" style="color: ${icon.color}"></i>`;
@@ -2430,6 +3203,11 @@
             selectedFolder = folderKey || 'archive';
             finderWindow.classList.add('active');
 
+            // Initialize navigation history with the starting folder
+            navigationHistory = [selectedFolder];
+            historyIndex = 0;
+            updateNavigationButtons();
+
             // Bring to front
             highestZIndex++;
             finderWindow.style.zIndex = highestZIndex;
@@ -2517,6 +3295,21 @@
 
         // Close button
         document.getElementById('close-btn').addEventListener('click', closeFinderWindow);
+
+        // Back button
+        const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+        if (backBtn) {
+            backBtn.addEventListener('click', navigateBack);
+        }
+
+        // Forward button
+        const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+        if (forwardBtn) {
+            forwardBtn.addEventListener('click', navigateForward);
+        }
+
+        // Initialize button states
+        updateNavigationButtons();
 
         // Theme toggle
         themeToggle.addEventListener('change', (e) => {
@@ -2652,8 +3445,66 @@
             isDragging = false;
         });
 
+
+        // Desktop Folder Positioning - Responsive to window size
+        function positionDesktopFolders() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const folderWidth = 100; // Width of desktop folder element
+            const folderHeight = 100; // Approximate height including icon and label
+            const margin = 20; // Safety margin from edges
+
+            // Define folder positions - left side folders use fixed positions
+            // Right side folder (Macintosh HD) uses viewport-relative positioning
+            const folderPositions = {
+                'archive': { left: margin, top: 27 },
+                'sophisticated-brilliance': { left: margin, top: 113 },
+                'sophisticated-ignorance': { left: margin + 118, top: 95 },
+                'coming-soon': { left: margin + 150, top: 204 },
+                'curated': { left: margin + 107, top: 332 },
+                'macintosh-hd': {
+                    left: Math.max(viewportWidth - folderWidth - margin, margin + 200),
+                    top: 346
+                }
+            };
+
+            // Apply positions to each folder
+            Object.keys(folderPositions).forEach(folderId => {
+                const folder = document.getElementById(folderId) ||
+                    document.querySelector(`[data-folder="${folderId}"]`);
+
+                if (folder) {
+                    let { left, top } = folderPositions[folderId];
+
+                    // Ensure folder stays within viewport bounds
+                    left = Math.max(margin, Math.min(left, viewportWidth - folderWidth - margin));
+                    top = Math.max(margin, Math.min(top, viewportHeight - folderHeight - margin));
+
+                    folder.style.left = left + 'px';
+                    folder.style.top = top + 'px';
+                }
+            });
+        }
+
+        // Debounce function to limit resize event frequency
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Add resize listener with debouncing
+        window.addEventListener('resize', debounce(positionDesktopFolders, 150));
+
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
+            positionDesktopFolders(); // Position folders on load
             generateCarousels();
 
             // Position popups like V1 (center-relative coordinates)
