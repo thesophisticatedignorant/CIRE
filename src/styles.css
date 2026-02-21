@@ -39,6 +39,10 @@ body,
   box-sizing: border-box;
 }
 
+strong {
+  font-weight: 700;
+}
+
 /* Desktop background */
 .desktop {
   width: 100%;

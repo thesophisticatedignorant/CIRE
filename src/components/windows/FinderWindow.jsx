@@ -38,8 +38,7 @@ export default function FinderWindow() {
             { name: 'Transcendence of Man', type: 'folder' },
         ],
         'sophisticated-ignorance': [
-            { name: 'research_notes.txt', type: 'document' },
-            { name: 'philosophy.pdf', type: 'document' },
+            { name: 'Power Perfected in Position', type: 'folder' },
         ],
         video: [
             { name: 'teaser.mp4', type: 'video' },
@@ -51,7 +50,33 @@ export default function FinderWindow() {
             { name: 'power perfected in position.rfd', type: 'document' },
         ],
         curated: [],
-        power: [],
+        power: [
+            { name: 'Power Perfected in Position.rfd', type: 'document' },
+            { name: 'Foundations', type: 'folder' },
+            { name: 'Fortifications', type: 'folder' },
+            { name: 'Relics', type: 'folder' },
+            { name: 'Dominion', type: 'folder' },
+            { name: 'Adornments', type: 'folder' },
+            { name: 'Crownworks', type: 'folder' },
+        ],
+        foundations: [
+            { name: 'foundations.rfd', type: 'document' },
+        ],
+        fortifications: [
+            { name: 'fortifications.rfd', type: 'document' },
+        ],
+        relics: [
+            { name: 'relics.rfd', type: 'document' },
+        ],
+        dominion: [
+            { name: 'dominion.rfd', type: 'document' },
+        ],
+        adornments: [
+            { name: 'adornments.rfd', type: 'document' },
+        ],
+        crownworks: [
+            { name: 'crownworks.rfd', type: 'document' },
+        ],
     };
 
     // Map files to window actions
