@@ -7,7 +7,7 @@ const getInitialWindows = () => {
   const height = typeof window !== "undefined" ? window.innerHeight : 768;
   const centerX = width / 2;
   const centerY = height / 2;
-  const version = 5; // Increment to force re-render/reset
+  const version = 6; // Increment to force re-render/reset
 
   return [
     {
@@ -24,7 +24,7 @@ const getInitialWindows = () => {
     },
     {
       id: "video",
-      title: "Transcendence of Man",
+      title: "Sophisticated Brilliance 1.2",
       contentKey: "video",
       x: centerX - 571,
       y: 69,
@@ -36,7 +36,7 @@ const getInitialWindows = () => {
     },
     {
       id: "sophisticated-brilliance",
-      title: "Sophisticated Brilliance",
+      title: "Sophisticated Brilliance 1.3",
       contentKey: "sophisticated-brilliance",
       x: centerX - 525, // Shifted -9px (was -516)
       y: 202,
@@ -76,6 +76,8 @@ const getInitialWindows = () => {
 export function WindowManagerProvider({ children }) {
   const [windows, setWindows] = useState(getInitialWindows());
   const [selectedFolder, setSelectedFolder] = useState('archive');
+  const [isSubscribePopupOpen, setIsSubscribePopupOpen] = useState(false);
+  const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
 
   useEffect(() => {
     let lastWidth = window.innerWidth;
@@ -119,8 +121,7 @@ export function WindowManagerProvider({ children }) {
     setWindows((prev) =>
       prev.map((w) => {
         if (w.id === id) {
-          if (w.minimized) return w;
-          return { ...w, minimized: true };
+          return { ...w, minimized: !w.minimized };
         }
         return w;
       })
@@ -291,6 +292,10 @@ export function WindowManagerProvider({ children }) {
     updatePosition,
     selectedFolder,
     setSelectedFolder,
+    isSubscribePopupOpen,
+    toggleSubscribePopup: (isOpen) => setIsSubscribePopupOpen(isOpen),
+    isGuestbookOpen,
+    toggleGuestbook: (isOpen) => setIsGuestbookOpen(isOpen),
     openMasterWithFolder: (folderKey) => {
       setSelectedFolder(folderKey);
       // Open and focus the master window

@@ -11,17 +11,10 @@ const tagColors = {
     "Inhorgenta Award Candidate": "yellow"
 };
 
-const tagsList = [
-    "CFDA Award Candidate",
-    "GEM Award Candidate",
-    "Inhorgenta Award Candidate",
-    "International Woolmark Prize Candidate",
-    "JWA Candidate",
-    "The Fashion Awards Candidate"
-];
+const tagsList = [];
 
 export default function FinderWindow() {
-    const { openWindow, openFileWindow, selectedFolder, setSelectedFolder } = useWindowManager();
+    const { openWindow, openFileWindow, selectedFolder, setSelectedFolder, toggleSubscribePopup } = useWindowManager();
     const [currentView, setCurrentView] = useState('icons');
     const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0);
     const [viewMenuOpen, setViewMenuOpen] = useState(false);
@@ -37,9 +30,12 @@ export default function FinderWindow() {
             { name: 'maison overview.rtf', type: 'document' },
             { name: 'art house.png', type: 'image' },
             { name: 'fashion house.png', type: 'image' },
+            { name: 'Maison Manifest', type: 'folder' },
+            { name: 'coming soon.mp4', type: 'video' },
         ],
         'sophisticated-brilliance': [
-            { name: 'collection 1 teaser.mp4', type: 'video' },
+            { name: 'coming soon.mp4', type: 'video' },
+            { name: 'Transcendence of Man', type: 'folder' },
         ],
         'sophisticated-ignorance': [
             { name: 'research_notes.txt', type: 'document' },
@@ -48,8 +44,12 @@ export default function FinderWindow() {
         video: [
             { name: 'teaser.mp4', type: 'video' },
         ],
-        'coming-soon': [],
-        maison: [],
+        'coming-soon': [
+            { name: 'coming soon.mp4', type: 'video' },
+        ],
+        maison: [
+            { name: 'power perfected in position.rfd', type: 'document' },
+        ],
         curated: [],
         power: [],
     };
@@ -59,9 +59,15 @@ export default function FinderWindow() {
         'maison overview.rtf': () => openWindow('archive'),
         'blackscale CIRE logo.png': () => openFileWindow('blackscale CIRE logo.png', '/blackscale CIRE logo.png'),
         'art house.png': () => openFileWindow('art house.png', '/art house.png'),
+
         'fashion house.png': () => openFileWindow('fashion house.png', '/fashion house.png'),
-        'collection 1 teaser.mp4': () => openWindow('video'),
+        'coming soon.mp4': () => openWindow('video'),
+        'power perfected in position.rfd': () => openFileWindow('power perfected in position.rfd', '/power perfected in position.rfd'),
         'teaser.mp4': () => openWindow('video'),
+        // Folder navigation
+        'Maison Manifest': () => setSelectedFolder('maison'),
+        'Transcendence of Man': () => setSelectedFolder('video'),
+        'Power Perfected in Position': () => setSelectedFolder('power'),
     };
 
     const handleFileClick = (fileName) => {
@@ -78,17 +84,17 @@ export default function FinderWindow() {
         { label: 'CIRE', key: 'archive', count: filesByFolder.archive?.length || 0 },
         { label: 'Sophisticated Brilliance', key: 'sophisticated-brilliance', count: filesByFolder['sophisticated-brilliance']?.length || 0 },
         { label: 'Sophisticated Ignorance', key: 'sophisticated-ignorance', count: filesByFolder['sophisticated-ignorance']?.length || 0 },
-        { label: 'Transcendence of Man', key: 'video', count: filesByFolder.video?.length || 0 },
-        { label: '*COMING SOON*', key: 'coming-soon', count: 0 },
-        { label: 'Maison Manifest', key: 'maison', count: 0 },
+        { label: '*COMING SOON*', key: 'coming-soon', count: filesByFolder['coming-soon']?.length || 0 },
         { label: 'Curated Content', key: 'curated', count: 0 },
-        { label: 'Power Perfected in Position', key: 'power', count: 0 },
+        { label: 'Subscribe 📧', key: 'subscribe', icon: 'fa-envelope', count: 0 },
     ];
 
     const files = filesByFolder[selectedFolder] || [];
+    console.log('FinderWindow: selectedFolder:', selectedFolder, 'files:', files);
     const selectedFile = files[selectedGalleryIndex] || files[0];
 
     const getFileIcon = (type) => {
+        if (type === 'folder') return { class: 'fas fa-folder', color: '#5ac8fa' };
         if (type === 'image') return { class: 'far fa-image', color: '#30d158' };
         if (type === 'video') return { class: 'fas fa-film', color: '#ff375f' };
         return { class: 'far fa-file-alt', color: '#aaa' };
@@ -171,14 +177,6 @@ export default function FinderWindow() {
                             <div className="finder-gallery-info-section-title">
                                 Information
                                 <span className="show-more">Show More</span>
-                            </div>
-                            <div className="finder-gallery-info-row">
-                                <span className="label">Created</span>
-                                <span className="value">Dec 7, 2025 at 23:57</span>
-                            </div>
-                            <div className="finder-gallery-info-row">
-                                <span className="label">Modified</span>
-                                <span className="value">Dec 7, 2025 at 23:57</span>
                             </div>
                         </div>
                         <div className="finder-gallery-info-section">
@@ -285,9 +283,12 @@ export default function FinderWindow() {
     );
 
     return (
-        <div className="finder-window-new">
+        <div className="finder-window-new" style={{ background: 'red !important' }}>
             {/* Toolbar */}
             <div className="finder-toolbar">
+                <div style={{ position: 'absolute', top: 0, left: 0, background: 'red', color: 'white', zIndex: 9999, fontSize: 10 }}>
+                    DEBUG: {selectedFolder} ({files.length})
+                </div>
                 <div className="finder-toolbar-button" onClick={(e) => { e.stopPropagation(); setViewMenuOpen(!viewMenuOpen); }}>
                     <i className={`fas ${currentView === 'gallery' ? 'fa-images' : currentView === 'list' ? 'fa-th-list' : 'fa-th-large'}`}></i>
                     {currentView.charAt(0).toUpperCase() + currentView.slice(1)}
@@ -320,7 +321,13 @@ export default function FinderWindow() {
                         <div
                             key={folder.key}
                             className={`finder-sidebar-item ${selectedFolder === folder.key ? 'active' : ''}`}
-                            onClick={() => setSelectedFolder(folder.key)}
+                            onClick={() => {
+                                if (folder.key === 'subscribe') {
+                                    toggleSubscribePopup(true);
+                                } else {
+                                    setSelectedFolder(folder.key);
+                                }
+                            }}
                         >
                             <i className={`fas ${folder.icon || 'fa-folder'}`} style={{ color: folder.icon ? '#aaa' : '#5ac8fa', width: '16px', textAlign: 'center' }}></i>
                             <span className="finder-folder-name">{folder.label}</span>

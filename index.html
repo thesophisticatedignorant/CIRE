@@ -158,6 +158,8 @@
             text-overflow: ellipsis;
             max-width: 300px;
             text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .window-toolbar {
@@ -510,11 +512,15 @@
 
         .gallery-info {
             width: 220px;
-            background-color: rgba(35, 35, 35, 0.9);
+            background-color: #232323;
+            /* Opaque to hide potential bleed-through */
+            background-image: none !important;
             padding: 10px;
             border-left: 1px solid rgba(255, 255, 255, 0.05);
             overflow: hidden;
             flex-shrink: 0;
+            z-index: 10;
+            /* Ensure it stays above background layers */
         }
 
         .gallery-info-header {
@@ -836,16 +842,32 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 50;
+            /* Flex layout for vertical centering of banner */
             display: none;
+            /* hidden by default, toggled via JS class/inline */
+            flex-direction: column;
             overflow: hidden;
+            padding-bottom: 10px;
+            /* Match titlebar padding */
         }
 
         .popup-window.active {
-            display: block;
+            display: flex;
+            /* Changed from block to flex */
         }
 
         /* V1-style minimized state - window shade effect */
-        .popup-window.minimized .popup-content {
+        .popup-window.minimized {
+            height: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            overflow: hidden !important;
+            resize: none !important;
+            /* Prevent resizing while minimized */
+        }
+
+        .popup-window.minimized .popup-content,
+        .popup-window.minimized .coming-soon-banner {
             display: none;
         }
 
@@ -862,6 +884,8 @@
         .popup-controls {
             display: flex;
             gap: 8px;
+            position: relative;
+            z-index: 2;
         }
 
         .popup-control {
@@ -885,8 +909,9 @@
 
         .popup-title {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            padding-left: 52px;
             font-size: 12px;
             color: #888;
             text-transform: uppercase;
@@ -895,7 +920,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 80%;
             text-align: center;
             user-select: none;
         }
@@ -929,19 +953,26 @@
 
         /* Graphite/Fullscreen mode for popups */
         .popup-window.graphite-mode {
-            width: 100vw !important;
-            height: 100vh !important;
-            top: 0 !important;
-            left: 0 !important;
-            border-radius: 0;
+            width: calc(100vw - 80px) !important;
+            height: calc(100vh - 80px) !important;
+            top: 40px !important;
+            left: 40px !important;
+            border-radius: 4px;
             z-index: 99999 !important;
             background-color: #2c2c2e !important;
             /* Graphite filled backdrop overrides light mode */
         }
 
         .popup-window.graphite-mode .popup-content {
-            height: calc(100vh - 32px);
+            height: calc(100vh - 80px - 32px);
             overflow-y: auto;
+        }
+
+        /* FORCE video to scale correctly without warping in graphite mode */
+        .popup-window.graphite-mode video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
         }
 
         /* Light Mode Support for Popups */
@@ -1148,6 +1179,73 @@
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
 
+        body.light-mode .column-item {
+            color: #000;
+        }
+
+        body.light-mode .column-preview {
+            background-color: transparent;
+            border-left: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .column-preview-empty {
+            color: #000 !important;
+        }
+
+        body.light-mode .column-preview-name,
+        body.light-mode .gallery-info-section-title,
+        body.light-mode .value {
+            color: #000;
+        }
+
+        body.light-mode .column-preview-image {
+            background-color: transparent;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Force opaque background to hide artifacts */
+        .column-preview,
+        .column-preview-image {
+            background-color: #1e1e1e !important;
+            background-image: none !important;
+        }
+
+        /* Document Preview Styles */
+        .document-preview-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 140px;
+            overflow: hidden;
+            text-align: left;
+            font-family: 'Georgia', serif;
+        }
+
+        .document-preview-header {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        .document-preview-body {
+            font-size: 11px;
+            color: #ddd;
+            line-height: 1.4;
+        }
+
+        body.light-mode .document-preview-container {
+            background: transparent;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .document-preview-header {
+            color: #555;
+        }
+
+        body.light-mode .document-preview-body {
+            color: #000;
+        }
+
         /* Toggle Switch */
         .toggle-container {
             position: absolute;
@@ -1295,6 +1393,387 @@
         .dock-item i {
             font-size: 14px;
         }
+
+        /* Coming Soon Popup Styles */
+        .coming-soon-body {
+            background-color: #05ff00;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            color: black;
+        }
+
+        .marquee-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .marquee-track {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-scroll 10s linear infinite;
+        }
+
+        .marquee-item {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 64px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            padding-right: 60px;
+            letter-spacing: -2px;
+        }
+
+        .nike-arch {
+            height: 50px;
+            margin-left: 15px;
+            image-rendering: pixelated;
+        }
+
+        .coming-soon-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.2;
+            z-index: 10;
+        }
+
+        @keyframes marquee-scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Bottom Banner styles */
+        /* Refined Bottom Banner styles - Public Domain / Blackscale Aesthetic */
+        :root {
+            --banner-h: 92px;
+            --stripe-a: #0a0a0a;
+            --stripe-b: #1a1a1a;
+            --edge: #2a2a2a;
+            --text: #ffffff;
+            --speed: 14s;
+            /* lower = faster */
+            --stripe-size: 22px;
+            /* stripe thickness */
+        }
+
+        .coming-soon-banner {
+            position: relative;
+            /* Changed from absolute */
+            height: var(--banner-h);
+            z-index: 10;
+
+            /* Center vertically in remaining space */
+            margin-top: auto;
+            margin-bottom: auto;
+            width: 100%;
+            /* Kept z-index manageable within the desktop/window context */
+
+            /* tighter, higher-contrast “tape” */
+            background: repeating-linear-gradient(135deg,
+                    var(--stripe-a) 0,
+                    var(--stripe-a) var(--stripe-size),
+                    var(--stripe-b) var(--stripe-size),
+                    var(--stripe-b) calc(var(--stripe-size) * 2));
+
+            border-top: 2px solid var(--edge);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 -10px 30px rgba(0, 0, 0, 0.35);
+
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Optional: slight fade at edges like “viewport” cropping */
+        .marquee {
+            display: flex;
+            width: 100%;
+            overflow: hidden;
+            mask-image: linear-gradient(to right,
+                    transparent 0%,
+                    black 10%,
+                    black 90%,
+                    transparent 100%);
+        }
+
+        .marquee__group {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            gap: clamp(44px, 6vw, 84px);
+            padding-left: clamp(24px, 4vw, 56px);
+
+            animation: marquee var(--speed) linear infinite;
+            will-change: transform;
+        }
+
+        /* Seamless loop: each group moves exactly its own width */
+        @keyframes marquee {
+            0% {
+                transform: translate3d(0, 0, 0);
+            }
+
+            100% {
+                transform: translate3d(-100%, 0, 0);
+            }
+        }
+
+        .banner-item {
+            display: inline-flex;
+            align-items: center;
+            gap: clamp(18px, 2.4vw, 28px);
+
+            font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: clamp(26px, 3vw, 40px);
+            letter-spacing: 0.12em;
+            /* this is a big part of the vibe */
+            text-transform: uppercase;
+            color: var(--text);
+
+            -webkit-font-smoothing: antialiased;
+            text-rendering: geometricPrecision;
+            white-space: nowrap;
+        }
+
+        .banner-logo {
+            height: 40px;
+            /* Adjusted to match new scale if needed, but 40px seems safe */
+            animation: rotate-logo 10s linear infinite;
+        }
+
+        @keyframes rotate-logo {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Respect reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .marquee__group {
+                animation: none;
+                transform: none;
+            }
+
+            .marquee {
+                mask-image: none;
+            }
+
+            .marquee {
+                mask-image: none;
+            }
+        }
+
+        /* Green Screen Banner Variant */
+        .coming-soon-banner.green-mode {
+            background: #05ff00;
+            border-top: 2px solid #000;
+            box-shadow: none;
+        }
+
+        .coming-soon-banner.green-mode .banner-item {
+            color: #000;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 32px;
+            letter-spacing: -1px;
+        }
+
+        .coming-soon-banner.green-mode .nike-arch {
+            height: 30px;
+            margin-left: 10px;
+            filter: invert(1);
+            /* Make logo black if it's white */
+        }
+
+        /* Construction Banner Variant */
+        .coming-soon-banner.construction-mode {
+            background: repeating-linear-gradient(135deg,
+                    #0b0b0c 0,
+                    #0b0b0c 18px,
+                    #151517 18px,
+                    #151517 36px);
+            /* Replaced border with "material edge" bevel */
+            border-top: 0;
+            border-bottom: 0;
+            box-shadow:
+                /* hairline highlight */
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                /* shallow bevel depth */
+                inset 0 10px 18px rgba(255, 255, 255, 0.03),
+                /* crisp seam */
+                inset 0 -1px 0 rgba(0, 0, 0, 0.65),
+                /* lift from page */
+                0 -12px 28px rgba(0, 0, 0, 0.55);
+            height: 350px;
+            /* Dominant height */
+            display: flex;
+            align-items: center;
+            position: relative;
+            /* For noise overlay positioning */
+        }
+
+        /* Cinematic Noise Overlay */
+        .coming-soon-banner.construction-mode::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.06;
+            mix-blend-mode: overlay;
+            /* Inline SVG Noise for grain effect */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .coming-soon-banner.construction-mode .marquee {
+            mask-image: linear-gradient(to right,
+                    transparent 0%,
+                    black 10%,
+                    black 90%,
+                    transparent 100%);
+            -webkit-mask-image: linear-gradient(to right,
+                    transparent 0%,
+                    black 10%,
+                    black 90%,
+                    transparent 100%);
+        }
+
+        /* Brass Foil Logo (CSS Mask) */
+        .banner-mark {
+            width: 80px;
+            /* Adjusted size based on previous 3D scale preference */
+            height: 80px;
+            display: inline-block;
+            flex: 0 0 auto;
+
+            /* Mask will be set via inline style or modifier class */
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+
+            /* “Material” lives here: brass + highlight + grain */
+            background:
+                radial-gradient(120% 120% at 30% 20%, rgba(255, 255, 255, 0.35), transparent 52%),
+                radial-gradient(90% 90% at 70% 80%, rgba(0, 0, 0, 0.35), transparent 55%),
+                linear-gradient(135deg,
+                    #d6b45a 0%,
+                    #8a6624 38%,
+                    #f0d98a 58%,
+                    #6f4f18 100%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+
+            background-blend-mode: screen, multiply, normal, overlay;
+
+            /* make it feel like ink/foil instead of orange paint */
+            filter: saturate(0.85) contrast(1.15) brightness(0.92);
+
+            /* depth without changing the fill color */
+            /* REMOVED box-shadow from here to prevent it from rotating with the logo */
+            /* box-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 10px 18px rgba(0, 0, 0, 0.35); */
+
+            opacity: 0.96;
+            /* Slightly increased opacity for solidity */
+
+            /* Stabilized animation: Removed drastic brightness changes */
+            animation: foil-shine 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes foil-shine {
+            0% {
+                filter: saturate(0.9) contrast(1.1) brightness(0.95);
+            }
+
+            100% {
+                filter: saturate(0.95) contrast(1.15) brightness(1.0);
+            }
+        }
+
+
+
+        .banner-mark.dominion {
+            -webkit-mask-image: url('/dominion.svg');
+            mask-image: url('/dominion.svg');
+        }
+
+        .banner-mark.adornments {
+            -webkit-mask-image: url('/adornments.svg');
+            mask-image: url('/adornments.svg');
+        }
+
+        .coming-soon-banner.construction-mode .banner-item {
+            color: #000;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 64px;
+            /* Increased size */
+            letter-spacing: -2px;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+            /* Improve readability on stripes? Actually might not be needed if stripes are background. Let's see. */
+            /* Better approach: Text is the item, stripes are background. */
+        }
+
+        .coming-soon-banner.construction-mode .banner-logo {
+            height: 50px;
+            /* Adjusted logo size */
+            margin-left: 10px;
+            animation: rotate-logo 10s linear infinite;
+        }
+
+        .coming-soon-banner.construction-mode .marquee__group {
+            gap: clamp(18px, 2.4vw, 28px);
+            /* Ensure gap matches banner-item gap */
+            animation: marquee 60s linear infinite;
+        }
+
+        /* Green Screen Layout Fixes */
+        .coming-soon-body {
+            background: #05ff00;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+        }
+
+        .coming-soon-banner.green-mode {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            height: auto;
+        }
+
+        .coming-soon-footer {
+            padding: 20px;
+            text-align: center;
+            font-family: "Arial Black", sans-serif;
+            font-size: 12px;
+            color: #000;
+            letter-spacing: 2px;
+            background: #05ff00;
+        }
     </style>
 </head>
 
@@ -1309,52 +1788,37 @@
         </div>
 
         <!-- Desktop Folders - matching your existing layout -->
-        <div class="desktop-folder" id="macintosh-hd" style="left: calc(max(50vw, 750px) + 450px); top: 346px;">
+        <div class="desktop-folder" id="macintosh-hd">
             <i class="fas fa-desktop icon gray"></i>
             <div class="label">Macintosh HD</div>
         </div>
 
-        <div class="desktop-folder" data-folder="archive" style="left: calc(max(50vw, 750px) - 636px); top: 27px;">
+        <div class="desktop-folder" data-folder="archive">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">CIRE</div>
         </div>
 
-        <div class="desktop-folder" data-folder="sophisticated-brilliance"
-            style="left: calc(max(50vw, 750px) - 689px); top: 113px;">
+        <div class="desktop-folder" data-folder="sophisticated-brilliance">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Sophisticated Brilliance</div>
         </div>
 
-        <div class="desktop-folder" data-folder="sophisticated-ignorance"
-            style="left: calc(max(50vw, 750px) - 571px); top: 95px;">
+        <div class="desktop-folder" data-folder="sophisticated-ignorance">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Sophisticated Ignorance</div>
         </div>
 
-        <div class="desktop-folder" data-folder="coming-soon" style="left: calc(max(50vw, 750px) - 539px); top: 204px;">
+        <div class="desktop-folder" data-folder="coming-soon">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">*COMING SOON*</div>
         </div>
 
-        <div class="desktop-folder" data-folder="maison" style="left: calc(max(50vw, 750px) - 700px); top: 252px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Maison Manifest</div>
-        </div>
-
-        <div class="desktop-folder" data-folder="curated" style="left: calc(max(50vw, 750px) - 582px); top: 332px;">
+        <div class="desktop-folder" data-folder="curated">
             <i class="fas fa-folder icon blue"></i>
             <div class="label">Curated Content</div>
         </div>
 
-        <div class="desktop-folder" data-folder="video" style="left: calc(max(50vw, 750px) - 662px); top: 395px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Transcendence of Man</div>
-        </div>
-
-        <div class="desktop-folder" data-folder="power" style="left: calc(max(50vw, 750px) - 571px); top: 428px;">
-            <i class="fas fa-folder icon blue"></i>
-            <div class="label">Power Perfected in Position</div>
-        </div>
+        <!-- Guestbook folder removed from desktop -->
 
         <!-- Finder Window -->
         <div class="finder-window" id="finder-window">
@@ -1376,15 +1840,15 @@
                     <i class="fas fa-chevron-right"></i>
                 </div>
                 <div class="toolbar-button" id="view-btn">
-                    <i class="fas fa-th-large" id="view-icon"></i> <span id="view-label">Icons</span>
+                    <i class="fas fa-columns" id="view-icon"></i> <span id="view-label">Columns</span>
                     <div class="view-menu" id="view-menu">
-                        <div class="view-menu-item selected" data-view="icons">
+                        <div class="view-menu-item" data-view="icons">
                             <i class="fas fa-th-large"></i> Icons
                         </div>
                         <div class="view-menu-item" data-view="list">
                             <i class="fas fa-th-list"></i> List
                         </div>
-                        <div class="view-menu-item" data-view="columns">
+                        <div class="view-menu-item selected" data-view="columns">
                             <i class="fas fa-columns"></i> Columns
                         </div>
                         <div class="view-menu-item" data-view="gallery">
@@ -1420,6 +1884,24 @@
         </div>
 
         <!-- Popup Windows -->
+        <div class="popup-window" id="popup-guestbook" style="top: 100px; left: 400px; width: 450px; height: 600px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-guestbook')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-guestbook')"></div>
+                    <div class="popup-control maximize disabled" style="opacity: 0.5; cursor: not-allowed;"
+                        title="Locked in Graphite Mode"></div>
+                </div>
+                <span class="popup-title">JOIN NETWORK 🤝</span>
+            </div>
+            <div class="popup-content"
+                style="padding: 0; height: calc(100% - 32px); background: #222; position: relative;">
+                <iframe id="guestbook-iframe" src="http://localhost:5186"
+                    style="width: 100%; height: 100%; border: none; position: relative; z-index: 10; background: #000;"
+                    allow="geolocation; scripts; same-origin; forms"></iframe>
+            </div>
+        </div>
+
         <div class="popup-window" id="popup-maison" style="top: 80px; left: 350px;">
             <div class="popup-titlebar">
                 <div class="popup-controls">
@@ -1507,7 +1989,7 @@
                     <div class="popup-control minimize" onclick="minimizePopup('popup-sb-logo')"></div>
                     <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-sb-logo')"></div>
                 </div>
-                <span class="popup-title">COLLECTION 1 LOGO</span>
+                <span class="popup-title">SB COLLECTION 1 LOGO</span>
             </div>
             <div class="popup-content" style="padding: 0;">
                 <video autoplay loop muted playsinline
@@ -1518,24 +2000,450 @@
             </div>
         </div>
 
-        <!-- Carousels -->
-        <div class="carousel-container">
-            <div class="carousel-track-wrapper">
-                <div class="carousel-track" id="carousel-top">
-                    <!-- Items generated by JS -->
+        <div class="popup-window" id="popup-power" style="top: 120px; left: 250px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-power')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-power')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-power')"></div>
                 </div>
+                <span class="popup-title">POWER PERFECTED IN POSITION</span>
             </div>
-            <div class="carousel-track-wrapper">
-                <div class="carousel-track carousel-track-reverse" id="carousel-bottom">
-                    <!-- Items generated by JS -->
+            <div class="popup-content">
+                <h1>Power Perfected in Position</h1>
+                <p style="text-indent: 2em;">Every position holds potential — not as limitation, but as leverage.
+                    <strong>Sophisticated Ignorance</strong> is built on the belief that elevation is earned through
+                    conviction, not circumstance. Whether one begins at <strong>Foundations</strong> or reigns within
+                    <strong>Crownworks</strong>, each tier represents a stage of growth — a moment to master before
+                    advancing to the next. To wear the brand is to embrace progression: to elevate within your means,
+                    and to build power through a solid foundation and discipline. Because ascension is not promised —
+                    it's pursued. And through conviction, <em>Power is Perfected in Position</em>.
+                </p>
+                <br>
+                <p style="text-indent: 2em;">At its core, the collection is organized through a <strong>symbolic
+                        classification system</strong> that quietly structures the brand's universe of garments.
+                    Categories are defined by function and refinement, each occupying a distinct role within the
+                    wardrobe. The symbols that
+                    accompany them serve as markers of position and progression, not spectacle. Because power is not
+                    loud, it is precise, therefore, is perfected in position.</p>
+            </div>
+        </div>
+
+        <!-- NEW DOCUMENTS -->
+        <div class="popup-window" id="popup-foundations" style="top: 130px; left: 260px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-foundations')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-foundations')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-foundations')"></div>
+                </div>
+                <span class="popup-title">FOUNDATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Foundations — The Architecture of Self</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Establish identity and structure —
+                    the groundwork of sophistication.</p>
+                <br>
+                <p style="text-indent: 2em;">Foundations serves as the base layer of refinement: the stepping stones of
+                    your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and
+                    precision, Foundations defines the essentials that ground identity — where form takes shape and
+                    sophistication begins.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-fortifications" style="top: 140px; left: 270px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-fortifications')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-fortifications')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-fortifications')"></div>
+                </div>
+                <span class="popup-title">FORTIFICATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Fortifications — The Shield of Style</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Protect, reinforce, and define.</p>
+                <br>
+                <p style="text-indent: 2em;">Fortifications represents defense through design — luxurious garments built
+                    as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure,
+                    engineered to impress.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-relics" style="top: 150px; left: 280px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-relics')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-relics')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-relics')"></div>
+                </div>
+                <span class="popup-title">RELICS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Relics — The Creed of Craft</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Carry heirlooms that endure —
+                    crafted in devotion to quality.</p>
+                <br>
+                <p style="text-indent: 2em;">Relics serve as the tactile memory of the brand: timeless leather goods
+                    that embody strength through subtlety and refinement through utility. Each piece is designed to be
+                    carried, aged, and remembered.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-dominion" style="top: 160px; left: 290px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-dominion')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-dominion')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-dominion')"></div>
+                </div>
+                <span class="popup-title">DOMINION</span>
+            </div>
+            <div class="popup-content">
+                <h1>Dominion — The Path of Conquest</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Stride with intent. Advance with
+                    purpose.</p>
+            </div>
+            <div class="coming-soon-banner construction-mode" role="presentation" aria-hidden="true">
+                <div class="marquee">
+                    <div class="marquee__group">
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                    </div>
+
+                    <!-- Duplicate group for a perfect loop -->
+                    <div class="marquee__group" aria-hidden="true">
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="dominion.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Clipboard Notification -->
-        <div class="clipboard-notification" id="clipboard-notification">
-            Copied to clipboard!
+        <div class="popup-window" id="popup-adornments" style="top: 170px; left: 300px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-adornments')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-adornments')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-adornments')"></div>
+                </div>
+                <span class="popup-title">ADORNMENTS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Adornments — The Reign of Detail</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Elevate your expression. Define
+                    your distinction.</p>
+            </div>
+            <div class="coming-soon-banner construction-mode" role="presentation" aria-hidden="true">
+                <div class="marquee">
+                    <div class="marquee__group">
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                    </div>
+
+                    <!-- Duplicate group for a perfect loop -->
+                    <div class="marquee__group" aria-hidden="true">
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                        <span class="banner-item">COMING SOON <div class="banner-3d-target" data-src="adornments.svg"
+                                style="width: 250px; height: 120px; display: inline-block; vertical-align: middle;">
+                            </div></span>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="popup-window" id="popup-crownworks" style="top: 180px; left: 310px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-crownworks')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-crownworks')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-crownworks')"></div>
+                </div>
+                <span class="popup-title">CROWNWORKS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Crownworks — The Pinnacle of Refinement</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">The ultimate articulation of
+                    mastery and rule.</p>
+                <br>
+                <p style="text-indent: 2em;">Crownworks represents the embodiment of power perfected in presentation:
+                    garments crafted for moments of command, ceremony, and consequence. Each creation in this tier
+                    signifies composure under pressure — the discipline to remain regal, the elegance to move with
+                    authority.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-trials" style="top: 160px; left: 320px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-trials')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-trials')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-trials')"></div>
+                </div>
+                <span class="popup-title">TRANSCENDENCE OF MAN</span>
+            </div>
+            <div class="popup-content">
+                <h1>Transcendence of Man</h1>
+                <p style="text-indent: 2em;"><em>Sophisticated Brilliance</em>'s debut collection, <strong>Transcendence
+                        of
+                        Man</strong>, explores the journey of refinement through experience. Each piece reflects a stage
+                    of
+                    healing — where scars are to be embraced as evidence of resilience against trials and tribulations.
+                    Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship
+                    refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is
+                    built through trials, and refinement is earned through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-collection-overview" style="top: 170px; left: 330px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-collection-overview')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-collection-overview')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-collection-overview')"></div>
+                </div>
+                <span class="popup-title">COLLECTION OVERVIEW</span>
+            </div>
+            <div class="popup-content">
+                <h1>Collection Overview</h1>
+                <p style="text-indent: 2em;">The debut collection from <em>Sophisticated Brilliance</em> reinterprets
+                    sacred iconography as a reflection of the human condition via trials and revelations. Each piece
+                    examines the tension between scars and magnificence, elaborating on the paradox of endurance:
+                    suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not
+                    the absence of damage, but the result of having endured it.</p>
+                <br>
+                <p style="text-indent: 2em;">As a whole, the collection invites reflection on scars not as
+                    disfigurements, but as evidence of transformation. These works of art crafted out of precious
+                    gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a
+                    process, and brilliance is achieved through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-beast" style="top: 180px; left: 340px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-beast')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-beast')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-beast')"></div>
+                </div>
+                <span class="popup-title">BEAST</span>
+            </div>
+            <div class="popup-content">
+                <h1>Beast</h1>
+                <p style="text-indent: 2em;">Pendant I: <strong>Beast</strong> explores the instinct to conceal pain
+                    rather
+                    than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts
+                    to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface
+                    representing the "rough around the edges" nature of the unhealed man.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-metamorphosis" style="top: 190px; left: 350px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-metamorphosis')"></div>
+                </div>
+                <span class="popup-title">METAMORPHOSIS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Metamorphosis</h1>
+                <p style="text-indent: 2em;">Pendant II: <strong>Metamorphosis</strong> represents movement between
+                    denial and
+                    acceptance. The more traditional stone-setting arrangement introduces structure and order,
+                    signifying discipline, self-awareness, and progression along the journey of refinement.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-humble" style="top: 200px; left: 360px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-humble')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-humble')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-humble')"></div>
+                </div>
+                <span class="popup-title">HUMBLE</span>
+            </div>
+            <div class="popup-content">
+                <h1>Humble</h1>
+                <p style="text-indent: 2em;">Pendant III: <strong>Humble</strong> embodies acceptance. The wounds remain
+                    visible and unembellished, free of excess. With no stones present, the piece depicts resilience
+                    shown through transparency rather than display.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-nails" style="top: 210px; left: 370px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-nails')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-nails')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-nails')"></div>
+                </div>
+                <span class="popup-title">THE NAILS</span>
+            </div>
+            <div class="popup-content">
+                <h1>The Nails</h1>
+                <p style="text-indent: 2em;">Earrings: <strong>The Nails</strong> transform symbols of suffering into
+                    emblems
+                    of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while
+                    maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing,
+                    secured with a screw mechanism and fully pavé-set, references the transformation of an object once
+                    associated with force and cruelty into an ornament of intention.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-celestial" style="top: 220px; left: 380px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-celestial')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-celestial')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-celestial')"></div>
+                </div>
+                <span class="popup-title">CELESTIAL SCARS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Celestial Scars</h1>
+                <p style="text-indent: 2em;">Cuban Chain: <strong>Celestial Scars - Forged Link</strong> a reimagined,
+                    reversible interpretation of the Cuban link. One side bears intentional surface scarring with a
+                    satin or sandblasted finish; the other remains smooth and polished. The duality represents the
+                    coexistence of damage and refinement — the choice to reveal or conceal, without denying either.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-coming-soon" style="top: 200px; left: 400px; width: 600px; height: 400px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-coming-soon')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-coming-soon')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-coming-soon')"></div>
+                </div>
+                <span class="popup-title">COMING SOON</span>
+            </div>
+            <div class="coming-soon-banner green-mode">
+                <div class="marquee">
+                    <div class="marquee__group">
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                    </div>
+                    <!-- Duplicate for loop -->
+                    <div class="marquee__group" aria-hidden="true">
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="banner-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="coming-soon-footer">
+                ARCHIVE<br>LAUNCHING SOON
+            </div>
+        </div>
+        <!-- 
+            <div class="popup-content coming-soon-body" style="padding: 0;">
+                <div class="marquee-container">
+                    <div class="marquee-track">
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                    </div>
+                </div>
+                <div class="coming-soon-footer">
+                    ARCHIVE<br>LAUNCHING SOON
+                </div>
+            </div> 
+            -->
+    </div>
+
+    <!-- Carousels -->
+    <div class="carousel-container">
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track" id="carousel-top">
+                <!-- Items generated by JS -->
+            </div>
+        </div>
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track carousel-track-reverse" id="carousel-bottom">
+                <!-- Items generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Clipboard Notification -->
+    <div class="clipboard-notification" id="clipboard-notification">
+        Copied to clipboard!
+    </div>
     </div>
 
     <!-- Grid Overlay -->
@@ -1560,86 +2468,161 @@
             archive: {
                 label: 'CIRE',
                 files: [
-                    { name: 'blackscale CIRE logo.png', type: 'image', src: '/blackscale CIRE logo.png' },
-                    { name: 'maison overview.rfd', type: 'document', textContent: 'CIRE Conglomerate is a visionary luxury maison built on the philosophy of cultivating influence, refinement, and excellence. Serving as the parent entity to Sophisticated Brilliance and Sophisticated Ignorance, CIRE operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified language of modern luxury.' },
+                    { name: 'blackscale logo.png', type: 'image', src: '/blackscale CIRE logo.png' },
                     { name: 'art house.png', type: 'image', src: '/art house.png' },
-                    { name: 'fashion house.png', type: 'image', src: '/fashion house.png' }
+                    { name: 'fashion house.png', type: 'image', src: '/fashion house.png' },
+                    { name: 'maison manifest', type: 'folder', targetFolder: 'maison' }
                 ]
             },
             'sophisticated-brilliance': {
                 label: 'Sophisticated Brilliance',
                 files: [
-                    { name: 'collection 1 teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
                     { name: 'collection 1 logo.mp4', type: 'video', src: '/SB Rotating Logo.mp4' },
-                    { name: 'Sophisticated Brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
-                    // Carousel content - The Nails
-                    { name: 'sketch: the nails.png', type: 'image', src: '/sketch: the nails.png' },
-                    { name: 'cad: the nails.mp4', type: 'video', src: '/cad: the nails.mp4' },
-                    { name: 'wax model: the nails.png', type: 'image', src: '/wax model: the nails.png' },
-                    { name: 'rendering: the nails.mp4', type: 'video', src: '/rendering: the nails.mp4' },
-                    { name: 'finished product: the nails.mp4', type: 'video', src: '/finished product: the nails.mp4' },
-                    // Carousel content - Beast (first set)
-                    { name: 'sketch: beast.png', type: 'image', src: '/sketch: beast.png' },
-                    { name: 'cad: beast.mp4', type: 'video', src: '/cad: beast.mp4' },
-                    { name: 'wax model: beast.png', type: 'image', src: '/wax model: beast.png' },
-                    { name: 'rendering: beast.mp4', type: 'video', src: '/rendering: beast.mp4' },
-                    { name: 'finished product: beast.mp4', type: 'video', src: '/finished product: beast.mp4' },
-                    // Carousel content - Metamorphosis
-                    { name: 'sketch: metamorphosis.png', type: 'image', src: '/sketch: metamorphosis.png' },
-                    { name: 'cad: metamorphosis.mp4', type: 'video', src: '/cad: metamorphosis.mp4' },
-                    { name: 'wax model: metamorphosis.png', type: 'image', src: '/wax model: metamorphosis.png' },
-                    { name: 'rendering: metamorphosis.mp4', type: 'video', src: '/rendering: metamorphosis.mp4' },
-                    { name: 'finished product: metamorphosis.mp4', type: 'video', src: '/finished product: metamorphosis.mp4' },
-                    // Carousel content - Beast (second set)
-                    { name: 'sketch: beast 2.png', type: 'image', src: '/sketch: beast.png' },
-                    { name: 'cad: beast 2.mp4', type: 'video', src: '/cad: beast.mp4' },
-                    { name: 'wax model: beast 2.png', type: 'image', src: '/wax model: beast.png' },
-                    { name: 'rendering: beast 2.mp4', type: 'video', src: '/rendering: beast.mp4' },
-                    { name: 'finished product: beast 2.mp4', type: 'video', src: '/finished product: beast.mp4' },
-                    // Carousel content - Celestial Scar
-                    { name: 'sketch: the celestial scar.png', type: 'image', src: '/sketch: the celestial scar.png' },
-                    { name: 'cad: the celestial scar.mp4', type: 'video', src: '/cad: the celestial scar.mp4' },
-                    { name: 'wax model: the celestial scar.png', type: 'image', src: '/wax model: the celestial scar.png' },
-                    { name: 'rendering: the celestial scar.mp4', type: 'video', src: '/rendering: the celestial scar.mp4' },
-                    { name: 'finished product: the celestial scar.mp4', type: 'video', src: '/finished product: the celestial scar.mp4' }
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'transcendence of man.rfd', type: 'document', textContent: '*Sophisticated Brilliance*\'s debut collection, **Transcendence of Man**, explores the journey of refinement through experience. Each piece reflects a stage of healing — where scars are to be embraced as evidence of resilience against trials and tribulations. Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is built through trials, and refinement is earned through endurance.' },
+                    { name: 'collection overview.rfd', type: 'document', textContent: 'The debut collection from *Sophisticated Brilliance* reinterprets sacred iconography as a reflection of the human condition via trials and revelations. Each piece examines the tension between scars and magnificence, elaborating on the paradox of endurance: suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not the absence of damage, but the result of having endured it.\\n\\nAs a whole, the collection invites reflection on scars not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.' },
+                    { name: 'beast.rfd', type: 'document', textContent: 'Pendant I: **Beast** explores the instinct to conceal pain rather than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface representing the "rough around the edges" nature of the unhealed man.' },
+                    { name: 'metamorphosis.rfd', type: 'document', textContent: 'Pendant II: **Metamorphosis** represents movement between denial and acceptance. The more traditional stone-setting arrangement introduces structure and order, signifying discipline, self-awareness, and progression along the journey of refinement.' },
+                    { name: 'humble.rfd', type: 'document', textContent: 'Pendant III: **Humble** embodies acceptance. The wounds remain visible and unembellished, free of excess. With no stones present, the piece depicts resilience shown through transparency rather than display.' },
+                    { name: 'the nails.rfd', type: 'document', textContent: 'Earrings: **The Nails** transform symbols of suffering into emblems of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing, secured with a screw mechanism and fully pavé-set, references the transformation of an object once associated with force and cruelty into an ornament of intention.' },
+                    { name: 'celestial scars.rfd', type: 'document', textContent: 'Cuban Link: **Celestial Scars** is a reimagined, reversible interpretation of the Cuban link. One side bears intentional surface scarring with a satin or sandblasted finish; the other remains smooth and polished. The duality represents the coexistence of damage and refinement — the choice to reveal or conceal, without denying either.' },
+                    { name: 'transcendence of man', type: 'folder', targetFolder: 'video' }
                 ]
             },
             'sophisticated-ignorance': {
                 label: 'Sophisticated Ignorance',
                 files: [
-                    { name: 'research_notes.txt', type: 'document', textContent: 'Research Notes:\n\nThe concept of Sophisticated Ignorance explores the deliberate choice to remain unburdened by conventional expectations while maintaining an air of refined taste.' },
-                    { name: 'philosophy.pdf', type: 'document', textContent: 'Philosophy Document:\n\nTo be sophisticated in ones ignorance is to understand that wisdom often lies in knowing what not to engage with.' },
-                    { name: 'Sophisticated Ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' }
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'power perfected in position.rfd', type: 'document', textContent: 'Every position holds potential — not as limitation, but as leverage. **Sophisticated Ignorance** is built on the belief that elevation is earned through conviction, not circumstance. Whether one begins at **Foundations** or reigns within **Crownworks**, each tier represents a stage of growth — a moment to master before advancing to the next. To wear the brand is to embrace progression: to elevate within your means, and to build power through a solid foundation and discipline. Because ascension is not promised — it\'s pursued. And through conviction, *Power is Perfected in Position*.\n\nAt its core, the collection is organized through a **symbolic classification system** that quietly structures the brand\'s universe of garments. Categories are defined by function and refinement, each occupying a distinct role within the wardrobe. The symbols that accompany them serve as markers of position and progression, not spectacle. Because power is not loud, it is precise, therefore, is perfected in position.' },
+                    { name: 'foundations', type: 'folder', targetFolder: 'si-foundations' },
+                    { name: 'fortifications', type: 'folder', targetFolder: 'si-fortifications' },
+                    { name: 'relics', type: 'folder', targetFolder: 'si-relics' },
+                    { name: 'dominion', type: 'folder', targetFolder: 'si-dominion' },
+                    { name: 'adornments', type: 'folder', targetFolder: 'si-adornments' },
+                    { name: 'crownworks', type: 'folder', targetFolder: 'si-crownworks' }
+                ]
+            },
+            'si-foundations': {
+                label: 'foundations',
+                files: [
+                    { name: 'foundations.rfd', type: 'document', textContent: 'Foundations — The Architecture of Self\nEstablish identity and structure — the groundwork of sophistication.\n\nFoundations serves as the base layer of refinement: the stepping stones of your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and precision, Foundations defines the essentials that ground identity — where form takes shape and sophistication begins.' }
+                ]
+            },
+            'si-fortifications': {
+                label: 'fortifications',
+                files: [
+                    { name: 'fortifications.rfd', type: 'document', textContent: 'Fortifications — The Shield of Style\nProtect, reinforce, and define.\n\nFortifications represents defense through design — luxurious garments built as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure, engineered to impress.' }
+                ]
+            },
+            'si-relics': {
+                label: 'relics',
+                files: [
+                    { name: 'relics.rfd', type: 'document', textContent: 'Relics — The Creed of Craft\nCarry heirlooms that endure — crafted in devotion to quality.\n\nRelics serve as the tactile memory of the brand: timeless leather goods that embody strength through subtlety and refinement through utility. Each piece is designed to be carried, aged, and remembered.' }
+                ]
+            },
+            'si-dominion': {
+                label: 'dominion',
+                files: [
+                    { name: 'dominion.rfd', type: 'document', textContent: 'Dominion — The Path of Conquest\nStride with intent. Advance with purpose.' }
+                ]
+            },
+            'si-adornments': {
+                label: 'adornments',
+                files: [
+                    { name: 'adornments.rfd', type: 'document', textContent: 'Adornments — The Reign of Detail\nElevate your expression. Define your distinction.' }
+                ]
+            },
+            'si-crownworks': {
+                label: 'crownworks',
+                files: [
+                    { name: 'crownworks.rfd', type: 'document', textContent: 'Crownworks — The Pinnacle of Refinement\nThe ultimate articulation of mastery and rule.\n\nCrownworks represents the embodiment of power perfected in presentation: garments crafted for moments of command, ceremony, and consequence. Each creation in this tier signifies composure under pressure — the discipline to remain regal, the elegance to move with authority.' }
                 ]
             },
             video: {
-                label: 'Transcendence of Man',
+                label: 'transcendence of man',
                 files: [
-                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' }
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'sketches', type: 'folder', targetFolder: 'tom-sketches' },
+                    { name: 'cads', type: 'folder', targetFolder: 'tom-cads' },
+                    { name: 'renderings', type: 'folder', targetFolder: 'tom-renderings' },
+                    { name: 'wax models', type: 'folder', targetFolder: 'tom-wax' },
+                    { name: 'final', type: 'folder', targetFolder: 'tom-final' }
                 ]
             },
-            'coming-soon': {
-                label: '*COMING SOON*',
-                files: []
+            'tom-sketches': {
+                label: 'sketches',
+                files: [
+                    { name: 'sketch: the nails.png', type: 'image', src: '/sketch: the nails.png' },
+                    { name: 'sketch: beast.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: metamorphosis.png', type: 'image', src: '/sketch: metamorphosis.png' },
+                    { name: 'sketch: beast 2.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: the celestial scar.png', type: 'image', src: '/sketch: the celestial scar.png' }
+                ]
+            },
+            'tom-cads': {
+                label: 'cads',
+                files: [
+                    { name: 'cad: the nails.mp4', type: 'video', src: '/cad: the nails.mp4' },
+                    { name: 'cad: beast.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: metamorphosis.mp4', type: 'video', src: '/cad: metamorphosis.mp4' },
+                    { name: 'cad: beast 2.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: the celestial scar.mp4', type: 'video', src: '/cad: the celestial scar.mp4' }
+                ]
+            },
+            'tom-renderings': {
+                label: 'renderings',
+                files: [
+                    { name: 'rendering: the nails.mp4', type: 'video', src: '/rendering: the nails.mp4' },
+                    { name: 'rendering: beast.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: metamorphosis.mp4', type: 'video', src: '/rendering: metamorphosis.mp4' },
+                    { name: 'rendering: beast 2.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: the celestial scar.mp4', type: 'video', src: '/rendering: the celestial scar.mp4' }
+                ]
+            },
+            'tom-wax': {
+                label: 'wax models',
+                files: [
+                    { name: 'wax model: the nails.png', type: 'image', src: '/wax model: the nails.png' },
+                    { name: 'wax model: beast.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: metamorphosis.png', type: 'image', src: '/wax model: metamorphosis.png' },
+                    { name: 'wax model: beast 2.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: the celestial scar.png', type: 'image', src: '/wax model: the celestial scar.png' }
+                ]
+            },
+            'tom-final': {
+                label: 'final',
+                files: [
+                    { name: 'final: the nails.mp4', type: 'video', src: '/final: the nails.mp4' },
+                    { name: 'final: beast.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: metamorphosis.mp4', type: 'video', src: '/final: metamorphosis.mp4' },
+                    { name: 'final: beast 2.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: the celestial scar.mp4', type: 'video', src: '/final: the celestial scar.mp4' }
+                ]
             },
             maison: {
-                label: 'Maison Manifest',
-                files: []
+                label: 'maison manifest',
+                files: [
+                    { name: 'maison overview.rfd', type: 'document', textContent: 'CIRE Conglomerate is a visionary luxury maison built on the philosophy of cultivating influence, refinement, and excellence. Serving as the parent entity to Sophisticated Brilliance and Sophisticated Ignorance, CIRE operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified language of modern luxury.' },
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'coming soon.mp4', type: 'video', src: '/coming soon.mp4' }
+                ]
             },
             curated: {
                 label: 'Curated Content',
-                files: []
-            },
-            power: {
-                label: 'Power Perfected in Position',
                 files: []
             }
         };
 
         let selectedFolder = 'archive';
-        let currentView = 'icons';
+        let currentView = 'columns';
         let selectedGalleryIndex = 0;
         let selectedColumnIndex = -1;
+
+        // Navigation history for back/forward buttons
+        let navigationHistory = ['archive']; // Start with initial folder
+        let historyIndex = 0; // Current position in history
 
         const desktop = document.getElementById('desktop');
         const finderWindow = document.getElementById('finder-window');
@@ -1675,13 +2658,55 @@
         // Popup window management
         let highestZIndex = 100;
 
+        // Global keydown for navigation
+        document.addEventListener('keydown', (e) => {
+            // Only handle if no popup is active (except maybe image popups, but let's keep it simple)
+            // and if we are in a folder view
+
+            // Check if any input is focused
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const files = folderData[selectedFolder]?.files || [];
+            if (files.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                let newIndex = selectedColumnIndex + 1;
+                if (newIndex >= files.length) newIndex = files.length - 1;
+
+                // Select and scroll into view
+                selectColumnItem(newIndex);
+                scrollItemIntoView(newIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                let newIndex = selectedColumnIndex - 1;
+                if (newIndex < 0) newIndex = 0;
+
+                // Select and scroll into view
+                selectColumnItem(newIndex);
+                scrollItemIntoView(newIndex);
+            } else if (e.key === 'Enter') {
+                if (selectedColumnIndex >= 0 && selectedColumnIndex < files.length) {
+                    handleFileClick(files[selectedColumnIndex].name);
+                }
+            }
+        });
+
+        function scrollItemIntoView(index) {
+            const items = document.querySelectorAll('.column-item');
+            if (items[index]) {
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
         // Popup ID to display name mapping for dock
         const popupTitles = {
             'popup-maison': 'Maison Overview',
             'popup-brilliance': 'Sophisticated Brilliance',
             'popup-ignorance': 'Sophisticated Ignorance',
             'popup-transcendence': 'Transcendence of Man',
-            'popup-sb-logo': 'Collection 1 Logo'
+            'popup-sb-logo': 'SB Collection 1 Logo',
+            'popup-guestbook': 'Join Network 🤝'
         };
 
         function openPopup(popupId) {
@@ -1697,6 +2722,13 @@
                 // Bring to front
                 highestZIndex++;
                 popup.style.zIndex = highestZIndex;
+
+                // Enforce Graphite Mode for Guestbook PERMANENTLY
+                if (popupId === 'popup-guestbook') {
+                    if (!popup.classList.contains('graphite-mode')) {
+                        popup.classList.add('graphite-mode');
+                    }
+                }
             }
         }
 
@@ -1714,19 +2746,22 @@
                 const centerX = window.innerWidth / 2;
 
                 if (popupId === 'popup-maison') {
-                    popup.style.left = (centerX - 250) + 'px';
+                    popup.style.left = (centerX - 150) + 'px';
                     popup.style.top = '18px';
                     popup.style.width = '450px';
                     popup.style.height = 'auto';
                 } else if (popupId === 'popup-transcendence') {
-                    popup.style.left = (centerX - 476) + 'px';
+                    popup.style.left = (centerX - 376) + 'px';
                     popup.style.top = '69px';
                 } else if (popupId === 'popup-brilliance') {
-                    popup.style.left = (centerX - 430) + 'px';
+                    popup.style.left = (centerX - 330) + 'px';
                     popup.style.top = '202px';
                 } else if (popupId === 'popup-ignorance') {
-                    popup.style.left = (centerX - 66) + 'px';
+                    popup.style.left = (centerX + 34) + 'px';
                     popup.style.top = '285px';
+                } else if (popupId === 'popup-guestbook') {
+                    popup.style.left = (centerX - 125) + 'px';
+                    popup.style.top = '100px';
                 }
             }
         }
@@ -1734,9 +2769,10 @@
         function minimizePopup(popupId) {
             const popup = document.getElementById(popupId);
             if (popup) {
-                // V1-style: only minimize if not already minimized (yellow button disabled when minimized)
-                // When minimized, user must double-click titlebar to restore
-                if (!popup.classList.contains('minimized')) {
+                // Toggle minimized state
+                if (popup.classList.contains('minimized')) {
+                    popup.classList.remove('minimized');
+                } else {
                     popup.classList.add('minimized');
                 }
             }
@@ -1756,6 +2792,9 @@
             const popup = document.getElementById(popupId);
             if (!popup) return;
 
+            // Lock Graphite Mode for Guestbook (Prevent toggle)
+            if (popupId === 'popup-guestbook') return;
+
             if (popup.classList.contains('graphite-mode')) {
                 // Restore from graphite mode
                 popup.classList.remove('graphite-mode');
@@ -1765,6 +2804,19 @@
                     popup.style.top = pre.top;
                     popup.style.width = pre.width;
                     popup.style.height = pre.height;
+                }
+
+                // Reset video if present
+                const video = popup.querySelector('video');
+                if (video) {
+                    video.style.height = '300px';
+                    video.style.objectFit = 'cover';
+                }
+
+                // Reset content height
+                const content = popup.querySelector('.popup-content');
+                if (content && (popupId === 'popup-sb-logo' || popupId === 'popup-transcendence' || popupId === 'popup-coming-soon')) {
+                    content.style.height = 'auto';
                 }
             } else {
                 // Enter graphite mode - save current state
@@ -1779,12 +2831,26 @@
                 popup.style.top = '0';
                 popup.style.width = '100vw';
                 popup.style.height = '100vh';
+
+                // Adjust video for full screen
+                const video = popup.querySelector('video');
+                if (video) {
+                    video.style.height = '100%';
+                    video.style.objectFit = 'cover';
+                }
+
+                // Force content to fill height for video popups
+                const content = popup.querySelector('.popup-content');
+                if (content && (popupId === 'popup-sb-logo' || popupId === 'popup-transcendence' || popupId === 'popup-coming-soon')) {
+                    content.style.height = 'calc(100% - 32px)';
+                }
             }
         }
 
         // File to popup mapping (for documents that open existing popups)
         const filePopupMap = {
             'maison overview.rfd': 'popup-maison',
+            'coming soon.mp4': 'popup-coming-soon',
         };
 
         // Folder to popup mapping
@@ -1796,26 +2862,180 @@
         // Select column item (single click) - shows preview
         function selectColumnItem(index) {
             selectedColumnIndex = index;
-            populateContent();
+            // Update selection state without regenerating entire list
+            const items = document.querySelectorAll('.column-item');
+            items.forEach((item, i) => {
+                item.classList.toggle('selected', i === index);
+            });
+            // Only update the preview panel
+            updateColumnPreview();
+        }
+
+        // Update only the column preview panel
+        function updateColumnPreview() {
+            const files = folderData[selectedFolder]?.files || [];
+            const selectedFile = selectedColumnIndex >= 0 ? files[selectedColumnIndex] : null;
+            const selectedIcon = selectedFile ? getFileIcon(selectedFile.type) : null;
+            const fileTypeLabel = selectedFile ? (selectedFile.type === 'image' ? 'PNG image' : selectedFile.type === 'video' ? 'MPEG-4 Video' : 'Document') : '';
+
+            let previewContent = '';
+            if (selectedFile?.type === 'image' && selectedFile?.src) {
+                previewContent = `<img src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain; background: #1a1a1a;">`;
+            } else if (selectedFile?.type === 'video' && selectedFile?.src) {
+                previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
+            } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
+                previewContent = `
+                    <div class="document-preview-container">
+                        <div class="document-preview-header">📄 ${selectedFile.name}</div>
+                        <div class="document-preview-body">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
+                    </div>`;
+            } else if (selectedFile) {
+                previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
+            }
+
+            const previewPanel = document.querySelector('.column-preview');
+            if (previewPanel) {
+                previewPanel.innerHTML = selectedFile ? `
+                    <div class="column-preview-image">
+                        ${previewContent}
+                    </div>
+                    <div class="column-preview-header">
+                        <div class="column-preview-name">${selectedFile.name}</div>
+                        <div class="column-preview-type">${fileTypeLabel} - 256 KB</div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">
+                            Information
+                            <span class="show-more">Show Less</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Modified</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Last opened</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Content created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">Tags</div>
+                        <div style="color: #888; font-size: 12px; padding: 5px 0;">Add Tags...</div>
+                    </div>
+                    <div class="gallery-actions">
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-undo"></i>
+                            <span>Rotate Left</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-marker"></i>
+                            <span>Markup</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>More...</span>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="column-preview-empty" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">
+                        Select a file to preview
+                    </div>
+                `;
+            }
         }
 
         function handleFileClick(fileName) {
+            // Check if it's a folder - navigate to it
+            const currentFiles = folderData[selectedFolder]?.files || [];
+            const clickedFile = currentFiles.find(f => f.name === fileName);
+            if (clickedFile && clickedFile.type === 'folder' && clickedFile.targetFolder) {
+                selectFolder(clickedFile.targetFolder);
+                return;
+            }
+
             // RFD Document triggers
             if (fileName === 'maison overview.rfd') {
                 openPopup('popup-maison');
                 return;
             }
-            if (fileName === 'Sophisticated Brilliance.rfd') {
+            if (fileName === 'sophisticated brilliance.rfd') {
                 openPopup('popup-brilliance');
                 return;
             }
-            if (fileName === 'Sophisticated Ignorance.rfd') {
+            if (fileName === 'sophisticated ignorance.rfd') {
                 openPopup('popup-ignorance');
+                return;
+            }
+            if (fileName === 'power perfected in position.rfd') {
+                openPopup('popup-power');
+                return;
+            }
+            if (fileName === 'foundations.rfd') {
+                openPopup('popup-foundations');
+                return;
+            }
+            if (fileName === 'fortifications.rfd') {
+                openPopup('popup-fortifications');
+                return;
+            }
+            if (fileName === 'relics.rfd') {
+                openPopup('popup-relics');
+                return;
+            }
+            if (fileName === 'dominion.rfd') {
+                openPopup('popup-dominion');
+                return;
+            }
+            if (fileName === 'adornments.rfd') {
+                openPopup('popup-adornments');
+                return;
+            }
+            if (fileName === 'crownworks.rfd') {
+                openPopup('popup-crownworks');
+                return;
+            }
+            if (fileName === 'coming soon.mp4') {
+                openPopup('popup-coming-soon');
+                return;
+            }
+            if (fileName === 'transcendence of man.rfd') {
+                openPopup('popup-trials');
+                return;
+            }
+            if (fileName === 'collection overview.rfd') {
+                openPopup('popup-collection-overview');
+                return;
+            }
+            if (fileName === 'beast.rfd') {
+                openPopup('popup-beast');
+                return;
+            }
+            if (fileName === 'metamorphosis.rfd') {
+                openPopup('popup-metamorphosis');
+                return;
+            }
+            if (fileName === 'humble.rfd') {
+                openPopup('popup-humble');
+                return;
+            }
+            if (fileName === 'the nails.rfd') {
+                openPopup('popup-nails');
+                return;
+            }
+            if (fileName === 'celestial scars.rfd') {
+                openPopup('popup-celestial');
                 return;
             }
 
             // Video trigger
-            if (fileName === 'collection 1 teaser.mp4') {
+            if (fileName === 'teaser.mp4') {
                 openPopup('popup-transcendence');
                 return;
             }
@@ -1828,7 +3048,9 @@
 
             // Image popup (dynamic)
             if (fileName.endsWith('.png')) {
-                openImagePopup(fileName, '/' + fileName);
+                // Use src from file data if available, otherwise construct from filename
+                const imgSrc = clickedFile && clickedFile.src ? clickedFile.src : '/' + fileName;
+                openImagePopup(fileName, imgSrc);
                 return;
             }
 
@@ -1865,7 +3087,7 @@
                     </div>
                     <span class="popup-title">${title}</span>
                 </div>
-                <div class="popup-content" style="padding: 0;">
+                <div class="popup-content" style="padding: 0; background: #1a1a1a;">
                     <img src="${src}" style="max-width: 100%; display: block;">
                 </div>
             `;
@@ -1903,16 +3125,47 @@
                 offsetY = e.clientY - popup.offsetTop;
                 highestZIndex++;
                 popup.style.zIndex = highestZIndex;
+
+                // Disable iframe pointer events during drag to prevent click-to-stick
+                const iframe = popup.querySelector('iframe');
+                if (iframe) iframe.style.pointerEvents = 'none';
             });
 
             document.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                popup.style.left = (e.clientX - offsetX) + 'px';
-                popup.style.top = (e.clientY - offsetY) + 'px';
+                if (!isDragging) {
+                    // Check if mouse released outside window
+                    if (isDragging) isDragging = false;
+                    return;
+                }
+                e.preventDefault();
+
+                let newLeft = e.clientX - offsetX;
+                let newTop = e.clientY - offsetY;
+
+                // Constraint: Keep within window bounds
+                const maxLeft = window.innerWidth - popup.offsetWidth;
+                const maxTop = window.innerHeight - popup.offsetHeight;
+
+                // Clamp
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                popup.style.left = newLeft + 'px';
+                popup.style.top = newTop + 'px';
             });
 
             document.addEventListener('mouseup', () => {
-                isDragging = false;
+                if (isDragging) {
+                    isDragging = false;
+                    // Re-enable iframe pointer events after drag
+                    const iframe = popup.querySelector('iframe');
+                    if (iframe) iframe.style.pointerEvents = 'auto';
+
+                    // UPDATE RELATIVE OFFSET AFTER DRAG
+                    // This ensures subsequent resizes respect the new position
+                    const currentLeft = parseFloat(popup.style.left) || 0;
+                    popup.dataset.centerOffset = currentLeft - (window.innerWidth / 2);
+                }
             });
 
             // V1 behavior: double-click titlebar to restore minimized window
@@ -1934,15 +3187,15 @@
             // Top carousel: 25 SB jewelry pieces
             // File associations (for when media is uploaded):
             // Item 1: sketch: the nails.png | Item 2: cad: the nails.mp4 | Item 3: wax model: the nails.png
-            // Item 4: rendering: the nails.mp4 | Item 5: finished product: the nails.mp4
+            // Item 4: rendering: the nails.mp4 | Item 5: final: the nails.mp4
             // Item 6: sketch: beast.png | Item 7: cad: beast.mp4 | Item 8: wax model: beast.png
-            // Item 9: rendering: beast.mp4 | Item 10: finished product: beast.mp4
+            // Item 9: rendering: beast.mp4 | Item 10: final: beast.mp4
             // Item 11: sketch: metamorphosis.png | Item 12: cad: metamorphosis.mp4 | Item 13: wax model: metamorphosis.png
-            // Item 14: rendering: metamorphosis.mp4 | Item 15: finished product: metamorphosis.mp4
+            // Item 14: rendering: metamorphosis.mp4 | Item 15: final: metamorphosis.mp4
             // Item 16: sketch: beast.png | Item 17: cad: beast.mp4 | Item 18: wax model: beast.png
-            // Item 19: rendering: beast.mp4 | Item 20: finished product: beast.mp4
+            // Item 19: rendering: beast.mp4 | Item 20: final: beast.mp4
             // Item 21: sketch: the celestial scar.png | Item 22: cad: the celestial scar.mp4 | Item 23: wax model: the celestial scar.png
-            // Item 24: rendering: the celestial scar.mp4 | Item 25: finished product: the celestial scar.mp4
+            // Item 24: rendering: the celestial scar.mp4 | Item 25: final: the celestial scar.mp4
             const topItems = Array.from({ length: 25 }).map((_, i) => ({
                 id: i,
                 title: `Item ${i + 1}`,
@@ -1983,6 +3236,9 @@
         }
 
         // Populate sidebar
+        // Folders that are now nested inside other folders (not shown in sidebar)
+        const nestedFolders = ['video', 'maison', 'power', 'tom-sketches', 'tom-cads', 'tom-renderings', 'tom-wax', 'tom-final', 'si-foundations', 'si-fortifications', 'si-relics', 'si-dominion', 'si-adornments', 'si-crownworks'];
+
         function populateSidebar() {
             sidebar.innerHTML = `
                 <div class="sidebar-section">
@@ -1993,6 +3249,9 @@
             const section = sidebar.querySelector('.sidebar-section');
 
             Object.keys(folderData).forEach(key => {
+                // Skip nested folders - they're inside other folders now
+                if (nestedFolders.includes(key)) return;
+
                 const folder = folderData[key];
                 const item = document.createElement('div');
                 item.className = 'sidebar-item' + (key === selectedFolder ? ' active' : '');
@@ -2008,12 +3267,39 @@
                 item.addEventListener('click', () => selectFolder(key));
                 section.appendChild(item);
             });
+
+            // Add Join Network item at the bottom of favorites
+            const joinNetworkItem = document.createElement('div');
+            joinNetworkItem.className = 'sidebar-item';
+            joinNetworkItem.dataset.folder = 'join-network';
+            joinNetworkItem.innerHTML = `
+                <i class="fas fa-folder"></i>
+                Join Network 🤝
+            `;
+            joinNetworkItem.addEventListener('click', () => {
+                openPopup('popup-guestbook');
+            });
+            section.appendChild(joinNetworkItem);
         }
 
         // Select folder
-        function selectFolder(folderKey) {
+        function selectFolder(folderKey, fromHistory = false) {
             selectedFolder = folderKey;
             selectedColumnIndex = -1; // Reset column selection
+
+            // Update navigation history (only if not navigating from history)
+            if (!fromHistory) {
+                // Remove any forward history if we're navigating from middle of stack
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+                // Only add to history if it's different from the current folder
+                const currentFolder = navigationHistory[historyIndex];
+                if (currentFolder !== folderKey) {
+                    navigationHistory.push(folderKey);
+                    historyIndex = navigationHistory.length - 1;
+                }
+                // Update button states
+                updateNavigationButtons();
+            }
 
             // Update sidebar active state
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -2021,7 +3307,8 @@
             });
 
             // Update window title
-            windowTitle.textContent = folderData[folderKey]?.label || 'Macintosh HD';
+            // Update window title - ALWAYS Macintosh HD per user request
+            windowTitle.textContent = 'Macintosh HD';
 
             // Bring Finder to front when Macintosh HD is clicked
             if (folderKey === 'macintosh-hd') {
@@ -2033,11 +3320,72 @@
             populateContent();
         }
 
+        // Update navigation button states
+        function updateNavigationButtons() {
+            const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+            const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+
+            if (backBtn) {
+                if (historyIndex > 0) {
+                    backBtn.style.opacity = '1';
+                    backBtn.style.cursor = 'pointer';
+                    backBtn.style.pointerEvents = 'auto';
+                } else {
+                    backBtn.style.opacity = '0.3';
+                    backBtn.style.cursor = 'not-allowed';
+                    backBtn.style.pointerEvents = 'none';
+                }
+            }
+
+            if (forwardBtn) {
+                if (historyIndex < navigationHistory.length - 1) {
+                    forwardBtn.style.opacity = '1';
+                    forwardBtn.style.cursor = 'pointer';
+                    forwardBtn.style.pointerEvents = 'auto';
+                } else {
+                    forwardBtn.style.opacity = '0.3';
+                    forwardBtn.style.cursor = 'not-allowed';
+                    forwardBtn.style.pointerEvents = 'none';
+                }
+            }
+        }
+
+        // Navigate back in history
+        function navigateBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
+        // Navigate forward in history
+        function navigateForward() {
+            if (historyIndex < navigationHistory.length - 1) {
+                historyIndex++;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
         // Get file icon
         function getFileIcon(type) {
+            if (type === 'folder') return { class: 'fas fa-folder', color: '#5ac8fa' };
             if (type === 'image') return { class: 'far fa-image image-icon', color: '#30d158' };
             if (type === 'video') return { class: 'fas fa-film video-icon', color: '#ff375f' };
             return { class: 'far fa-file-alt file-icon', color: '#aaa' };
+        }
+
+        // Render markdown to HTML
+        function renderMarkdown(text) {
+            if (!text) return '';
+            // Convert **bold** to <strong>
+            text = text.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+            // Convert *italic* to <em>
+            text = text.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+            // Convert newlines to <br>
+            text = text.replace(/\\n/g, '<br>');
+            return text;
         }
 
         // Populate content based on view
@@ -2064,7 +3412,7 @@
                     } else if (file.type === 'document' && file.textContent) {
                         previewHtml = `
                             <div style="width: 16px; height: 20px; background: white; color: black; font-size: 2px; overflow: hidden; padding: 1px; margin-right: 10px; font-family: sans-serif; opacity: 0.9; border: 1px solid #ccc;">
-                                ${file.textContent}
+                                ${renderMarkdown(file.textContent)}
                             </div>
                         `;
                     } else {
@@ -2127,9 +3475,9 @@
                     previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
                 } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
                     previewContent = `
-                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; max-height: 140px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
-                            <div style="font-size: 10px; color: #888; margin-bottom: 6px;">📄 ${selectedFile.name}</div>
-                            <div style="font-size: 11px; color: #ddd; line-height: 1.4; white-space: pre-wrap;">${selectedFile.textContent.substring(0, 200)}...</div>
+                        <div class="document-preview-container">
+                            <div class="document-preview-header">📄 ${selectedFile.name}</div>
+                            <div class="document-preview-body">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
                         </div>`;
                 } else if (selectedFile) {
                     previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
@@ -2230,14 +3578,7 @@
                 const fileTypeLabel = selectedFile ? (selectedFile.type.charAt(0).toUpperCase() + selectedFile.type.slice(1)) : '';
 
                 // Tag list
-                const tagsList = [
-                    "CFDA Award Candidate",
-                    "The Fashion Awards Candidate",
-                    "International Woolmark Prize Candidate",
-                    "JWA Candidate",
-                    "GEM Award Candidate",
-                    "Inhorgenta Award Candidate"
-                ];
+                const tagsList = [];
 
                 // Initialize tags if not present
                 if (selectedFile && !selectedFile.tags) selectedFile.tags = [];
@@ -2279,7 +3620,7 @@
                     previewContent = `
                         <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px; max-width: 300px; max-height: 250px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
                             <div style="font-size: 11px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">📄 ${selectedFile.name}</div>
-                            <div style="font-size: 13px; color: #ddd; line-height: 1.6; white-space: pre-wrap;">${selectedFile.textContent}</div>
+                            <div style="font-size: 13px; color: #ddd; line-height: 1.6;">${renderMarkdown(selectedFile.textContent)}</div>
                         </div>`;
                 } else {
                     previewContent = `<i class="${icon.class}" style="color: ${icon.color}"></i>`;
@@ -2430,6 +3771,22 @@
             selectedFolder = folderKey || 'archive';
             finderWindow.classList.add('active');
 
+            // Reset position to default to ensure it's visible
+            const startLeft = 150;
+            const startTop = 100;
+            const centerX = window.innerWidth / 2;
+
+            finderWindow.style.left = startLeft + 'px';
+            finderWindow.style.top = startTop + 'px';
+
+            // Calculate and store offset for resize logic
+            finderWindow.dataset.centerOffset = startLeft - centerX;
+
+            // Initialize navigation history with the starting folder
+            navigationHistory = [selectedFolder];
+            historyIndex = 0;
+            updateNavigationButtons();
+
             // Bring to front
             highestZIndex++;
             finderWindow.style.zIndex = highestZIndex;
@@ -2458,53 +3815,21 @@
             });
         }
 
-        // Event listeners for desktop folders (with drag support)
+        // Event listeners for desktop folders (locked positions - no dragging)
         document.querySelectorAll('.desktop-folder').forEach(folder => {
-            // Store offset in data attributes for persistence
-            folder.dataset.offsetX = folder.dataset.offsetX || '0';
-            folder.dataset.offsetY = folder.dataset.offsetY || '0';
-
-            folder.addEventListener('mousedown', (e) => {
+            folder.addEventListener('dblclick', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent wallpaper reveal from triggering
+                if (folder.dataset.folder) {
+                    openFinderWindow(folder.dataset.folder);
+                } else if (folder.id === 'macintosh-hd') {
+                    openFinderWindow('archive');
+                }
+            });
 
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const initialOffsetX = parseFloat(folder.dataset.offsetX);
-                const initialOffsetY = parseFloat(folder.dataset.offsetY);
-                let hasMoved = false;
-
-                const onMouseMove = (moveE) => {
-                    const dx = moveE.clientX - startX;
-                    const dy = moveE.clientY - startY;
-
-                    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-                        hasMoved = true;
-                    }
-
-                    const newOffsetX = initialOffsetX + dx;
-                    const newOffsetY = initialOffsetY + dy;
-
-                    folder.style.transform = `translate(${newOffsetX}px, ${newOffsetY}px)`;
-                    folder.dataset.offsetX = newOffsetX;
-                    folder.dataset.offsetY = newOffsetY;
-                };
-
-                const onMouseUp = () => {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-
-                    // Only trigger click if barely moved
-                    if (!hasMoved) {
-                        if (folder.dataset.folder) {
-                            openFinderWindow(folder.dataset.folder);
-                        } else if (folder.id === 'macintosh-hd') {
-                            openFinderWindow('archive');
-                        }
-                    }
-                };
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
+            // Prevent single click from doing anything (except selection if we add that later)
+            folder.addEventListener('click', (e) => {
+                e.stopPropagation();
             });
         });
 
@@ -2517,6 +3842,21 @@
 
         // Close button
         document.getElementById('close-btn').addEventListener('click', closeFinderWindow);
+
+        // Back button
+        const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+        if (backBtn) {
+            backBtn.addEventListener('click', navigateBack);
+        }
+
+        // Forward button
+        const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+        if (forwardBtn) {
+            forwardBtn.addEventListener('click', navigateForward);
+        }
+
+        // Initialize button states
+        updateNavigationButtons();
 
         // Theme toggle
         themeToggle.addEventListener('change', (e) => {
@@ -2583,14 +3923,7 @@
         });
 
         // Initialize toolbar tags
-        const globalTagsList = [
-            "CFDA Award Candidate",
-            "GEM Award Candidate",
-            "Inhorgenta Award Candidate",
-            "International Woolmark Prize Candidate",
-            "JWA Candidate",
-            "The Fashion Awards Candidate"
-        ];
+        const globalTagsList = [];
 
         const tagColors = {
             "CFDA Award Candidate": "green",
@@ -2624,65 +3957,447 @@
             }
         });
 
-        // Draggable window
-        let isDragging = false;
-        let currentX, currentY, initialX, initialY;
-        let xOffset = 0, yOffset = 0;
+        // Draggable window (Fixed with bounds)
+        const finderWin = document.getElementById('finder-window');
+        const finderTitlebar = finderWin.querySelector('.window-titlebar');
 
-        const titlebar = document.querySelector('.window-titlebar');
+        let isFinderDragging = false;
+        let finderOffsetX, finderOffsetY;
 
-        titlebar.addEventListener('mousedown', (e) => {
+        finderTitlebar.addEventListener('mousedown', (e) => {
             if (e.target.classList.contains('window-control')) return;
-            initialX = e.clientX - xOffset;
-            initialY = e.clientY - yOffset;
-            isDragging = true;
+            isFinderDragging = true;
+            finderOffsetX = e.clientX - finderWin.offsetLeft;
+            finderOffsetY = e.clientY - finderWin.offsetTop;
+
+            // Ensure z-index handling
+            if (typeof highestZIndex !== 'undefined') {
+                highestZIndex++;
+                finderWin.style.zIndex = highestZIndex;
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
+            if (!isFinderDragging) return;
             e.preventDefault();
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
-            xOffset = currentX;
-            yOffset = currentY;
-            finderWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+
+            let newLeft = e.clientX - finderOffsetX;
+            let newTop = e.clientY - finderOffsetY;
+
+            // BOUNDS CHECKING
+            const maxLeft = window.innerWidth - finderWin.offsetWidth;
+            const maxTop = window.innerHeight - finderWin.offsetHeight;
+
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+
+            finderWin.style.left = newLeft + 'px';
+            finderWin.style.top = newTop + 'px';
+
+            // Remove transform if it exists from previous attempts
+            finderWin.style.transform = 'none';
         });
 
         document.addEventListener('mouseup', () => {
-            isDragging = false;
+            if (isFinderDragging) {
+                isFinderDragging = false;
+                // Update center offset for resize logic
+                const currentLeft = parseFloat(finderWin.style.left) || 0;
+                finderWin.dataset.centerOffset = currentLeft - (window.innerWidth / 2);
+            }
         });
+
+
+        // Desktop Folder Positioning - Responsive to window size
+        function positionDesktopFolders() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const folderWidth = 100; // Width of desktop folder element
+            const folderHeight = 100; // Approximate height including icon and label
+            const margin = 20; // Safety margin from edges
+
+            // Define folder positions - left side folders use fixed positions
+            // Right side folder (Macintosh HD) uses viewport-relative positioning
+            const folderPositions = {
+
+                'archive': { left: 38, top: 27 }, // Moved additional 9px right (29+9)
+                'sophisticated-brilliance': { left: margin, top: 113 },
+                'sophisticated-ignorance': { left: margin + 118, top: 95 },
+                'coming-soon': { left: margin + 150, top: 204 },
+                'curated': { left: margin + 107, top: 332 },
+                'macintosh-hd': {
+                    left: Math.max(viewportWidth - folderWidth - margin, margin + 200),
+                    top: 331 // Moved additional 5px up (336-5)
+                }
+            };
+
+            // Apply positions to each folder
+            Object.keys(folderPositions).forEach(folderId => {
+                const folder = document.getElementById(folderId) ||
+                    document.querySelector(`[data-folder="${folderId}"]`);
+
+                if (folder) {
+                    // Skip if manually moved
+                    if (folder.dataset.manuallyMoved === 'true') return;
+
+                    let { left, top } = folderPositions[folderId];
+
+                    // Ensure folder stays within viewport bounds
+                    left = Math.max(margin, Math.min(left, viewportWidth - folderWidth - margin));
+                    top = Math.max(margin, Math.min(top, viewportHeight - folderHeight - margin));
+
+                    folder.style.left = left + 'px';
+                    folder.style.top = top + 'px';
+                }
+            });
+        }
+
+        // Make desktop folders draggable
+        function makeDesktopDraggable(folder) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            folder.addEventListener('mousedown', (e) => {
+                // Prevent dragging if content locked (e.g. reveal mode)
+                if (folder.style.pointerEvents === 'none') return;
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = folder.offsetLeft;
+                initialTop = folder.offsetTop;
+
+                // Bring to front slightly
+                folder.style.zIndex = 10;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
+
+                // Bounds checking
+                const maxLeft = window.innerWidth - folder.offsetWidth;
+                const maxTop = window.innerHeight - folder.offsetHeight;
+
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                folder.style.left = newLeft + 'px';
+                folder.style.top = newTop + 'px';
+
+                // Mark as manually moved
+                folder.dataset.manuallyMoved = 'true';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        // Debounce function to limit resize event frequency
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Add resize listener with debouncing
+        window.addEventListener('resize', debounce(() => {
+            positionDesktopFolders();
+
+            // Reposition ALL open windows relative to new center
+            // This maintains their visual position relative to the center of the screen
+            const newCenterX = window.innerWidth / 2;
+            document.querySelectorAll('.popup-window').forEach(popup => {
+                // If we have a stored offset, use it. usage of || 0 handles potential NaNs
+                const offset = parseFloat(popup.dataset.centerOffset);
+                if (!isNaN(offset)) {
+                    popup.style.left = (newCenterX + offset) + 'px';
+                }
+            });
+
+            // Handle Finder window specifically
+            if (finderWindow) {
+                const offset = parseFloat(finderWindow.dataset.centerOffset);
+                if (!isNaN(offset)) {
+                    finderWindow.style.left = (newCenterX + offset) + 'px';
+                }
+            }
+        }, 10));
+
+        // Position initial popups relative to viewport center
+        function positionInitialPopups() {
+            const centerX = window.innerWidth / 2;
+
+            function setInitialPos(id, offset, top) {
+                const el = document.getElementById(id);
+                if (el) {
+                    // Only set if not already set (preserve manual moves if re-called)
+                    if (!el.dataset.centerOffset) {
+                        el.style.left = (centerX + offset) + 'px';
+                        el.style.top = top;
+                        el.dataset.centerOffset = offset; // Store relative position
+                    }
+                }
+            }
+
+            setInitialPos('popup-maison', -150, '18px');
+            setInitialPos('popup-transcendence', -376, '69px');
+            setInitialPos('popup-brilliance', -330, '202px');
+            setInitialPos('popup-ignorance', 34, '285px');
+            setInitialPos('popup-guestbook', -125, '100px');
+            setInitialPos('popup-coming-soon', 100, '200px');
+            setInitialPos('popup-power', -200, '120px');
+        }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
+            positionDesktopFolders();
             generateCarousels();
 
-            // Position popups like V1 (center-relative coordinates)
-            const centerX = window.innerWidth / 2;
-
-            // Maison Overview: centerX - 250, y: 18
-            document.getElementById('popup-maison').style.left = (centerX - 250) + 'px';
-            document.getElementById('popup-maison').style.top = '18px';
-
-            // Transcendence of Man: centerX - 476, y: 69 (Moved 95px right)
-            document.getElementById('popup-transcendence').style.left = (centerX - 476) + 'px';
-            document.getElementById('popup-transcendence').style.top = '69px';
-
-            // Sophisticated Brilliance: centerX - 430, y: 202 (Moved 95px right from -525)
-            document.getElementById('popup-brilliance').style.left = (centerX - 430) + 'px';
-            document.getElementById('popup-brilliance').style.top = '202px';
-
-            // Sophisticated Ignorance: centerX - 66, y: 285
-            document.getElementById('popup-ignorance').style.left = (centerX - 66) + 'px';
-            document.getElementById('popup-ignorance').style.top = '285px';
-
-            // Open 4 windows on launch (instead of Finder)
+            // Open windows on launch
             setTimeout(() => {
                 openPopup('popup-maison');
                 openPopup('popup-transcendence');
                 openPopup('popup-brilliance');
                 openPopup('popup-ignorance');
+                openPopup('popup-guestbook');
+
+                // Initialize draggable desktop folders
+                document.querySelectorAll('.desktop-folder').forEach(folder => {
+                    makeDesktopDraggable(folder);
+                });
+
+                // Position all popups after opening
+                positionInitialPopups();
+
+                // Maison Manifest Delay - Block ONLY controls
+                const maisonWindow = document.getElementById('popup-maison');
+                if (maisonWindow) {
+                    const titlebar = maisonWindow.querySelector('.popup-titlebar');
+                    if (titlebar) {
+                        const blocker = document.createElement('div');
+                        blocker.id = 'maison-blocker';
+                        blocker.style.position = 'absolute';
+                        blocker.style.top = '0';
+                        blocker.style.left = '0';
+                        blocker.style.width = '100%';
+                        blocker.style.height = '100%';
+                        blocker.style.zIndex = '50'; // Above controls
+                        blocker.style.cursor = 'wait';
+                        titlebar.appendChild(blocker);
+
+                        setTimeout(() => {
+                            if (titlebar.contains(blocker)) {
+                                titlebar.removeChild(blocker);
+                            }
+                        }, 5000);
+                    }
+                }
+
+                // Enforce Graphite Mode with 5s delay for Guestbook
+                setTimeout(() => {
+                    const gbWindow = document.getElementById('popup-guestbook');
+                    if (gbWindow) {
+                        // 1. Force Fullscreen (Graphite Mode)
+                        if (!gbWindow.classList.contains('graphite')) {
+                            toggleGraphiteMode('popup-guestbook');
+                        }
+
+                        // 2. Global Interaction Blocker
+                        let globalBlocker = document.getElementById('global-blocker');
+                        if (!globalBlocker) {
+                            globalBlocker = document.createElement('div');
+                            globalBlocker.id = 'global-blocker';
+                            globalBlocker.style.position = 'fixed';
+                            globalBlocker.style.top = '0';
+                            globalBlocker.style.left = '0';
+                            globalBlocker.style.width = '100vw';
+                            globalBlocker.style.height = '100vh';
+                            globalBlocker.style.zIndex = '9998'; // Just below Guestbook (9999)
+                            globalBlocker.style.cursor = 'wait';
+                            globalBlocker.style.background = 'transparent'; // Invisible wall
+                            document.body.appendChild(globalBlocker);
+
+                            // Ensure Guestbook is ON TOP
+                            gbWindow.style.zIndex = '9999';
+                        }
+
+                        // 3. Block Window Controls (Close/Min/Max) specifically
+                        const controls = gbWindow.querySelectorAll('.popup-control');
+                        controls.forEach(c => {
+                            c.style.pointerEvents = 'none';
+                            c.style.opacity = '0.5';
+                        });
+
+                        // Remove blocking immediately (was 5000ms)
+                        setTimeout(() => {
+                            // Remove global blocker
+                            if (globalBlocker && document.body.contains(globalBlocker)) {
+                                document.body.removeChild(globalBlocker);
+                            }
+
+                            // Re-enable window controls
+                            controls.forEach(c => {
+                                c.style.pointerEvents = 'auto';
+                                c.style.opacity = '1';
+                            });
+                        }, 5000); // RESTORED TO 5000ms per user request
+                    }
+                }, 100);
             }, 300);
         });
+
+        // GLOBAL Z-INDEX HANDLER (Delegated)
+        document.addEventListener('mousedown', (e) => {
+            const popup = e.target.closest('.popup-window');
+            if (popup) {
+                if (parseInt(popup.style.zIndex) !== highestZIndex) {
+                    highestZIndex++;
+                    popup.style.zIndex = highestZIndex;
+                }
+            }
+        }, true);
+
+        // Click wallpaper to reveal desktop (macOS-style)
+        let desktopRevealed = false;
+        const desktopEl = document.getElementById('desktop') || document.querySelector('.macos-desktop');
+
+        if (desktopEl) {
+            desktopEl.addEventListener('click', (e) => {
+                const folder = e.target.closest('.desktop-folder');
+                if (folder && desktopRevealed) {
+                    // 1. Manually trigger restore logic
+                    desktopRevealed = false; // Set state
+
+                    const allPopups = document.querySelectorAll('.popup-window.active');
+                    const finderWin = document.getElementById('finder-window');
+
+                    allPopups.forEach(popup => {
+                        popup.style.transition = 'left 0.4s ease, top 0.4s ease, opacity 0.4s ease';
+                        popup.style.left = popup.dataset.preRevealLeft || popup.style.left;
+                        popup.style.top = popup.dataset.preRevealTop || popup.style.top;
+                    });
+
+                    if (finderWin && finderWin.dataset.preRevealLeft) {
+                        finderWin.style.transition = 'left 0.4s ease, top 0.4s ease';
+                        finderWin.style.left = finderWin.dataset.preRevealLeft;
+                        finderWin.style.top = finderWin.dataset.preRevealTop;
+                    }
+
+                    // 2. Directly trigger click on the folder and stop this event
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    folder.click();
+                }
+            }, true);
+
+            // Prevent event bubbling on window controls
+            document.querySelectorAll('.popup-window').forEach(popup => {
+                const controls = popup.querySelectorAll('.popup-control');
+                controls.forEach(control => {
+                    control.addEventListener('click', (e) => { e.stopPropagation(); });
+                    control.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+                });
+            });
+
+            desktopEl.addEventListener('click', (e) => {
+                const folder = e.target.closest('.desktop-folder');
+
+                // 1. Handle clicking a folder while desktop is revealed
+                if (folder && desktopRevealed) {
+                    desktopRevealed = false; // Reset state
+                    const allPopups = document.querySelectorAll('.popup-window.active');
+                    const finderWin = document.getElementById('finder-window');
+                    allPopups.forEach(popup => {
+                        popup.style.transition = 'left 0.4s ease, top 0.4s ease, opacity 0.4s ease';
+                        // Clear force-hidden styles (see line 4260) -> Handled by resetting checks
+                        popup.style.removeProperty('left');
+                        popup.style.removeProperty('top');
+                        if (popup.dataset.preRevealLeft) {
+                            popup.style.left = popup.dataset.preRevealLeft;
+                            popup.style.top = popup.dataset.preRevealTop;
+                        }
+                    });
+                    if (finderWin) {
+                        if (finderWin.dataset.preRevealLeft) {
+                            finderWin.style.removeProperty('left');
+                            finderWin.style.removeProperty('top');
+                            finderWin.style.left = finderWin.dataset.preRevealLeft;
+                            finderWin.style.top = finderWin.dataset.preRevealTop;
+                        }
+                    }
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    folder.click();
+                    return;
+                }
+
+                // 2. Handle Reveal Desktop
+                if (e.target !== desktopEl && !e.target.classList.contains('macos-desktop')) return;
+
+                const allPopups = document.querySelectorAll('.popup-window.active');
+                const finderWin = document.getElementById('finder-window');
+
+                if (!desktopRevealed) {
+                    desktopRevealed = true;
+                    allPopups.forEach((popup, i) => {
+                        const rect = popup.getBoundingClientRect();
+                        popup.dataset.preRevealLeft = popup.style.left;
+                        popup.dataset.preRevealTop = popup.style.top;
+                        if (!popup.style.left) popup.dataset.preRevealLeft = rect.left + 'px';
+                        if (!popup.style.top) popup.dataset.preRevealTop = rect.top + 'px';
+
+                        popup.style.transition = 'left 0.4s ease, top 0.4s ease, opacity 0.4s ease';
+                        popup.style.right = 'auto';
+                        if (i % 2 === 0) {
+                            popup.style.setProperty('left', '-' + (popup.offsetWidth + 50) + 'px', 'important');
+                        } else {
+                            popup.style.setProperty('left', (window.innerWidth + 50) + 'px', 'important');
+                        }
+                    });
+                    if (finderWin && finderWin.style.display !== 'none') {
+                        finderWin.dataset.preRevealLeft = finderWin.style.left;
+                        finderWin.dataset.preRevealTop = finderWin.style.top;
+                        finderWin.style.transition = 'left 0.4s ease, top 0.4s ease';
+                        finderWin.style.left = (window.innerWidth + 50) + 'px';
+                    }
+                } else {
+                    desktopRevealed = false;
+                    allPopups.forEach(popup => {
+                        popup.style.transition = 'left 0.4s ease, top 0.4s ease';
+                        popup.style.removeProperty('left');
+                        popup.style.removeProperty('top');
+                        if (popup.dataset.preRevealLeft) {
+                            popup.style.left = popup.dataset.preRevealLeft;
+                            popup.style.top = popup.dataset.preRevealTop;
+                        }
+                    });
+                    if (finderWin) {
+                        if (finderWin.dataset.preRevealLeft) {
+                            finderWin.style.left = finderWin.dataset.preRevealLeft;
+                            finderWin.style.top = finderWin.dataset.preRevealTop;
+                        }
+                    }
+                    setTimeout(() => {
+                        allPopups.forEach(p => p.style.transition = '');
+                        if (finderWin) finderWin.style.transition = '';
+                    }, 500);
+                }
+            });
+        }
+
 
         // Grid Toggle Feature
         let gridVisible = false;
@@ -2725,6 +4440,7 @@
             });
         });
     </script>
+    <script type="module" src="/src/mount_banners.jsx"></script>
 </body>
 
 </html>

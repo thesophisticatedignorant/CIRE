@@ -1,0 +1,3540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIRE</title>
+    <link rel="icon" type="image/png" href="/CC V6.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #1d1d1f;
+            color: #f5f5f7;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .macos-desktop {
+            background: linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
+            background-image: url('/cire-logo.png');
+            background-position: center -185.5px;
+            background-repeat: no-repeat;
+            background-size: auto;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Desktop folder icons */
+        .desktop-folder {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            width: 100px;
+            /* Extended for 15 chars */
+            text-align: center;
+            padding: 10px 5px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+            z-index: 1;
+        }
+
+        .desktop-folder:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .desktop-folder.selected {
+            background-color: rgba(0, 112, 255, 0.3);
+        }
+
+        .desktop-folder .icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .desktop-folder .icon.blue {
+            color: #5ac8fa;
+        }
+
+        .desktop-folder .icon.gray {
+            color: #8e8e93;
+        }
+
+        .desktop-folder .label {
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            width: 100px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-wrap: break-word;
+        }
+
+        /* Finder Window */
+        .finder-window {
+            position: absolute;
+            top: 100px;
+            left: 150px;
+            width: 700px;
+            height: 450px;
+            min-height: 450px;
+            max-height: 450px;
+            background-color: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        .finder-window.active {
+            display: flex;
+        }
+
+        .window-titlebar {
+            height: 38px;
+            background-color: rgba(50, 50, 50, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: move;
+            flex-shrink: 0;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .window-control.close {
+            background-color: #ff5f57;
+        }
+
+        .window-control.minimize {
+            background-color: #ffbd2e;
+        }
+
+        .window-control.maximize {
+            background-color: #28ca42;
+        }
+
+        .window-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .window-toolbar {
+            height: 40px;
+            background-color: rgba(45, 45, 45, 0.9);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+
+        .toolbar-button {
+            color: #aaa;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .toolbar-button:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toolbar-button.active {
+            color: #5ac8fa;
+        }
+
+        /* View dropdown menu */
+        .view-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 5px;
+            background-color: rgba(50, 50, 50, 0.98);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            display: none;
+            min-width: 120px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .view-menu.show {
+            display: block;
+        }
+
+        .view-menu-item {
+            padding: 8px 15px;
+            font-size: 13px;
+            color: #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .view-menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .view-menu-item.selected {
+            color: #5ac8fa;
+        }
+
+        .view-menu-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            min-height: 0;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: rgba(35, 35, 35, 0.9);
+            padding: 15px 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            padding: 0 15px 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-item {
+            font-size: 13px;
+            color: #ddd;
+            padding: 6px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 500;
+        }
+
+        .sidebar-item i {
+            width: 16px;
+            text-align: center;
+            color: #5ac8fa;
+        }
+
+        .sidebar-item .count {
+            margin-left: auto;
+            background: #555;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .list-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr;
+            padding: 8px 10px;
+            background-color: #3c3c3c;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .list-items {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .list-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Icon View */
+        .icon-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .icon-view-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .icon-view-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .icon-view-item i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .icon-view-item .name {
+            font-size: 12px;
+            color: #fff;
+            word-break: break-word;
+        }
+
+        /* Column View */
+        .column-view {
+            display: flex;
+            height: 100%;
+        }
+
+        .column {
+            min-width: 200px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
+        }
+
+        .column-item {
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #ddd;
+        }
+
+        .column-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .column-item.selected {
+            background-color: rgba(0, 112, 255, 0.3);
+        }
+
+        /* Column Preview Panel */
+        .column-preview {
+            min-width: 250px;
+            max-width: 250px;
+            background-color: rgba(35, 35, 35, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .column-preview-image {
+            width: 100%;
+            height: 186px;
+            min-height: 186px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .column-preview-image img,
+        .column-preview-image video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .column-preview-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .column-preview-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .column-preview-type {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Gallery View - macOS style */
+        .gallery-view {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            justify-content: center;
+            /* Center content vertically */
+            overflow: hidden;
+            /* Disable vertical scroll */
+        }
+
+        .gallery-main {
+            display: flex;
+            overflow: hidden;
+            height: 250px;
+            min-height: 250px;
+            max-height: 250px;
+            margin-bottom: 5px;
+            /* Minimal space */
+        }
+
+        .gallery-preview {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+        }
+
+        .gallery-preview-content {
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-preview-content i {
+            font-size: 120px;
+        }
+
+        .gallery-info {
+            width: 220px;
+            background-color: rgba(35, 35, 35, 0.9);
+            padding: 10px;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .gallery-info-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .gallery-info-header i {
+            font-size: 28px;
+        }
+
+        .gallery-info-header .info-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            word-break: break-word;
+        }
+
+        .gallery-info-header .info-type {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .gallery-info-section {
+            margin-bottom: 8px;
+        }
+
+        .gallery-info-section-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .gallery-info-section-title .show-more {
+            color: #5ac8fa;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .gallery-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+
+        .gallery-info-row .label {
+            color: #888;
+        }
+
+        .gallery-info-row .value {
+            color: #fff;
+        }
+
+        .gallery-tags-wrapper {
+            position: relative;
+        }
+
+        .gallery-tags-input {
+            font-size: 11px;
+            color: #888;
+            cursor: text;
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .gallery-tags-input:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .gallery-tags-input.active {
+            background-color: #1e1e1e;
+            border-color: #007aff;
+            color: #fff;
+        }
+
+        .gallery-tags-dropdown {
+            position: fixed;
+            width: 250px;
+            background-color: rgba(40, 40, 40, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            display: none;
+        }
+
+        .gallery-tags-dropdown.show {
+            display: block;
+        }
+
+        .gallery-tag-option {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gallery-tag-option:hover {
+            background-color: #007aff;
+            color: #fff;
+        }
+
+        .gallery-tag-circle {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .gallery-tag-circle.red {
+            background-color: #ff5f57;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.orange {
+            background-color: #ffbd2e;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.green {
+            background-color: #28ca42;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.purple {
+            background-color: #af52de;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.blue {
+            background-color: #007aff;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.gray {
+            background-color: #8e8e93;
+            border-color: transparent;
+        }
+
+        .gallery-tag-circle.yellow {
+            background-color: #ffcc00;
+            border-color: transparent;
+        }
+
+        .gallery-chosen-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .gallery-tag-chip {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .gallery-tag-chip i {
+            cursor: pointer;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .gallery-tag-chip i:hover {
+            opacity: 1;
+        }
+
+        .gallery-actions {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gallery-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #888;
+            font-size: 10px;
+        }
+
+        .gallery-action-btn i {
+            font-size: 16px;
+        }
+
+        .gallery-action-btn:hover {
+            color: #5ac8fa;
+        }
+
+        .gallery-thumbnails {
+            height: 75px;
+            background-color: rgba(30, 30, 30, 0.9);
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+            border-radius: 6px;
+        }
+
+        .gallery-thumbnail {
+            flex: 0 0 55px;
+            height: 55px;
+            background-color: rgba(60, 60, 60, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .gallery-thumbnail:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .gallery-thumbnail.selected {
+            border-color: #5ac8fa;
+        }
+
+        .gallery-thumbnail i {
+            font-size: 24px;
+        }
+
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+
+        .file-name i {
+            color: #5ac8fa;
+        }
+
+        .file-name i.file-icon {
+            color: #aaa;
+        }
+
+        .file-name i.video-icon {
+            color: #ff375f;
+        }
+
+        .file-name i.image-icon {
+            color: #30d158;
+        }
+
+        .date-modified,
+        .size {
+            color: #aaa;
+        }
+
+        .status-bar {
+            height: 24px;
+            background-color: rgba(40, 40, 40, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-size: 11px;
+            color: #888;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Clipboard notification */
+        .clipboard-notification {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .clipboard-notification.show {
+            opacity: 1;
+        }
+
+        /* Popup Window Styles */
+        .popup-window {
+            position: absolute;
+            width: 450px;
+            background-color: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 50;
+            display: none;
+            overflow: hidden;
+        }
+
+        .popup-window.active {
+            display: block;
+        }
+
+        /* V1-style minimized state - window shade effect */
+        .popup-window.minimized .popup-content {
+            display: none;
+        }
+
+        .popup-titlebar {
+            height: 32px;
+            background-color: rgba(60, 60, 60, 0.9);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            cursor: move;
+            position: relative;
+        }
+
+        .popup-controls {
+            display: flex;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .popup-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .popup-control.close {
+            background-color: #ff5f57;
+        }
+
+        .popup-control.minimize {
+            background-color: #ffbd2e;
+        }
+
+        .popup-control.maximize {
+            background-color: #28ca42;
+        }
+
+        .popup-title {
+            position: absolute;
+            left: 0;
+            right: 0;
+            padding-left: 52px;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            user-select: none;
+        }
+
+        .popup-content {
+            padding: 20px;
+            color: #f5f5f7;
+        }
+
+        .popup-content h1 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .popup-content p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .popup-content strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .popup-content em {
+            font-style: italic;
+        }
+
+        /* Graphite/Fullscreen mode for popups */
+        .popup-window.graphite-mode {
+            width: calc(100vw - 80px) !important;
+            height: calc(100vh - 80px) !important;
+            top: 40px !important;
+            left: 40px !important;
+            border-radius: 4px;
+            z-index: 99999 !important;
+            background-color: #2c2c2e !important;
+            /* Graphite filled backdrop overrides light mode */
+        }
+
+        .popup-window.graphite-mode .popup-content {
+            height: calc(100vh - 80px - 32px);
+            overflow-y: auto;
+        }
+
+        /* Light Mode Support for Popups */
+        body.light-mode .popup-window {
+            background-color: rgba(240, 240, 240, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            color: #000;
+        }
+
+        body.light-mode .popup-titlebar {
+            background-color: rgba(220, 220, 220, 0.9);
+        }
+
+        body.light-mode .popup-title {
+            color: #555;
+        }
+
+        body.light-mode .popup-content {
+            color: #333;
+        }
+
+        body.light-mode .popup-content p {
+            color: #444;
+        }
+
+        body.light-mode .popup-content strong {
+            color: #000;
+        }
+
+        /* Carousel Styles */
+        .carousel-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 0;
+        }
+
+        .carousel-track-wrapper {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            padding: 10px 0;
+        }
+
+        .carousel-track {
+            display: flex;
+            gap: 16px;
+            height: 100%;
+            width: max-content;
+            animation: scroll 40s linear infinite;
+        }
+
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+
+        .carousel-track-reverse {
+            animation: scroll-reverse 40s linear infinite;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes scroll-reverse {
+            0% {
+                transform: translateX(-50%);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        .carousel-item {
+            flex: 0 0 200px;
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .carousel-item:hover {
+            transform: scale(1.02);
+        }
+
+        /* Light mode */
+        body.light-mode {
+            background-color: #f0f0f0;
+        }
+
+        body.light-mode .macos-desktop {
+            background: linear-gradient(135deg, #e8e8e8 0%, #f0f0f0 100%);
+            background-image: url('/cire-logo.png');
+            background-position: center -185.5px;
+            background-repeat: no-repeat;
+        }
+
+        body.light-mode .finder-window {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .window-titlebar {
+            background-color: rgba(240, 240, 240, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .window-title {
+            color: #333;
+        }
+
+        body.light-mode .window-toolbar {
+            background-color: rgba(245, 245, 245, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .toolbar-button {
+            color: #666;
+        }
+
+        body.light-mode .toolbar-button:hover {
+            color: #000;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .view-menu {
+            background-color: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .view-menu-item {
+            color: #333;
+        }
+
+        body.light-mode .view-menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .sidebar {
+            background-color: rgba(245, 245, 245, 0.9);
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .sidebar-item {
+            color: #333;
+        }
+
+        body.light-mode .sidebar-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode .sidebar-item.active {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .content-area {
+            background-color: #fff;
+        }
+
+        body.light-mode .list-header {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: #666;
+        }
+
+        body.light-mode .list-item:hover,
+        body.light-mode .icon-view-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        body.light-mode .file-name,
+        body.light-mode .icon-view-item .name {
+            color: #000;
+        }
+
+        body.light-mode .date-modified,
+        body.light-mode .size {
+            color: #666;
+        }
+
+        body.light-mode .status-bar {
+            background-color: rgba(240, 240, 240, 0.9);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            color: #666;
+        }
+
+        body.light-mode .desktop-folder .label {
+            color: #000;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Grid Overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .grid-info {
+            position: absolute;
+            top: 20px;
+            right: 80px;
+            background-color: rgba(255, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Blue crosshair lines following mouse */
+        .grid-line-x {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #007aff;
+            pointer-events: none;
+        }
+
+        .grid-line-y {
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background-color: #007aff;
+            pointer-events: none;
+        }
+
+        /* Red vertical midpoint line */
+        .grid-midpoint {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: #ff0000;
+            pointer-events: none;
+        }
+
+        /* Dock for minimized windows */
+        .dock {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 9999;
+        }
+
+        .dock:empty {
+            display: none;
+        }
+
+        .dock-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dock-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dock-item i {
+            font-size: 14px;
+        }
+
+        /* Coming Soon Popup Styles */
+        .coming-soon-body {
+            background-color: #05ff00;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            color: black;
+        }
+
+        .marquee-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .marquee-track {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-scroll 10s linear infinite;
+        }
+
+        .marquee-item {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 64px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            padding-right: 60px;
+            letter-spacing: -2px;
+        }
+
+        .nike-arch {
+            height: 50px;
+            margin-left: 15px;
+            image-rendering: pixelated;
+        }
+
+        .coming-soon-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.2;
+            z-index: 10;
+        }
+
+        @keyframes marquee-scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Bottom Banner styles */
+        /* Bottom Banner styles - Blackscale Construction Site Aesthetic */
+        .coming-soon-banner {
+            background: repeating-linear-gradient(45deg,
+                    #000,
+                    #000 20px,
+                    #222 20px,
+                    #222 40px);
+            height: 80px;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            border-top: 2px solid #333;
+        }
+
+        .banner-track {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-scroll 8s linear infinite;
+        }
+
+        .banner-item {
+            font-family: 'Helvetica Neue', Helvetica, 'Arial Black', sans-serif;
+            font-weight: 900;
+            font-size: 32px;
+            text-transform: uppercase;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            margin-right: 60px;
+            letter-spacing: 1px;
+        }
+
+        .banner-logo {
+            height: 40px;
+            margin-left: 15px;
+            animation: rotate-logo 10s linear infinite;
+        }
+
+        @keyframes rotate-logo {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="macos-desktop" id="desktop">
+        <!-- Light/Dark Toggle -->
+        <div class="toggle-container">
+            <label class="toggle-switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <!-- Desktop Folders - matching your existing layout -->
+        <div class="desktop-folder" id="macintosh-hd">
+            <i class="fas fa-desktop icon gray"></i>
+            <div class="label">Macintosh HD</div>
+        </div>
+
+        <div class="desktop-folder" data-folder="archive">
+            <i class="fas fa-folder icon blue"></i>
+            <div class="label">CIRE</div>
+        </div>
+
+        <div class="desktop-folder" data-folder="sophisticated-brilliance">
+            <i class="fas fa-folder icon blue"></i>
+            <div class="label">Sophisticated Brilliance</div>
+        </div>
+
+        <div class="desktop-folder" data-folder="sophisticated-ignorance">
+            <i class="fas fa-folder icon blue"></i>
+            <div class="label">Sophisticated Ignorance</div>
+        </div>
+
+        <div class="desktop-folder" data-folder="coming-soon">
+            <i class="fas fa-folder icon blue"></i>
+            <div class="label">*COMING SOON*</div>
+        </div>
+
+        <div class="desktop-folder" data-folder="curated">
+            <i class="fas fa-folder icon blue"></i>
+            <div class="label">Curated Content</div>
+        </div>
+
+        <!-- Finder Window -->
+        <div class="finder-window" id="finder-window">
+            <div class="window-titlebar">
+                <div class="window-controls">
+                    <div class="window-control close" id="close-btn"></div>
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                </div>
+                <div class="window-title" id="window-title">Macintosh HD</div>
+                <div></div>
+            </div>
+
+            <div class="window-toolbar">
+                <div class="toolbar-button">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+                <div class="toolbar-button">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="toolbar-button" id="view-btn">
+                    <i class="fas fa-columns" id="view-icon"></i> <span id="view-label">Columns</span>
+                    <div class="view-menu" id="view-menu">
+                        <div class="view-menu-item" data-view="icons">
+                            <i class="fas fa-th-large"></i> Icons
+                        </div>
+                        <div class="view-menu-item" data-view="list">
+                            <i class="fas fa-th-list"></i> List
+                        </div>
+                        <div class="view-menu-item selected" data-view="columns">
+                            <i class="fas fa-columns"></i> Columns
+                        </div>
+                        <div class="view-menu-item" data-view="gallery">
+                            <i class="fas fa-images"></i> Gallery
+                        </div>
+                    </div>
+                </div>
+                <div class="toolbar-button" id="share-btn">
+                    <i class="fas fa-share-alt"></i> Share
+                </div>
+                <div class="toolbar-button" id="tags-btn">
+                    <i class="fas fa-tag"></i> Tags
+                    <div class="view-menu" id="tags-menu" style="width: 260px;">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="window-content">
+                <div class="sidebar" id="sidebar">
+                    <!-- Sidebar items will be populated by JavaScript -->
+                </div>
+
+                <div class="content-area" id="content-area">
+                    <!-- Content will be dynamically populated -->
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div id="item-count">0 items</div>
+                <div>Zero KB available</div>
+            </div>
+        </div>
+
+        <!-- Popup Windows -->
+        <div class="popup-window" id="popup-maison" style="top: 80px; left: 350px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-maison')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-maison')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-maison')"></div>
+                </div>
+                <span class="popup-title">MAISON OVERVIEW</span>
+            </div>
+            <div class="popup-content">
+                <h1>CIRE Conglomerate</h1>
+                <p>CIRE Conglomerate is a visionary luxury maison built on the philosophy of <em>cultivating</em>
+                    <em>influence</em>, <em>refinement</em>, and <em>excellence</em>. Serving as the parent entity to
+                    <strong>Sophisticated Brilliance</strong> and <strong>Sophisticated Ignorance</strong>, CIRE
+                    operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified
+                    language of modern luxury.
+                </p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-brilliance" style="top: 150px; left: 100px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-brilliance')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-brilliance')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-brilliance')"></div>
+                </div>
+                <span class="popup-title">SOPHISTICATED BRILLIANCE</span>
+            </div>
+            <div class="popup-content">
+                <h1>Sophisticated Brilliance</h1>
+                <p>Sophisticated Brilliance is an <strong>art house</strong> disguised as a <strong>luxury jewelry
+                        brand</strong> — where every creation is both wearable art and a financial asset. The brand
+                    represents <em>mastery</em>, <em>craftsmanship</em>, and <em>artistic depth</em>, merging the
+                    refinement of high jewelry with the disruptive pulse of hip-hop culture. Each piece embodies the
+                    philosophy of <em>Imperfection as Character</em> — beauty revealed through time, touch, and
+                    transformation. This is <em>Luxury in its Final Form</em> — a meditation on material, meaning, and
+                    mastery.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-ignorance" style="top: 200px; left: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-ignorance')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-ignorance')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-ignorance')"></div>
+                </div>
+                <span class="popup-title">SOPHISTICATED IGNORANCE</span>
+            </div>
+            <div class="popup-content">
+                <h1>Sophisticated Ignorance</h1>
+                <p>Sophisticated Ignorance is a <strong>fashion house</strong> at the intersection of
+                    <em>refinement</em> and <em>rebellion</em>, where the <em>trickle-up</em> and <em>trickle-down</em>
+                    theories of luxury collide. Rooted in the ethos of <em>The Architecture of Self</em>, it explores
+                    identity, hierarchy, and ascension through chess symbolism — from Pawn to King. Ignorance represents
+                    the evolution of street luxury into an aspirational art form — <em>New-Vieux Riche</em> in spirit,
+                    and unapologetically bold in execution.
+                </p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-transcendence" style="top: 50px; left: 50px; width: 320px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-transcendence')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-transcendence')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-transcendence')"></div>
+                </div>
+                <span class="popup-title">TRANSCENDENCE OF MAN</span>
+            </div>
+            <div class="popup-content" style="padding: 0;">
+                <video autoplay loop muted playsinline
+                    style="width: 100%; height: 300px; object-fit: cover; display: block;">
+                    <source src="/transcendence of man.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-sb-logo" style="top: 100px; left: 400px; width: 320px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-sb-logo')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-sb-logo')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-sb-logo')"></div>
+                </div>
+                <span class="popup-title">COLLECTION 1 LOGO</span>
+            </div>
+            <div class="popup-content" style="padding: 0;">
+                <video autoplay loop muted playsinline
+                    style="width: 100%; height: 300px; object-fit: cover; display: block;">
+                    <source src="/SB Rotating Logo.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-power" style="top: 120px; left: 250px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-power')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-power')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-power')"></div>
+                </div>
+                <span class="popup-title">POWER PERFECTED IN POSITION</span>
+            </div>
+            <div class="popup-content">
+                <h1>Power Perfected in Position</h1>
+                <p style="text-indent: 2em;">Every position holds potential — not as limitation, but as leverage.
+                    <strong>Sophisticated Ignorance</strong> is built on the belief that elevation is earned through
+                    conviction, not circumstance. Whether one begins at <strong>Foundations</strong> or reigns within
+                    <strong>Crownworks</strong>, each tier represents a stage of growth — a moment to master before
+                    advancing to the next. To wear the brand is to embrace progression: to elevate within your means,
+                    and to build power through a solid foundation and discipline. Because ascension is not promised —
+                    it's pursued. And through conviction, <em>Power is Perfected in Position</em>.
+                </p>
+                <br>
+                <p style="text-indent: 2em;">At its core, the collection is organized through a <strong>symbolic
+                        classification system</strong> that quietly structures the brand's universe of garments.
+                    Categories are defined by function and refinement, each occupying a distinct role within the
+                    wardrobe. The symbols that
+                    accompany them serve as markers of position and progression, not spectacle. Because power is not
+                    loud, it is precise, therefore, is perfected in position.</p>
+            </div>
+        </div>
+
+        <!-- NEW DOCUMENTS -->
+        <div class="popup-window" id="popup-foundations" style="top: 130px; left: 260px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-foundations')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-foundations')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-foundations')"></div>
+                </div>
+                <span class="popup-title">FOUNDATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Foundations — The Architecture of Self</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Establish identity and structure —
+                    the groundwork of sophistication.</p>
+                <br>
+                <p style="text-indent: 2em;">Foundations serves as the base layer of refinement: the stepping stones of
+                    your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and
+                    precision, Foundations defines the essentials that ground identity — where form takes shape and
+                    sophistication begins.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-fortifications" style="top: 140px; left: 270px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-fortifications')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-fortifications')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-fortifications')"></div>
+                </div>
+                <span class="popup-title">FORTIFICATIONS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Fortifications — The Shield of Style</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Protect, reinforce, and define.</p>
+                <br>
+                <p style="text-indent: 2em;">Fortifications represents defense through design — luxurious garments built
+                    as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure,
+                    engineered to impress.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-relics" style="top: 150px; left: 280px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-relics')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-relics')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-relics')"></div>
+                </div>
+                <span class="popup-title">RELICS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Relics — The Creed of Craft</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Carry heirlooms that endure —
+                    crafted in devotion to quality.</p>
+                <br>
+                <p style="text-indent: 2em;">Relics serve as the tactile memory of the brand: timeless leather goods
+                    that embody strength through subtlety and refinement through utility. Each piece is designed to be
+                    carried, aged, and remembered.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-dominion" style="top: 160px; left: 290px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-dominion')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-dominion')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-dominion')"></div>
+                </div>
+                <span class="popup-title">DOMINION</span>
+            </div>
+            <div class="popup-content">
+                <h1>Dominion — The Path of Conquest</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Stride with intent. Advance with
+                    purpose.</p>
+            </div>
+            <div class="coming-soon-banner">
+                <div class="banner-track">
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-adornments" style="top: 170px; left: 300px; width: 600px; height: 500px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-adornments')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-adornments')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-adornments')"></div>
+                </div>
+                <span class="popup-title">ADORNMENTS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Adornments — The Reign of Detail</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">Elevate your expression. Define
+                    your distinction.</p>
+            </div>
+            <div class="coming-soon-banner">
+                <div class="banner-track">
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                    <span class="banner-item">COMING SOON <img src="blackscale_logo_white.png"
+                            class="banner-logo"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-crownworks" style="top: 180px; left: 310px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-crownworks')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-crownworks')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-crownworks')"></div>
+                </div>
+                <span class="popup-title">CROWNWORKS</span>
+            </div>
+            <div class="popup-content">
+                <h1>Crownworks — The Pinnacle of Refinement</h1>
+                <p style="text-align: center; font-style: italic; font-weight: 500;">The ultimate articulation of
+                    mastery and rule.</p>
+                <br>
+                <p style="text-indent: 2em;">Crownworks represents the embodiment of power perfected in presentation:
+                    garments crafted for moments of command, ceremony, and consequence. Each creation in this tier
+                    signifies composure under pressure — the discipline to remain regal, the elegance to move with
+                    authority.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-trials" style="top: 160px; left: 320px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-trials')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-trials')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-trials')"></div>
+                </div>
+                <span class="popup-title">TRIALS INTO BRILLIANCE</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;"><em>Sophisticated Brilliance</em>'s debut collection, <strong>Transcendence
+                        of
+                        Man</strong>, explores the journey of refinement through experience. Each piece reflects a stage
+                    of
+                    healing — where scars are to be embraced as evidence of resilience against trials and tribulations.
+                    Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship
+                    refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is
+                    built through trials, and refinement is earned through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-collection-overview" style="top: 170px; left: 330px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-collection-overview')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-collection-overview')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-collection-overview')"></div>
+                </div>
+                <span class="popup-title">COLLECTION OVERVIEW</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">The debut collection from <em>Sophisticated Brilliance</em> reinterprets
+                    sacred iconography as a reflection of the human condition via trials and revelations. Each piece
+                    examines the tension between scars and magnificence, elaborating on the paradox of endurance:
+                    suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not
+                    the absence of damage, but the result of having endured it.</p>
+                <br>
+                <p style="text-indent: 2em;">As a whole, the collection invites reflection on scars not as
+                    disfigurements, but as evidence of transformation. These works of art crafted out of precious
+                    gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a
+                    process, and brilliance is achieved through endurance.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-beast" style="top: 180px; left: 340px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-beast')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-beast')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-beast')"></div>
+                </div>
+                <span class="popup-title">BEAST</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant I: <strong>Beast</strong> explores the instinct to conceal pain
+                    rather
+                    than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts
+                    to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface
+                    representing the "rough around the edges" nature of the unhealed man.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-metamorphosis" style="top: 190px; left: 350px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-metamorphosis')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-metamorphosis')"></div>
+                </div>
+                <span class="popup-title">METAMORPHOSIS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant II: <strong>Metamorphosis</strong> represents movement between
+                    denial and
+                    acceptance. The more traditional stone-setting arrangement introduces structure and order,
+                    signifying discipline, self-awareness, and progression along the journey of refinement.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-humble" style="top: 200px; left: 360px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-humble')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-humble')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-humble')"></div>
+                </div>
+                <span class="popup-title">HUMBLE</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Pendant III: <strong>Humble</strong> embodies acceptance. The wounds remain
+                    visible and unembellished, free of excess. With no stones present, the piece depicts resilience
+                    shown through transparency rather than display.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-nails" style="top: 210px; left: 370px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-nails')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-nails')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-nails')"></div>
+                </div>
+                <span class="popup-title">THE NAILS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Earrings: <strong>The Nails</strong> transform symbols of suffering into
+                    emblems
+                    of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while
+                    maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing,
+                    secured with a screw mechanism and fully pavé-set, references the transformation of an object once
+                    associated with force and cruelty into an ornament of intention.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-celestial" style="top: 220px; left: 380px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-celestial')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-celestial')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-celestial')"></div>
+                </div>
+                <span class="popup-title">CELESTIAL SCARS</span>
+            </div>
+            <div class="popup-content">
+                <p style="text-indent: 2em;">Cuban Chain: <strong>Celestial Scars - Forged Link</strong> a reimagined,
+                    reversible interpretation of the Cuban link. One side bears intentional surface scarring with a
+                    satin or sandblasted finish; the other remains smooth and polished. The duality represents the
+                    coexistence of damage and refinement — the choice to reveal or conceal, without denying either.</p>
+            </div>
+        </div>
+
+        <div class="popup-window" id="popup-coming-soon" style="top: 200px; left: 400px; width: 600px; height: 400px;">
+            <div class="popup-titlebar">
+                <div class="popup-controls">
+                    <div class="popup-control close" onclick="closePopup('popup-coming-soon')"></div>
+                    <div class="popup-control minimize" onclick="minimizePopup('popup-coming-soon')"></div>
+                    <div class="popup-control maximize" onclick="toggleGraphiteMode('popup-coming-soon')"></div>
+                </div>
+                <span class="popup-title">COMING SOON</span>
+            </div>
+            <div class="popup-content coming-soon-body" style="padding: 0;">
+                <div class="marquee-container">
+                    <div class="marquee-track">
+                        <!-- Duplicated content for seamless loop (enough to cover wide screens) -->
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                        <span class="marquee-item">Public Domain <img
+                                src="https://public---domain.com/_nuxt/img/nike-arch-blue-opt.597176b.gif"
+                                class="nike-arch"></span>
+                    </div>
+                </div>
+                <div class="coming-soon-footer">
+                    ARCHIVE<br>LAUNCHING SOON
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousels -->
+        <div class="carousel-container">
+            <div class="carousel-track-wrapper">
+                <div class="carousel-track" id="carousel-top">
+                    <!-- Items generated by JS -->
+                </div>
+            </div>
+            <div class="carousel-track-wrapper">
+                <div class="carousel-track carousel-track-reverse" id="carousel-bottom">
+                    <!-- Items generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Clipboard Notification -->
+        <div class="clipboard-notification" id="clipboard-notification">
+            Copied to clipboard!
+        </div>
+    </div>
+
+    <!-- Grid Overlay -->
+    <div id="grid-overlay" class="grid-overlay" style="display: none;">
+        <!-- Blue crosshair lines -->
+        <div id="grid-line-x" class="grid-line-x"></div>
+        <div id="grid-line-y" class="grid-line-y"></div>
+        <!-- Red center midpoint line -->
+        <div id="grid-midpoint" class="grid-midpoint"></div>
+        <!-- Info panel -->
+        <div class="grid-info">
+            <div>Mouse X: <span id="mouse-x">0</span></div>
+            <div>Mouse Y: <span id="mouse-y">0</span></div>
+            <div>Center Offset X: <span id="center-offset">0</span></div>
+            <div style="color: #28ca42;">Press 'G' to toggle grid</div>
+        </div>
+    </div>
+
+    <script>
+        // Data matching your existing structure
+        const folderData = {
+            archive: {
+                label: 'CIRE',
+                files: [
+                    { name: 'blackscale_logo_white.png', type: 'image', src: '/blackscale_logo_white.png' },
+                    { name: 'art house.png', type: 'image', src: '/art house.png' },
+                    { name: 'fashion house.png', type: 'image', src: '/fashion house.png' },
+                    { name: 'maison manifest', type: 'folder', targetFolder: 'maison' }
+                ]
+            },
+            'sophisticated-brilliance': {
+                label: 'Sophisticated Brilliance',
+                files: [
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'logo.mp4', type: 'video', src: '/SB Rotating Logo.mp4' },
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'trials into brilliance.rfd', type: 'document', textContent: '*Sophisticated Brilliance*\'s debut collection, **Transcendence of Man**, explores the journey of refinement through experience. Each piece reflects a stage of healing — where scars are to be embraced as evidence of resilience against trials and tribulations. Like a rough diamond, shaped and reshaped through repeated cuts, the collection traces how hardship refines rather than diminishes. Each scar is intentional recognizing a simple truth: strength is built through trials, and refinement is earned through endurance.' },
+                    { name: 'collection overview.rfd', type: 'document', textContent: 'The debut collection from *Sophisticated Brilliance* reinterprets sacred iconography as a reflection of the human condition via trials and revelations. Each piece examines the tension between scars and magnificence, elaborating on the paradox of endurance: suffering not only has the power to wound, but also to refine. Brilliance, in this context, is not the absence of damage, but the result of having endured it.\\n\\nAs a whole, the collection invites reflection on scars not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.' },
+                    { name: 'beast.rfd', type: 'document', textContent: 'Pendant I: **Beast** explores the instinct to conceal pain rather than confront it. Material brilliance is concentrated within the damaged areas, suggesting attempts to mask unresolved wounds. The reverse mosaic setting is intentional — an uneven, fragmented surface representing the "rough around the edges" nature of the unhealed man.' },
+                    { name: 'metamorphosis.rfd', type: 'document', textContent: 'Pendant II: **Metamorphosis** represents movement between denial and acceptance. The more traditional stone-setting arrangement introduces structure and order, signifying discipline, self-awareness, and progression along the journey of refinement.' },
+                    { name: 'humble.rfd', type: 'document', textContent: 'Pendant III: **Humble** embodies acceptance. The wounds remain visible and unembellished, free of excess. With no stones present, the piece depicts resilience shown through transparency rather than display.' },
+                    { name: 'the nails.rfd', type: 'document', textContent: 'Earrings: **The Nails** transform symbols of suffering into emblems of endurance. The Nova-cut center stone, with over 150 facets, refracts exceptional light while maintaining clarity — a metaphor for pressure turned into brilliance. The gauge-inspired backing, secured with a screw mechanism and fully pavé-set, references the transformation of an object once associated with force and cruelty into an ornament of intention.' },
+                    { name: 'celestial scars.rfd', type: 'document', textContent: 'Cuban Chain: **Celestial Scars - Forged Link** a reimagined, reversible interpretation of the Cuban link. One side bears intentional surface scarring with a satin or sandblasted finish; the other remains smooth and polished. The duality represents the coexistence of damage and refinement — the choice to reveal or conceal, without denying either.' },
+                    { name: 'transcendence of man', type: 'folder', targetFolder: 'video' }
+                ]
+            },
+            'sophisticated-ignorance': {
+                label: 'Sophisticated Ignorance',
+                files: [
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'power perfected in position.rfd', type: 'document', textContent: 'Every position holds potential — not as limitation, but as leverage. **Sophisticated Ignorance** is built on the belief that elevation is earned through conviction, not circumstance. Whether one begins at **Foundations** or reigns within **Crownworks**, each tier represents a stage of growth — a moment to master before advancing to the next. To wear the brand is to embrace progression: to elevate within your means, and to build power through a solid foundation and discipline. Because ascension is not promised — it\'s pursued. And through conviction, *Power is Perfected in Position*.\n\nAt its core, the collection is organized through a **symbolic classification system** that quietly structures the brand\'s universe of garments. Categories are defined by function and refinement, each occupying a distinct role within the wardrobe. The symbols that accompany them serve as markers of position and progression, not spectacle. Because power is not loud, it is precise, therefore, is perfected in position.' },
+                    { name: 'foundations.rfd', type: 'document', textContent: 'Foundations — The Architecture of Self\nEstablish identity and structure — the groundwork of sophistication.\n\nFoundations serves as the base layer of refinement: the stepping stones of your wardrobe, designed for structure, comfort, and everyday uniformity. Through simplicity and precision, Foundations defines the essentials that ground identity — where form takes shape and sophistication begins.' },
+                    { name: 'fortifications.rfd', type: 'document', textContent: 'Fortifications — The Shield of Style\nProtect, reinforce, and define.\n\nFortifications represents defense through design — luxurious garments built as armor. Each piece in this tier acts as both protection and proclamation — constructed to endure, engineered to impress.' },
+                    { name: 'relics.rfd', type: 'document', textContent: 'Relics — The Creed of Craft\nCarry heirlooms that endure — crafted in devotion to quality.\n\nRelics serve as the tactile memory of the brand: timeless leather goods that embody strength through subtlety and refinement through utility. Each piece is designed to be carried, aged, and remembered.' },
+                    { name: 'dominion.rfd', type: 'document', textContent: 'Dominion — The Path of Conquest\nStride with intent. Advance with purpose.' },
+                    { name: 'adornments.rfd', type: 'document', textContent: 'Adornments — The Reign of Detail\nElevate your expression. Define your distinction.' },
+                    { name: 'crownworks.rfd', type: 'document', textContent: 'Crownworks — The Pinnacle of Refinement\nThe ultimate articulation of mastery and rule.\n\nCrownworks represents the embodiment of power perfected in presentation: garments crafted for moments of command, ceremony, and consequence. Each creation in this tier signifies composure under pressure — the discipline to remain regal, the elegance to move with authority.' }
+                ]
+            },
+            video: {
+                label: 'transcendence of man',
+                files: [
+                    { name: 'teaser.mp4', type: 'video', src: '/transcendence of man.mp4' },
+                    { name: 'sketches', type: 'folder', targetFolder: 'tom-sketches' },
+                    { name: 'cads', type: 'folder', targetFolder: 'tom-cads' },
+                    { name: 'renderings', type: 'folder', targetFolder: 'tom-renderings' },
+                    { name: 'wax models', type: 'folder', targetFolder: 'tom-wax' },
+                    { name: 'final', type: 'folder', targetFolder: 'tom-final' }
+                ]
+            },
+            'tom-sketches': {
+                label: 'sketches',
+                files: [
+                    { name: 'sketch: the nails.png', type: 'image', src: '/sketch: the nails.png' },
+                    { name: 'sketch: beast.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: metamorphosis.png', type: 'image', src: '/sketch: metamorphosis.png' },
+                    { name: 'sketch: beast 2.png', type: 'image', src: '/sketch: beast.png' },
+                    { name: 'sketch: the celestial scar.png', type: 'image', src: '/sketch: the celestial scar.png' }
+                ]
+            },
+            'tom-cads': {
+                label: 'cads',
+                files: [
+                    { name: 'cad: the nails.mp4', type: 'video', src: '/cad: the nails.mp4' },
+                    { name: 'cad: beast.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: metamorphosis.mp4', type: 'video', src: '/cad: metamorphosis.mp4' },
+                    { name: 'cad: beast 2.mp4', type: 'video', src: '/cad: beast.mp4' },
+                    { name: 'cad: the celestial scar.mp4', type: 'video', src: '/cad: the celestial scar.mp4' }
+                ]
+            },
+            'tom-renderings': {
+                label: 'renderings',
+                files: [
+                    { name: 'rendering: the nails.mp4', type: 'video', src: '/rendering: the nails.mp4' },
+                    { name: 'rendering: beast.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: metamorphosis.mp4', type: 'video', src: '/rendering: metamorphosis.mp4' },
+                    { name: 'rendering: beast 2.mp4', type: 'video', src: '/rendering: beast.mp4' },
+                    { name: 'rendering: the celestial scar.mp4', type: 'video', src: '/rendering: the celestial scar.mp4' }
+                ]
+            },
+            'tom-wax': {
+                label: 'wax models',
+                files: [
+                    { name: 'wax model: the nails.png', type: 'image', src: '/wax model: the nails.png' },
+                    { name: 'wax model: beast.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: metamorphosis.png', type: 'image', src: '/wax model: metamorphosis.png' },
+                    { name: 'wax model: beast 2.png', type: 'image', src: '/wax model: beast.png' },
+                    { name: 'wax model: the celestial scar.png', type: 'image', src: '/wax model: the celestial scar.png' }
+                ]
+            },
+            'tom-final': {
+                label: 'final',
+                files: [
+                    { name: 'final: the nails.mp4', type: 'video', src: '/final: the nails.mp4' },
+                    { name: 'final: beast.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: metamorphosis.mp4', type: 'video', src: '/final: metamorphosis.mp4' },
+                    { name: 'final: beast 2.mp4', type: 'video', src: '/final: beast.mp4' },
+                    { name: 'final: the celestial scar.mp4', type: 'video', src: '/final: the celestial scar.mp4' }
+                ]
+            },
+            'coming-soon': {
+                label: '*COMING SOON*',
+                files: []
+            },
+            maison: {
+                label: 'maison manifest',
+                files: [
+                    { name: 'maison overview.rfd', type: 'document', textContent: 'CIRE Conglomerate is a visionary luxury maison built on the philosophy of cultivating influence, refinement, and excellence. Serving as the parent entity to Sophisticated Brilliance and Sophisticated Ignorance, CIRE operates as an intellectual holding company bridging fashion, jewelry, and culture into a unified language of modern luxury.' },
+                    { name: 'sophisticated brilliance.rfd', type: 'document', textContent: 'Sophisticated Brilliance is a luxury fashion and jewelry house under the CIRE Conglomerate. It represents the pinnacle of refined aesthetics and modern craftsmanship.' },
+                    { name: 'sophisticated ignorance.rfd', type: 'document', textContent: 'Sophisticated Ignorance is a concept brand exploring the intersection of luxury culture and intentional simplicity.' },
+                    { name: 'archive.rfd', type: 'document', textContent: 'ARCHIVE LAUNCHING SOON' }
+                ]
+            },
+            curated: {
+                label: 'Curated Content',
+                files: []
+            }
+        };
+
+        let selectedFolder = 'archive';
+        let currentView = 'columns';
+        let selectedGalleryIndex = 0;
+        let selectedColumnIndex = -1;
+
+        // Navigation history for back/forward buttons
+        let navigationHistory = ['archive']; // Start with initial folder
+        let historyIndex = 0; // Current position in history
+
+        const desktop = document.getElementById('desktop');
+        const finderWindow = document.getElementById('finder-window');
+        const sidebar = document.getElementById('sidebar');
+        const contentArea = document.getElementById('content-area');
+        const windowTitle = document.getElementById('window-title');
+        const itemCount = document.getElementById('item-count');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // Theme toggle
+        themeToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        });
+
+        // Bring finder window to front when clicked
+        finderWindow.addEventListener('mousedown', () => {
+            highestZIndex++;
+            finderWindow.style.zIndex = highestZIndex;
+        });
+        const viewBtn = document.getElementById('view-btn');
+        const viewMenu = document.getElementById('view-menu');
+        const viewIcon = document.getElementById('view-icon');
+        const viewLabel = document.getElementById('view-label');
+        const shareBtn = document.getElementById('share-btn');
+        const tagsBtn = document.getElementById('tags-btn');
+        const tagsMenu = document.getElementById('tags-menu');
+        const clipboardNotification = document.getElementById('clipboard-notification');
+
+        // Popup window management
+        let highestZIndex = 100;
+
+        // Popup ID to display name mapping for dock
+        const popupTitles = {
+            'popup-maison': 'Maison Overview',
+            'popup-brilliance': 'Sophisticated Brilliance',
+            'popup-ignorance': 'Sophisticated Ignorance',
+            'popup-transcendence': 'transcendence of man',
+            'popup-sb-logo': 'Collection 1 Logo'
+        };
+
+        function openPopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup) {
+                // Remove from dock if minimized
+                const dockItem = document.querySelector(`.dock-item[data-popup="${popupId}"]`);
+                if (dockItem) dockItem.remove();
+
+                // Show popup
+                popup.classList.add('active');
+
+                // Bring to front
+                highestZIndex++;
+                popup.style.zIndex = highestZIndex;
+            }
+        }
+
+        function closePopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup) {
+                popup.classList.remove('active');
+                popup.classList.remove('graphite-mode'); // Exit fullscreen
+
+                // Remove from dock if present
+                const dockItem = document.querySelector(`.dock-item[data-popup="${popupId}"]`);
+                if (dockItem) dockItem.remove();
+
+                // Reset Position to defaults (Differs from minimize)
+                const centerX = window.innerWidth / 2;
+
+                if (popupId === 'popup-maison') {
+                    popup.style.left = (centerX - 250) + 'px';
+                    popup.style.top = '18px';
+                    popup.style.width = '450px';
+                    popup.style.height = 'auto';
+                } else if (popupId === 'popup-transcendence') {
+                    popup.style.left = (centerX - 476) + 'px';
+                    popup.style.top = '69px';
+                } else if (popupId === 'popup-brilliance') {
+                    popup.style.left = (centerX - 430) + 'px';
+                    popup.style.top = '202px';
+                } else if (popupId === 'popup-ignorance') {
+                    popup.style.left = (centerX - 66) + 'px';
+                    popup.style.top = '285px';
+                }
+            }
+        }
+
+        function minimizePopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup) {
+                // V1-style: only minimize if not already minimized (yellow button disabled when minimized)
+                // When minimized, user must double-click titlebar to restore
+                if (!popup.classList.contains('minimized')) {
+                    popup.classList.add('minimized');
+                }
+            }
+        }
+
+        function restorePopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup && popup.classList.contains('minimized')) {
+                popup.classList.remove('minimized');
+            }
+        }
+
+        // Store for pre-graphite state
+        const popupPreGraphiteState = {};
+
+        function toggleGraphiteMode(popupId) {
+            const popup = document.getElementById(popupId);
+            if (!popup) return;
+
+            if (popup.classList.contains('graphite-mode')) {
+                // Restore from graphite mode
+                popup.classList.remove('graphite-mode');
+                const pre = popupPreGraphiteState[popupId];
+                if (pre) {
+                    popup.style.left = pre.left;
+                    popup.style.top = pre.top;
+                    popup.style.width = pre.width;
+                    popup.style.height = pre.height;
+                }
+            } else {
+                // Enter graphite mode - save current state
+                popupPreGraphiteState[popupId] = {
+                    left: popup.style.left,
+                    top: popup.style.top,
+                    width: popup.style.width,
+                    height: popup.style.height
+                };
+                popup.classList.add('graphite-mode');
+                popup.style.left = '0';
+                popup.style.top = '0';
+                popup.style.width = '100vw';
+                popup.style.height = '100vh';
+            }
+        }
+
+        // File to popup mapping (for documents that open existing popups)
+        const filePopupMap = {
+            'maison overview.rfd': 'popup-maison',
+        };
+
+        // Folder to popup mapping
+        const folderPopupMap = {
+            'sophisticated-brilliance': 'popup-brilliance',
+            'sophisticated-ignorance': 'popup-ignorance',
+        };
+
+        // Select column item (single click) - shows preview
+        function selectColumnItem(index) {
+            selectedColumnIndex = index;
+            // Update selection state without regenerating entire list
+            const items = document.querySelectorAll('.column-item');
+            items.forEach((item, i) => {
+                item.classList.toggle('selected', i === index);
+            });
+            // Only update the preview panel
+            updateColumnPreview();
+        }
+
+        // Update only the column preview panel
+        function updateColumnPreview() {
+            const files = folderData[selectedFolder]?.files || [];
+            const selectedFile = selectedColumnIndex >= 0 ? files[selectedColumnIndex] : null;
+            const selectedIcon = selectedFile ? getFileIcon(selectedFile.type) : null;
+            const fileTypeLabel = selectedFile ? (selectedFile.type === 'image' ? 'PNG image' : selectedFile.type === 'video' ? 'MPEG-4 Video' : 'Document') : '';
+
+            let previewContent = '';
+            if (selectedFile?.type === 'image' && selectedFile?.src) {
+                previewContent = `<img src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            } else if (selectedFile?.type === 'video' && selectedFile?.src) {
+                previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
+            } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
+                previewContent = `
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; max-height: 140px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
+                        <div style="font-size: 10px; color: #888; margin-bottom: 6px;">📄 ${selectedFile.name}</div>
+                        <div style="font-size: 11px; color: #ddd; line-height: 1.4;">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
+                    </div>`;
+            } else if (selectedFile) {
+                previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
+            }
+
+            const previewPanel = document.querySelector('.column-preview');
+            if (previewPanel) {
+                previewPanel.innerHTML = selectedFile ? `
+                    <div class="column-preview-image">
+                        ${previewContent}
+                    </div>
+                    <div class="column-preview-header">
+                        <div class="column-preview-name">${selectedFile.name}</div>
+                        <div class="column-preview-type">${fileTypeLabel} - 256 KB</div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">
+                            Information
+                            <span class="show-more">Show Less</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Modified</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Last opened</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                        <div class="gallery-info-row">
+                            <span class="label">Content created</span>
+                            <span class="value">Today, 02:42</span>
+                        </div>
+                    </div>
+                    <div class="gallery-info-section">
+                        <div class="gallery-info-section-title">Tags</div>
+                        <div style="color: #888; font-size: 12px; padding: 5px 0;">Add Tags...</div>
+                    </div>
+                    <div class="gallery-actions">
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-undo"></i>
+                            <span>Rotate Left</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-marker"></i>
+                            <span>Markup</span>
+                        </div>
+                        <div class="gallery-action-btn">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>More...</span>
+                        </div>
+                    </div>
+                ` : `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">
+                        Select a file to preview
+                    </div>
+                `;
+            }
+        }
+
+        function handleFileClick(fileName) {
+            // Check if it's a folder - navigate to it
+            const currentFiles = folderData[selectedFolder]?.files || [];
+            const clickedFile = currentFiles.find(f => f.name === fileName);
+            if (clickedFile && clickedFile.type === 'folder' && clickedFile.targetFolder) {
+                selectFolder(clickedFile.targetFolder);
+                return;
+            }
+
+            // RFD Document triggers
+            if (fileName === 'maison overview.rfd') {
+                openPopup('popup-maison');
+                return;
+            }
+            if (fileName === 'sophisticated brilliance.rfd') {
+                openPopup('popup-brilliance');
+                return;
+            }
+            if (fileName === 'sophisticated ignorance.rfd') {
+                openPopup('popup-ignorance');
+                return;
+            }
+            if (fileName === 'power perfected in position.rfd') {
+                openPopup('popup-power');
+                return;
+            }
+            if (fileName === 'foundations.rfd') {
+                openPopup('popup-foundations');
+                return;
+            }
+            if (fileName === 'fortifications.rfd') {
+                openPopup('popup-fortifications');
+                return;
+            }
+            if (fileName === 'relics.rfd') {
+                openPopup('popup-relics');
+                return;
+            }
+            if (fileName === 'dominion.rfd') {
+                openPopup('popup-dominion');
+                return;
+            }
+            if (fileName === 'adornments.rfd') {
+                openPopup('popup-adornments');
+                return;
+            }
+            if (fileName === 'crownworks.rfd') {
+                openPopup('popup-crownworks');
+                return;
+            }
+            if (fileName === 'archive.rfd') {
+                openPopup('popup-coming-soon');
+                return;
+            }
+            if (fileName === 'trials into brilliance.rfd') {
+                openPopup('popup-trials');
+                return;
+            }
+            if (fileName === 'collection overview.rfd') {
+                openPopup('popup-collection-overview');
+                return;
+            }
+            if (fileName === 'beast.rfd') {
+                openPopup('popup-beast');
+                return;
+            }
+            if (fileName === 'metamorphosis.rfd') {
+                openPopup('popup-metamorphosis');
+                return;
+            }
+            if (fileName === 'humble.rfd') {
+                openPopup('popup-humble');
+                return;
+            }
+            if (fileName === 'the nails.rfd') {
+                openPopup('popup-nails');
+                return;
+            }
+            if (fileName === 'celestial scars.rfd') {
+                openPopup('popup-celestial');
+                return;
+            }
+
+            // Video trigger
+            if (fileName === 'teaser.mp4') {
+                openPopup('popup-transcendence');
+                return;
+            }
+
+            // SB Logo video trigger
+            if (fileName === 'logo.mp4') {
+                openPopup('popup-sb-logo');
+                return;
+            }
+
+            // Image popup (dynamic)
+            if (fileName.endsWith('.png')) {
+                openImagePopup(fileName, '/' + fileName);
+                return;
+            }
+
+            // Fallback to filePopupMap
+            const popupId = filePopupMap[fileName];
+            if (popupId) {
+                openPopup(popupId);
+            }
+        }
+
+        // Dynamic image popup
+        function openImagePopup(title, src) {
+            const popupId = 'popup-' + title.replace(/[^a-zA-Z0-9]/g, '-');
+            let popup = document.getElementById(popupId);
+
+            if (popup) {
+                // Already exists - bring to front
+                popup.classList.add('active');
+                highestZIndex++;
+                popup.style.zIndex = highestZIndex;
+                return;
+            }
+
+            // Create new popup
+            popup = document.createElement('div');
+            popup.id = popupId;
+            popup.className = 'popup-window active';
+            popup.innerHTML = `
+                <div class="popup-titlebar">
+                    <div class="popup-controls">
+                        <span class="popup-control close" onclick="closeImagePopup('${popupId}')"></span>
+                        <span class="popup-control minimize" onclick="minimizePopup('${popupId}')"></span>
+                        <span class="popup-control maximize" onclick="toggleGraphiteMode('${popupId}')"></span>
+                    </div>
+                    <span class="popup-title">${title}</span>
+                </div>
+                <div class="popup-content" style="padding: 0;">
+                    <img src="${src}" style="max-width: 100%; display: block;">
+                </div>
+            `;
+
+            // Position - match Transcendence window sizing (320px width)
+            popup.style.left = (window.innerWidth / 2 - 160) + 'px';
+            popup.style.top = '100px';
+            popup.style.width = '320px';
+
+            document.body.appendChild(popup);
+
+            // Make draggable
+            makeDraggable(popup);
+
+            // Bring to front
+            highestZIndex++;
+            popup.style.zIndex = highestZIndex;
+        }
+
+        function closeImagePopup(popupId) {
+            const popup = document.getElementById(popupId);
+            if (popup) popup.remove();
+        }
+
+        // Reusable draggable function
+        function makeDraggable(popup) {
+            const titlebar = popup.querySelector('.popup-titlebar');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            titlebar.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('popup-control')) return;
+                isDragging = true;
+                offsetX = e.clientX - popup.offsetLeft;
+                offsetY = e.clientY - popup.offsetTop;
+                highestZIndex++;
+                popup.style.zIndex = highestZIndex;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                popup.style.left = (e.clientX - offsetX) + 'px';
+                popup.style.top = (e.clientY - offsetY) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // V1 behavior: double-click titlebar to restore minimized window
+            titlebar.addEventListener('dblclick', () => {
+                restorePopup(popup.id);
+            });
+        }
+
+        // Make existing popups draggable
+        document.querySelectorAll('.popup-window').forEach(popup => {
+            makeDraggable(popup);
+        });
+
+        // Generate carousel items
+        function generateCarousels() {
+            const topCarousel = document.getElementById('carousel-top');
+            const bottomCarousel = document.getElementById('carousel-bottom');
+
+            // Top carousel: 25 SB jewelry pieces
+            // File associations (for when media is uploaded):
+            // Item 1: sketch: the nails.png | Item 2: cad: the nails.mp4 | Item 3: wax model: the nails.png
+            // Item 4: rendering: the nails.mp4 | Item 5: final: the nails.mp4
+            // Item 6: sketch: beast.png | Item 7: cad: beast.mp4 | Item 8: wax model: beast.png
+            // Item 9: rendering: beast.mp4 | Item 10: final: beast.mp4
+            // Item 11: sketch: metamorphosis.png | Item 12: cad: metamorphosis.mp4 | Item 13: wax model: metamorphosis.png
+            // Item 14: rendering: metamorphosis.mp4 | Item 15: final: metamorphosis.mp4
+            // Item 16: sketch: beast.png | Item 17: cad: beast.mp4 | Item 18: wax model: beast.png
+            // Item 19: rendering: beast.mp4 | Item 20: final: beast.mp4
+            // Item 21: sketch: the celestial scar.png | Item 22: cad: the celestial scar.mp4 | Item 23: wax model: the celestial scar.png
+            // Item 24: rendering: the celestial scar.mp4 | Item 25: final: the celestial scar.mp4
+            const topItems = Array.from({ length: 25 }).map((_, i) => ({
+                id: i,
+                title: `Item ${i + 1}`,
+                color: `hsl(0, 0%, ${(i * 4) % 100}%)`
+            }));
+
+            // Bottom carousel: 23 slides
+            // File associations (for reference when media is uploaded):
+            // Item 1: foundations logo.png | Item 2: foundations: camo shiesty.png | Item 3: foundations: black shiesty.png
+            // Item 4: foundations: black tee.png | Item 5: foundations: white tee.png | Item 6: fortifications logo.png
+            // Item 7: foundations: orange tracksuit.png | Item 8: foundations: purple tracksuit.png | Item 9: foundations: black tracksuit.png
+            // Item 10: fortifications: reversible racing jacket.png | Item 11: fortifications: f-1 motorcycle jacket.png | Item 12: fortifications: sample puffer jacket.png
+            // Item 13: relics logo.png | Item 14: relics: boxing set.png | Item 15: dominion logo.png
+            // Item 16: adornments logo.png | Item 17: crownsworks logo.png | Item 18: crownsworks: lgrey 3P suit.png
+            // Item 19: crownsworks: blue 2P suit.png | Item 20: crownsworks: dgrey 2P suit.png | Item 21: crownsworks: navy 3P suit.png
+            // Item 22: crownsworks: black 3P suit.png | Item 23: crownsworks: black DB suit.png
+            const bottomItems = Array.from({ length: 23 }).map((_, i) => ({
+                id: i,
+                title: `Item ${i + 1}`,
+                color: `hsl(0, 0%, ${(i * 5) % 100}%)`
+            }));
+
+            // Duplicate for infinite effect
+            const allTopItems = [...topItems, ...topItems];
+            const allBottomItems = [...bottomItems, ...bottomItems];
+
+            topCarousel.innerHTML = allTopItems.map((item, index) => `
+                <div class="carousel-item" style="background-color: ${item.color}">
+                    <span>${item.title}</span>
+                </div>
+            `).join('');
+
+            bottomCarousel.innerHTML = allBottomItems.map((item, index) => `
+                <div class="carousel-item" style="background-color: ${item.color}">
+                    <span>${item.title}</span>
+                </div>
+            `).join('');
+        }
+
+        // Populate sidebar
+        // Folders that are now nested inside other folders (not shown in sidebar)
+        const nestedFolders = ['video', 'maison', 'power', 'tom-sketches', 'tom-cads', 'tom-renderings', 'tom-wax', 'tom-final'];
+
+        function populateSidebar() {
+            sidebar.innerHTML = `
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Favorites</div>
+                </div>
+            `;
+
+            const section = sidebar.querySelector('.sidebar-section');
+
+            Object.keys(folderData).forEach(key => {
+                // Skip nested folders - they're inside other folders now
+                if (nestedFolders.includes(key)) return;
+
+                const folder = folderData[key];
+                const item = document.createElement('div');
+                item.className = 'sidebar-item' + (key === selectedFolder ? ' active' : '');
+                item.dataset.folder = key;
+
+                const count = folder.files.length;
+                item.innerHTML = `
+                    <i class="fas fa-folder"></i>
+                    ${folder.label}
+                    ${count > 0 ? `<span class="count">${count}</span>` : ''}
+                `;
+
+                item.addEventListener('click', () => selectFolder(key));
+                section.appendChild(item);
+            });
+        }
+
+        // Select folder
+        function selectFolder(folderKey, fromHistory = false) {
+            selectedFolder = folderKey;
+            selectedColumnIndex = -1; // Reset column selection
+
+            // Update navigation history (only if not navigating from history)
+            if (!fromHistory) {
+                // Remove any forward history if we're navigating from middle of stack
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+                // Only add to history if it's different from the current folder
+                const currentFolder = navigationHistory[historyIndex];
+                if (currentFolder !== folderKey) {
+                    navigationHistory.push(folderKey);
+                    historyIndex = navigationHistory.length - 1;
+                }
+                // Update button states
+                updateNavigationButtons();
+            }
+
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.folder === folderKey);
+            });
+
+            // Update window title
+            windowTitle.textContent = folderData[folderKey]?.label || 'Macintosh HD';
+
+            // Bring Finder to front when Macintosh HD is clicked
+            if (folderKey === 'macintosh-hd') {
+                highestZIndex++;
+                finderWindow.style.zIndex = highestZIndex;
+            }
+
+            // Populate files (no longer opens popup for SB/SI - just shows folder contents)
+            populateContent();
+        }
+
+        // Update navigation button states
+        function updateNavigationButtons() {
+            const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+            const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+
+            if (backBtn) {
+                if (historyIndex > 0) {
+                    backBtn.style.opacity = '1';
+                    backBtn.style.cursor = 'pointer';
+                    backBtn.style.pointerEvents = 'auto';
+                } else {
+                    backBtn.style.opacity = '0.3';
+                    backBtn.style.cursor = 'not-allowed';
+                    backBtn.style.pointerEvents = 'none';
+                }
+            }
+
+            if (forwardBtn) {
+                if (historyIndex < navigationHistory.length - 1) {
+                    forwardBtn.style.opacity = '1';
+                    forwardBtn.style.cursor = 'pointer';
+                    forwardBtn.style.pointerEvents = 'auto';
+                } else {
+                    forwardBtn.style.opacity = '0.3';
+                    forwardBtn.style.cursor = 'not-allowed';
+                    forwardBtn.style.pointerEvents = 'none';
+                }
+            }
+        }
+
+        // Navigate back in history
+        function navigateBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
+        // Navigate forward in history
+        function navigateForward() {
+            if (historyIndex < navigationHistory.length - 1) {
+                historyIndex++;
+                selectFolder(navigationHistory[historyIndex], true);
+                updateNavigationButtons();
+            }
+        }
+
+        // Get file icon
+        function getFileIcon(type) {
+            if (type === 'folder') return { class: 'fas fa-folder', color: '#5ac8fa' };
+            if (type === 'image') return { class: 'far fa-image image-icon', color: '#30d158' };
+            if (type === 'video') return { class: 'fas fa-film video-icon', color: '#ff375f' };
+            return { class: 'far fa-file-alt file-icon', color: '#aaa' };
+        }
+
+        // Render markdown to HTML
+        function renderMarkdown(text) {
+            if (!text) return '';
+            // Convert **bold** to <strong>
+            text = text.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+            // Convert *italic* to <em>
+            text = text.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+            // Convert newlines to <br>
+            text = text.replace(/\\n/g, '<br>');
+            return text;
+        }
+
+        // Populate content based on view
+        function populateContent() {
+            const files = folderData[selectedFolder]?.files || [];
+
+            if (currentView === 'list') {
+                contentArea.innerHTML = `
+                    <div class="list-view">
+                        <div class="list-header">
+                            <span>Name</span>
+                            <span>Date Modified</span>
+                            <span>Size</span>
+                        </div>
+                        <div class="list-items">
+                        ${files.map(file => {
+                    const icon = getFileIcon(file.type);
+                    let previewHtml;
+
+                    if (file.type === 'image' && file.src) {
+                        previewHtml = `<img src="${file.src}" style="width: 20px; height: 20px; object-fit: contain; margin-right: 10px;">`;
+                    } else if (file.type === 'video' && file.src) {
+                        previewHtml = `<video src="${file.src}#t=0.1" style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 10px;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+                    } else if (file.type === 'document' && file.textContent) {
+                        previewHtml = `
+                            <div style="width: 16px; height: 20px; background: white; color: black; font-size: 2px; overflow: hidden; padding: 1px; margin-right: 10px; font-family: sans-serif; opacity: 0.9; border: 1px solid #ccc;">
+                                ${renderMarkdown(file.textContent)}
+                            </div>
+                        `;
+                    } else {
+                        previewHtml = `<i class="${icon.class}" style="color: ${icon.color}; margin-right: 10px;"></i>`;
+                    }
+
+                    return `
+                                <div class="list-item" onclick="handleFileClick('${file.name}')">
+                                    <div class="file-name" style="display: flex; align-items: center;">
+                                        ${previewHtml}
+                                        ${file.name}
+                                    </div>
+                                    <span class="date-modified">Dec 7, 2025</span>
+                                    <span class="size">--</span>
+                                </div>
+                            `;
+                }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (currentView === 'icons') {
+                contentArea.innerHTML = `
+                    <div class="icon-view">
+                        ${files.map(file => {
+                    const icon = getFileIcon(file.type);
+                    let previewHtml;
+
+                    if (file.type === 'image' && file.src) {
+                        previewHtml = `<img src="${file.src}" style="width: 64px; height: 64px; object-fit: contain; margin-bottom: 10px;">`;
+                    } else if (file.type === 'video' && file.src) {
+                        previewHtml = `<video src="${file.src}#t=0.1" style="width: 64px; height: 64px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+                    } else if (file.type === 'document' && file.textContent) {
+                        previewHtml = `
+                            <div style="width: 50px; height: 64px; background: white; color: black; font-size: 4px; overflow: hidden; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); text-align: left; margin-bottom: 10px; font-family: sans-serif; opacity: 0.9;">
+                                ${file.textContent}
+                            </div>
+                        `;
+                    } else {
+                        previewHtml = `<i class="${icon.class}" style="color: ${icon.color}; font-size: 48px; margin-bottom: 10px;"></i>`;
+                    }
+
+                    return `
+                                <div class="icon-view-item" onclick="handleFileClick('${file.name}')">
+                                    ${previewHtml}
+                                    <span class="name">${file.name}</span>
+                                </div>
+                            `;
+                }).join('')}
+                    </div>
+                `;
+            } else if (currentView === 'columns') {
+                const selectedFile = selectedColumnIndex >= 0 ? files[selectedColumnIndex] : null;
+                const selectedIcon = selectedFile ? getFileIcon(selectedFile.type) : null;
+                const fileTypeLabel = selectedFile ? (selectedFile.type === 'image' ? 'PNG image' : selectedFile.type === 'video' ? 'MPEG-4 Video' : 'Document') : '';
+
+                let previewContent = '';
+                if (selectedFile?.type === 'image' && selectedFile?.src) {
+                    previewContent = `<img src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                } else if (selectedFile?.type === 'video' && selectedFile?.src) {
+                    previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
+                } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
+                    previewContent = `
+                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; max-height: 140px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
+                            <div style="font-size: 10px; color: #888; margin-bottom: 6px;">📄 ${selectedFile.name}</div>
+                            <div style="font-size: 11px; color: #ddd; line-height: 1.4;">${renderMarkdown(selectedFile.textContent.substring(0, 200))}...</div>
+                        </div>`;
+                } else if (selectedFile) {
+                    previewContent = `<i class="${selectedIcon.class}" style="font-size: 64px; color: ${selectedIcon.color}"></i>`;
+                }
+
+                contentArea.innerHTML = `
+                    <div class="column-view">
+                        <div class="column">
+                            ${files.map((file, index) => {
+                    const icon = getFileIcon(file.type);
+                    let itemPreviewHtml;
+
+                    if (file.type === 'image' && file.src) {
+                        itemPreviewHtml = `<img src="${file.src}" style="width: 20px; height: 20px; object-fit: contain; margin-right: 10px;">`;
+                    } else if (file.type === 'video' && file.src) {
+                        itemPreviewHtml = `<video src="${file.src}#t=0.1" style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 10px;" muted playsinline></video>`;
+                    } else if (file.type === 'document' && file.textContent) {
+                        itemPreviewHtml = `
+                            <div style="width: 16px; height: 20px; background: white; color: black; font-size: 2px; overflow: hidden; padding: 1px; margin-right: 10px; font-family: sans-serif; opacity: 0.9; border: 1px solid #ccc;">
+                                ${file.textContent}
+                            </div>
+                        `;
+                    } else {
+                        itemPreviewHtml = `<i class="${icon.class}" style="color: ${icon.color}; margin-right: 10px;"></i>`;
+                    }
+
+                    return `
+                        <div class="column-item${index === selectedColumnIndex ? ' selected' : ''}" 
+                             onclick="selectColumnItem(${index})" 
+                             ondblclick="handleFileClick('${file.name}')" 
+                             style="display: flex; align-items: center;">
+                            ${itemPreviewHtml}
+                            ${file.name}
+                        </div>
+                    `;
+                }).join('')}
+                        </div>
+                        <div class="column-preview">
+                            ${selectedFile ? `
+                                <div class="column-preview-image">
+                                    ${previewContent}
+                                </div>
+                                <div class="column-preview-header">
+                                    <div class="column-preview-name">${selectedFile.name}</div>
+                                    <div class="column-preview-type">${fileTypeLabel} - 256 KB</div>
+                                </div>
+                                <div class="gallery-info-section">
+                                    <div class="gallery-info-section-title">
+                                        Information
+                                        <span class="show-more">Show Less</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Created</span>
+                                        <span class="value">Today, 02:42</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Modified</span>
+                                        <span class="value">Today, 02:42</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Last opened</span>
+                                        <span class="value">Today, 02:42</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Content created</span>
+                                        <span class="value">Today, 02:42</span>
+                                    </div>
+                                </div>
+                                <div class="gallery-info-section">
+                                    <div class="gallery-info-section-title">Tags</div>
+                                    <div style="color: #888; font-size: 12px; padding: 5px 0;">Add Tags...</div>
+                                </div>
+                                <div class="gallery-actions">
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-undo"></i>
+                                        <span>Rotate Left</span>
+                                    </div>
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-marker"></i>
+                                        <span>Markup</span>
+                                    </div>
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                        <span>More...</span>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888;">
+                                    Select a file to preview
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            } else if (currentView === 'gallery') {
+                const selectedFile = files[selectedGalleryIndex] || files[0];
+                const icon = selectedFile ? getFileIcon(selectedFile.type) : { class: '', color: '' };
+                const fileTypeLabel = selectedFile ? (selectedFile.type.charAt(0).toUpperCase() + selectedFile.type.slice(1)) : '';
+
+                // Tag list
+                const tagsList = [
+                    "CFDA Award Candidate",
+                    "The Fashion Awards Candidate",
+                    "International Woolmark Prize Candidate",
+                    "JWA Candidate",
+                    "GEM Award Candidate",
+                    "Inhorgenta Award Candidate"
+                ];
+
+                // Initialize tags if not present
+                if (selectedFile && !selectedFile.tags) selectedFile.tags = [];
+
+                // Generate tag options HTML
+                const tagColors = {
+                    "CFDA Award Candidate": "green",
+                    "The Fashion Awards Candidate": "green",
+                    "International Woolmark Prize Candidate": "green",
+                    "JWA Candidate": "yellow",
+                    "GEM Award Candidate": "yellow",
+                    "Inhorgenta Award Candidate": "yellow"
+                };
+
+                const tagOptionsHTML = tagsList.map(tag => {
+                    const color = tagColors[tag] || 'gray';
+                    return `
+                        <div class="gallery-tag-option" data-tag="${tag}">
+                            <div class="gallery-tag-circle ${color}"></div>
+                            ${tag}
+                        </div>
+                    `;
+                }).join('');
+
+                // Generate chosen tags HTML
+                const chosenTagsHTML = selectedFile && selectedFile.tags ? selectedFile.tags.map(tag => `
+                    <div class="gallery-tag-chip">
+                        ${tag} <i class="fas fa-times" data-remove-tag="${tag}"></i>
+                    </div>
+                `).join('') : '';
+
+                // File Preview Logic - Images, Videos, and Documents
+                let previewContent;
+                if (selectedFile?.type === 'image' && selectedFile?.src) {
+                    previewContent = `<img src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;">`;
+                } else if (selectedFile?.type === 'video' && selectedFile?.src) {
+                    previewContent = `<video src="${selectedFile.src}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px;" autoplay muted loop playsinline></video>`;
+                } else if (selectedFile?.type === 'document' && selectedFile?.textContent) {
+                    previewContent = `
+                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px; max-width: 300px; max-height: 250px; overflow: hidden; text-align: left; font-family: 'Georgia', serif;">
+                            <div style="font-size: 11px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">📄 ${selectedFile.name}</div>
+                            <div style="font-size: 13px; color: #ddd; line-height: 1.6;">${renderMarkdown(selectedFile.textContent)}</div>
+                        </div>`;
+                } else {
+                    previewContent = `<i class="${icon.class}" style="color: ${icon.color}"></i>`;
+                }
+
+                contentArea.innerHTML = `
+                    <div class="gallery-view">
+                        <div class="gallery-main">
+                            <div class="gallery-preview">
+                                <div class="gallery-preview-content">
+                                    ${previewContent}
+                                </div>
+                            </div>
+                            <div class="gallery-info">
+                                <div class="gallery-info-header">
+                                    <i class="${icon.class}" style="color: ${icon.color}"></i>
+                                    <div>
+                                        <div class="info-name">${selectedFile?.name || 'No file selected'}</div>
+                                        <div class="info-type">${fileTypeLabel}${selectedFile ? ' - 256 KB' : ''}</div>
+                                    </div>
+                                </div>
+                                <div class="gallery-info-section">
+                                    <div class="gallery-info-section-title">
+                                        Information
+                                        <span class="show-more">Show More</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Created</span>
+                                        <span class="value">Dec 7, 2025 at 23:57</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Modified</span>
+                                        <span class="value">Dec 7, 2025 at 23:57</span>
+                                    </div>
+                                    <div class="gallery-info-row">
+                                        <span class="label">Last opened</span>
+                                        <span class="value">Dec 7, 2025 at 23:57</span>
+                                    </div>
+                                </div>
+                                <div class="gallery-actions">
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-undo"></i>
+                                        <span>Rotate Left</span>
+                                    </div>
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-marker"></i>
+                                        <span>Markup</span>
+                                    </div>
+                                    <div class="gallery-action-btn">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                        <span>More...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="gallery-thumbnails" id="gallery-thumbnails"></div>
+                    </div>
+                `;
+
+                // Add event listeners for tags
+                const tagsInput = document.getElementById('gallery-tags-input');
+                const tagsDropdown = document.getElementById('gallery-tags-dropdown');
+
+                if (tagsInput) {
+                    tagsInput.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Close any other menus
+                        document.querySelectorAll('.show').forEach(el => {
+                            if (el !== tagsDropdown) el.classList.remove('show');
+                        });
+
+                        // Toggle dropdown - move to body to escape transform stacking context
+                        if (tagsDropdown.classList.contains('show')) {
+                            tagsDropdown.classList.remove('show');
+                            tagsInput.classList.remove('active');
+                        } else {
+                            // Position dropdown using fixed positioning
+                            const rect = tagsInput.getBoundingClientRect();
+                            document.body.appendChild(tagsDropdown); // Move to body to escape parent overflow/transform
+                            tagsDropdown.style.left = rect.left + 'px';
+                            tagsDropdown.style.top = (rect.bottom + 4) + 'px';
+                            tagsDropdown.classList.add('show');
+                            tagsInput.classList.add('active');
+                        }
+                    });
+
+                    // Tag selection
+                    document.querySelectorAll('.gallery-tag-option').forEach(option => {
+                        option.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const tag = option.dataset.tag;
+                            if (selectedFile && !selectedFile.tags.includes(tag)) {
+                                selectedFile.tags.push(tag);
+                                populateContent();
+                            }
+                        });
+                    });
+
+                    // Tag removal
+                    document.querySelectorAll('[data-remove-tag]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const tagToRemove = btn.dataset.removeTag;
+                            if (selectedFile) {
+                                selectedFile.tags = selectedFile.tags.filter(t => t !== tagToRemove);
+                                populateContent();
+                            }
+                        });
+                    });
+                }
+
+                // Populate thumbnails
+                const thumbnailsContainer = document.getElementById('gallery-thumbnails');
+                files.forEach((file, index) => {
+                    const thumbIcon = getFileIcon(file.type);
+                    const thumb = document.createElement('div');
+                    thumb.className = 'gallery-thumbnail' + (index === selectedGalleryIndex ? ' selected' : '');
+
+                    let previewHtml;
+                    if (file.type === 'image' && file.src) {
+                        previewHtml = `<img src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;">`;
+                    } else if (file.type === 'video' && file.src) {
+                        previewHtml = `<video src="${file.src}#t=0.1" style="width: 100%; height: 100%; object-fit: cover;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
+                    } else if (file.type === 'document' && file.textContent) {
+                        previewHtml = `
+                            <div style="width: 100%; height: 100%; background: white; color: black; font-size: 3px; overflow: hidden; padding: 2px; font-family: sans-serif; text-align: left;">
+                                ${file.textContent}
+                            </div>
+                        `;
+                    } else {
+                        previewHtml = `<i class="${thumbIcon.class}" style="color: ${thumbIcon.color}"></i>`;
+                    }
+
+                    thumb.innerHTML = previewHtml;
+                    thumb.addEventListener('click', () => {
+                        selectedGalleryIndex = index;
+                        populateContent();
+                    });
+                    thumbnailsContainer.appendChild(thumb);
+                });
+            }
+
+            itemCount.textContent = `${files.length} item${files.length !== 1 ? 's' : ''}`;
+        }
+
+        // Open finder window
+        function openFinderWindow(folderKey) {
+            selectedFolder = folderKey || 'archive';
+            finderWindow.classList.add('active');
+
+            // Initialize navigation history with the starting folder
+            navigationHistory = [selectedFolder];
+            historyIndex = 0;
+            updateNavigationButtons();
+
+            // Bring to front
+            highestZIndex++;
+            finderWindow.style.zIndex = highestZIndex;
+
+            populateSidebar();
+            populateContent();
+
+            // Update desktop folder selection
+            deselectAllFolders();
+            const selectedDesktopFolder = document.querySelector(`.desktop-folder[data-folder="${selectedFolder}"]`);
+            if (selectedDesktopFolder) {
+                selectedDesktopFolder.classList.add('selected');
+            }
+        }
+
+        // Close finder window
+        function closeFinderWindow() {
+            finderWindow.classList.remove('active');
+            deselectAllFolders();
+        }
+
+        // Deselect all folders
+        function deselectAllFolders() {
+            document.querySelectorAll('.desktop-folder').forEach(folder => {
+                folder.classList.remove('selected');
+            });
+        }
+
+        // Event listeners for desktop folders (with drag support)
+        document.querySelectorAll('.desktop-folder').forEach(folder => {
+            // Store offset in data attributes for persistence
+            folder.dataset.offsetX = folder.dataset.offsetX || '0';
+            folder.dataset.offsetY = folder.dataset.offsetY || '0';
+
+            folder.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const initialOffsetX = parseFloat(folder.dataset.offsetX);
+                const initialOffsetY = parseFloat(folder.dataset.offsetY);
+                let hasMoved = false;
+
+                const onMouseMove = (moveE) => {
+                    const dx = moveE.clientX - startX;
+                    const dy = moveE.clientY - startY;
+
+                    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                        hasMoved = true;
+                    }
+
+                    const newOffsetX = initialOffsetX + dx;
+                    const newOffsetY = initialOffsetY + dy;
+
+                    folder.style.transform = `translate(${newOffsetX}px, ${newOffsetY}px)`;
+                    folder.dataset.offsetX = newOffsetX;
+                    folder.dataset.offsetY = newOffsetY;
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+
+                    // Only trigger click if barely moved
+                    if (!hasMoved) {
+                        if (folder.dataset.folder) {
+                            openFinderWindow(folder.dataset.folder);
+                        } else if (folder.id === 'macintosh-hd') {
+                            openFinderWindow('archive');
+                        }
+                    }
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+
+        // Click on desktop to deselect folders
+        desktop.addEventListener('click', (e) => {
+            if (e.target === desktop || e.target.classList.contains('macos-desktop')) {
+                deselectAllFolders();
+            }
+        });
+
+        // Close button
+        document.getElementById('close-btn').addEventListener('click', closeFinderWindow);
+
+        // Back button
+        const backBtn = document.querySelector('.toolbar-button .fa-chevron-left')?.parentElement;
+        if (backBtn) {
+            backBtn.addEventListener('click', navigateBack);
+        }
+
+        // Forward button
+        const forwardBtn = document.querySelector('.toolbar-button .fa-chevron-right')?.parentElement;
+        if (forwardBtn) {
+            forwardBtn.addEventListener('click', navigateForward);
+        }
+
+        // Initialize button states
+        updateNavigationButtons();
+
+        // Theme toggle
+        themeToggle.addEventListener('change', (e) => {
+            document.body.classList.toggle('light-mode', e.target.checked);
+        });
+
+        // View button toggle
+        viewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewMenu.classList.toggle('show');
+        });
+
+        // View menu items
+        document.querySelectorAll('.view-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const view = item.dataset.view;
+                currentView = view;
+
+                // Update menu selection
+                document.querySelectorAll('.view-menu-item').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+
+                // Update button icon and label
+                const icons = {
+                    list: 'fa-th-list',
+                    icons: 'fa-th-large',
+                    columns: 'fa-columns',
+                    gallery: 'fa-images'
+                };
+                const labels = {
+                    list: 'List',
+                    icons: 'Icons',
+                    columns: 'Columns',
+                    gallery: 'Gallery'
+                };
+                viewIcon.className = `fas ${icons[view]}`;
+                viewLabel.textContent = labels[view];
+
+                // Close menu and refresh content
+                viewMenu.classList.remove('show');
+                populateContent();
+            });
+        });
+
+        // Close menus when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            viewMenu.classList.remove('show');
+            tagsMenu.classList.remove('show');
+
+            // Close tags dropdown if it exists
+            const tagsDropdown = document.getElementById('gallery-tags-dropdown');
+            const tagsInput = document.getElementById('gallery-tags-input');
+            if (tagsDropdown && !e.target.closest('.gallery-tags-wrapper')) {
+                tagsDropdown.classList.remove('show');
+                if (tagsInput) tagsInput.classList.remove('active');
+            }
+        });
+
+        // Toggle toolbar tags menu
+        tagsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tagsMenu.classList.toggle('show');
+        });
+
+        // Initialize toolbar tags
+        const globalTagsList = [
+            "CFDA Award Candidate",
+            "GEM Award Candidate",
+            "Inhorgenta Award Candidate",
+            "International Woolmark Prize Candidate",
+            "JWA Candidate",
+            "The Fashion Awards Candidate"
+        ];
+
+        const tagColors = {
+            "CFDA Award Candidate": "green",
+            "The Fashion Awards Candidate": "green",
+            "International Woolmark Prize Candidate": "green",
+            "JWA Candidate": "yellow",
+            "GEM Award Candidate": "yellow",
+            "Inhorgenta Award Candidate": "yellow"
+        };
+
+        tagsMenu.innerHTML = globalTagsList.map(tag => {
+            const color = tagColors[tag] || 'gray';
+            return `
+                <div class="view-menu-item" style="color: #ddd;">
+                    <div class="gallery-tag-circle ${color}" style="margin-right: 8px;"></div> ${tag}
+                </div>
+            `;
+        }).join('');
+
+        // Share button - copy to clipboard
+        shareBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                await navigator.clipboard.writeText('cireconglomerate.com');
+                clipboardNotification.classList.add('show');
+                setTimeout(() => {
+                    clipboardNotification.classList.remove('show');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+
+        // Draggable window
+        let isDragging = false;
+        let currentX, currentY, initialX, initialY;
+        let xOffset = 0, yOffset = 0;
+
+        const titlebar = document.querySelector('.window-titlebar');
+
+        titlebar.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('window-control')) return;
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            finderWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+
+        // Desktop Folder Positioning - Responsive to window size
+        function positionDesktopFolders() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const folderWidth = 100; // Width of desktop folder element
+            const folderHeight = 100; // Approximate height including icon and label
+            const margin = 20; // Safety margin from edges
+
+            // Define folder positions - left side folders use fixed positions
+            // Right side folder (Macintosh HD) uses viewport-relative positioning
+            const folderPositions = {
+                'archive': { left: margin, top: 27 },
+                'sophisticated-brilliance': { left: margin, top: 113 },
+                'sophisticated-ignorance': { left: margin + 118, top: 95 },
+                'coming-soon': { left: margin + 150, top: 204 },
+                'curated': { left: margin + 107, top: 332 },
+                'macintosh-hd': {
+                    left: Math.max(viewportWidth - folderWidth - margin, margin + 200),
+                    top: 346
+                }
+            };
+
+            // Apply positions to each folder
+            Object.keys(folderPositions).forEach(folderId => {
+                const folder = document.getElementById(folderId) ||
+                    document.querySelector(`[data-folder="${folderId}"]`);
+
+                if (folder) {
+                    let { left, top } = folderPositions[folderId];
+
+                    // Ensure folder stays within viewport bounds
+                    left = Math.max(margin, Math.min(left, viewportWidth - folderWidth - margin));
+                    top = Math.max(margin, Math.min(top, viewportHeight - folderHeight - margin));
+
+                    folder.style.left = left + 'px';
+                    folder.style.top = top + 'px';
+                }
+            });
+        }
+
+        // Debounce function to limit resize event frequency
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Add resize listener with debouncing
+        window.addEventListener('resize', debounce(positionDesktopFolders, 150));
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            positionDesktopFolders(); // Position folders on load
+            generateCarousels();
+
+            // Position popups like V1 (center-relative coordinates)
+            const centerX = window.innerWidth / 2;
+
+            // Maison Overview: centerX - 250, y: 18
+            document.getElementById('popup-maison').style.left = (centerX - 250) + 'px';
+            document.getElementById('popup-maison').style.top = '18px';
+
+            // Transcendence of Man: centerX - 476, y: 69 (Moved 95px right)
+            document.getElementById('popup-transcendence').style.left = (centerX - 476) + 'px';
+            document.getElementById('popup-transcendence').style.top = '69px';
+
+            // Sophisticated Brilliance: centerX - 430, y: 202 (Moved 95px right from -525)
+            document.getElementById('popup-brilliance').style.left = (centerX - 430) + 'px';
+            document.getElementById('popup-brilliance').style.top = '202px';
+
+            // Sophisticated Ignorance: centerX - 66, y: 285
+            document.getElementById('popup-ignorance').style.left = (centerX - 66) + 'px';
+            document.getElementById('popup-ignorance').style.top = '285px';
+
+            // Open 4 windows on launch (instead of Finder)
+            setTimeout(() => {
+                openPopup('popup-maison');
+                openPopup('popup-transcendence');
+                openPopup('popup-brilliance');
+                openPopup('popup-ignorance');
+            }, 300);
+        });
+
+        // Grid Toggle Feature
+        let gridVisible = false;
+        const gridOverlay = document.getElementById('grid-overlay');
+        const mouseXDisplay = document.getElementById('mouse-x');
+        const mouseYDisplay = document.getElementById('mouse-y');
+        const centerOffsetDisplay = document.getElementById('center-offset');
+        const gridLineX = document.getElementById('grid-line-x');
+        const gridLineY = document.getElementById('grid-line-y');
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'g' || e.key === 'G') {
+                gridVisible = !gridVisible;
+                gridOverlay.style.display = gridVisible ? 'block' : 'none';
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (gridVisible) {
+                mouseXDisplay.textContent = e.clientX;
+                mouseYDisplay.textContent = e.clientY;
+                const centerOffset = Math.round(e.clientX - window.innerWidth / 2);
+                centerOffsetDisplay.textContent = centerOffset;
+
+                // Move crosshair lines
+                if (gridLineX && gridLineY) {
+                    gridLineX.style.top = e.clientY + 'px';
+                    gridLineY.style.left = e.clientX + 'px';
+                }
+            }
+        });
+
+        // Ensure popups come to front on click
+        document.querySelectorAll('.popup-window').forEach(popup => {
+            popup.addEventListener('mousedown', () => {
+                if (parseInt(popup.style.zIndex) !== highestZIndex) {
+                    highestZIndex++;
+                    popup.style.zIndex = highestZIndex;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

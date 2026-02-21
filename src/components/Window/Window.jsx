@@ -19,7 +19,20 @@ export default function Window({
 }) {
   const nodeRef = React.useRef(null);
 
+  const [bounds, setBounds] = React.useState({ left: 0, top: 0, right: 0, bottom: 0 });
+
   const handleStart = () => {
+    if (nodeRef.current && nodeRef.current.offsetParent) {
+      const parent = nodeRef.current.offsetParent;
+      const width = nodeRef.current.offsetWidth;
+      const height = nodeRef.current.offsetHeight;
+      setBounds({
+        left: 0,
+        top: 0,
+        right: parent.clientWidth - width,
+        bottom: parent.clientHeight - height,
+      });
+    }
     onFocus(id);
   };
 
@@ -39,6 +52,7 @@ export default function Window({
       onStart={handleStart}
       onStop={handleStop}
       disabled={graphiteMode} // Disable dragging in graphite mode
+      bounds={bounds}
     >
       <div
         ref={nodeRef}
