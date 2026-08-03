@@ -59,7 +59,7 @@
     <meta property="twitter:title" content="CIRE Conglomerate | The Pinnacle of Luxury" />
     <meta property="twitter:description" content="Discover the CIRE ecosystem. Explore our exclusive automotive and maritime concierge services, showcasing the absolute pinnacle of luxury and performance." />
     <meta property="twitter:image" content="https://cireconglomerate.com/blackscale%20CIRE%20logo.png" />
-    <link rel="icon" type="image/png" href="/CC V6.png" />
+    <link rel="icon" type="image/png" href="/cire-logo.png" sizes="any" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -10589,7 +10589,7 @@
         const forceBanner = urlParams.get('forceBanner') === 'true';
         const banner = document.getElementById('site-footer-message-bar');
         
-        if (!forceBanner && localStorage.getItem('cire_cookie_consent_v7')) {
+        if (!forceBanner && localStorage.getItem('cire_cookie_consent_v8')) {
           banner.style.setProperty('display', 'none', 'important');
         } else {
           const delay = forceBanner ? 0 : 3000;
@@ -10599,7 +10599,7 @@
           }, delay);
 
           document.getElementById('site-ack-btn').addEventListener('click', async function() {
-            localStorage.setItem('cire_cookie_consent_v7', 'granted');
+            localStorage.setItem('cire_cookie_consent_v8', 'granted');
             banner.style.setProperty('opacity', '0', 'important');
             setTimeout(() => banner.style.setProperty('display', 'none', 'important'), 1000);
             
