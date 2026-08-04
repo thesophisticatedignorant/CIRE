@@ -2576,8 +2576,8 @@
         </div>
 
         <div class="status-bar">
-          <div id="item-count">Sector Restricted</div>
-          <div>Access Selective</div>
+          <div id="item-count">0 items</div>
+          <div id="disk-space">412.5 GB available</div>
         </div>
       </div>
 
@@ -3497,7 +3497,7 @@
               if (window._wwnMapInitialized) return;
               window._wwnMapInitialized = true;
 
-              const map = L.map("wwn-map", {
+              window.wwnMap = L.map("wwn-map", {
                 center: [40, -95],
                 zoom: 2,
                 zoomControl: false,
@@ -3518,7 +3518,7 @@
                   maxZoom: 20,
                   attribution: "",
                 },
-              ).addTo(map);
+              ).addTo(window.wwnMap);
 
               // Helper — draw a colored circle marker
               function placeNode(lat, lng, color, name) {
@@ -6090,7 +6090,10 @@
               if (typeof window.initGuestbookMap === "function") {
                 window.initGuestbookMap();
               }
-            }, 50);
+              if (window.wwnMap) {
+                window.wwnMap.invalidateSize();
+              }
+            }, 300);
           }
         }
       }
@@ -7817,9 +7820,26 @@
           }
         }
 
+        let totalMb = 0;
+        files.forEach(f => {
+          if (f.type === "video") totalMb += 450.5;
+          else if (f.type === "image") totalMb += 12.4;
+          else if (f.type === "folder") totalMb += 0;
+          else totalMb += 2.1; // documents/unknown
+        });
+        
+        let sizeText = "";
+        if (totalMb > 0) {
+          if (totalMb > 1000) {
+            sizeText = `, ${(totalMb / 1000).toFixed(1)} GB`;
+          } else {
+            sizeText = `, ${totalMb.toFixed(1)} MB`;
+          }
+        }
+
         itemCount.textContent = `${files.length} item${
           files.length !== 1 ? "s" : ""
-        }`;
+        }${sizeText}`;
       }
 
       // Open finder window
