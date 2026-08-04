@@ -25,7 +25,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-draggable": "^4.5.0",
-    "sharp": "^0.35.3",
     "three": "^0.182.0"
   },
   "devDependencies": {
@@ -41,6 +40,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^29.1.1",
+    "sharp": "^0.35.3",
     "vite": "^7.2.4",
     "vitest": "^4.1.10"
   }

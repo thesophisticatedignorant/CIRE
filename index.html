@@ -2084,6 +2084,12 @@
           overflow-y: hidden !important;
         }
 
+        @keyframes pulse-overlay {
+          0% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.02); }
+          100% { opacity: 0.8; transform: scale(1); }
+        }
+
         #mobile-tutorial-overlay {
           position: fixed !important;
           top: 0 !important;
@@ -2098,6 +2104,7 @@
           align-items: center;
           color: white;
           font-family: -apple-system, sans-serif;
+          animation: pulse-overlay 3s infinite ease-in-out;
           transition: opacity 0.5s ease-out;
         }
 
@@ -2569,8 +2576,8 @@
         </div>
 
         <div class="status-bar">
-          <div id="item-count">0 items</div>
-          <div>Zero KB available</div>
+          <div id="item-count">Sector Restricted</div>
+          <div>Access Selective</div>
         </div>
       </div>
 
@@ -5413,13 +5420,6 @@
       <div id="grid-line-y" class="grid-line-y"></div>
       <!-- Red center midpoint line -->
       <div id="grid-midpoint" class="grid-midpoint"></div>
-      <!-- Info panel -->
-      <div class="grid-info">
-        <div>Mouse X: <span id="mouse-x">0</span></div>
-        <div>Mouse Y: <span id="mouse-y">0</span></div>
-        <div>Center Offset X: <span id="center-offset">0</span></div>
-        <div style="color: #28ca42">Press 'G' to toggle grid</div>
-      </div>
     </div>
 
     <script>
@@ -6011,9 +6011,14 @@
         "popup-guestbook": "Join Network 🤝",
       };
 
-      function openPopup(popupId) {
+      function openPopup(popupId, updateHistory = true) {
         const popup = document.getElementById(popupId);
         if (popup) {
+          if (updateHistory) {
+            const url = new URL(window.location);
+            url.searchParams.set('window', popupId);
+            window.history.pushState({ popupId }, '', url);
+          }
           // Remove from dock if minimized
           const dockItem = document.querySelector(
             `.dock-item[data-popup="${popupId}"]`,
@@ -6149,12 +6154,17 @@
           nameEl.textContent = selectedFile.name.replace(/\.png$/, "");
       }
 
-      function closePopup(popupId) {
+      function closePopup(popupId, updateHistory = true) {
         const popup = document.getElementById(popupId);
         if (popup) {
           popup.classList.remove("active");
           popup.classList.remove("graphite-mode"); // Exit fullscreen
-          window.history.pushState({}, '', window.location.pathname);
+          
+          if (updateHistory) {
+            const url = new URL(window.location);
+            url.searchParams.delete('window');
+            window.history.pushState(null, '', url);
+          }
 
           // Pause any video inside the popup
           const vid = popup.querySelector('video');
@@ -9124,6 +9134,27 @@
           }, 2000);
         }, 1500);
       }
+
+      // Deep Linking & URL Routing
+      window.addEventListener('popstate', (e) => {
+        document.querySelectorAll('.popup.active').forEach(p => closePopup(p.id, false));
+        
+        const params = new URLSearchParams(window.location.search);
+        const windowToOpen = params.get('window');
+        if (windowToOpen) {
+          openPopup(windowToOpen, false);
+        }
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const windowToOpen = params.get('window');
+        if (windowToOpen) {
+          setTimeout(() => {
+             openPopup(windowToOpen, false);
+          }, 500); // Wait for desktop shell to render
+        }
+      });
     </script>
     <!-- Product Detail Modal -->
     <div
@@ -9172,7 +9203,7 @@
             id="pd-title"
             style="margin: 0; color: white; font-size: 20px; font-weight: 600"
           >
-            Vehicle Name
+            Awaiting Asset Allocation
           </h2>
           <div style="display: flex; gap: 1rem; align-items: center;">
             <button
@@ -9259,7 +9290,7 @@
                   margin: 0 0 30px 0;
                 "
               >
-                Description goes here.
+                Asset profile is currently sealed. Full specifications will be available upon allocation.
               </p>
 
               <h3
