@@ -6161,8 +6161,22 @@
           popup.classList.remove("graphite-mode"); // Exit fullscreen
           
           if (updateHistory) {
+            const activePopups = Array.from(document.querySelectorAll('.popup.active')).filter(p => p.id !== popupId);
             const url = new URL(window.location);
-            url.searchParams.delete('window');
+            if (activePopups.length > 0) {
+              let topPopup = activePopups[0];
+              let maxZ = parseInt(window.getComputedStyle(topPopup).zIndex) || 0;
+              for (let i = 1; i < activePopups.length; i++) {
+                let z = parseInt(window.getComputedStyle(activePopups[i]).zIndex) || 0;
+                if (z > maxZ) {
+                  maxZ = z;
+                  topPopup = activePopups[i];
+                }
+              }
+              url.searchParams.set('window', topPopup.id);
+            } else {
+              url.searchParams.delete('window');
+            }
             window.history.pushState(null, '', url);
           }
 
