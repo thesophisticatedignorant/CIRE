@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Analytics & Visitor Metadata Logging
+    match /analytics_metadata/{docId} {
+      allow create: if request.resource.data.keys().hasAny(['timestamp', 'userAgent', 'language', 'referrer']);
+      allow read, update, delete: if false;
+    }
+
+    // 2. Cookie Consent Choices
+    match /cookie_consents/{docId} {
+      allow create: if request.resource.data.consent in ['granted', 'declined'];
+      allow read, update, delete: if false;
+    }
+
+    // 3. Access Requests Submissions
+    match /request_access/{docId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.email is string;
+      allow read, update, delete: if false;
+    }
+
+    // 4. Private Vehicle & Concierge Inquiries
+    match /private_inquiry/{docId} {
+      allow create: if request.resource.data.vehicle is string
+                    && request.resource.data.email is string;
+      allow read, update, delete: if false;
+    }
+
+    // 5. Default Fallback Safety Net (Block all unhandled collections)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
