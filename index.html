@@ -102,6 +102,8 @@
         background-size: auto, cover;
         height: 100vh;
         position: relative;
+        cursor: pointer;
+        touch-action: manipulation;
       }
 
       .osm-dark-map {
@@ -1195,6 +1197,8 @@
         -webkit-animation: scroll 40s linear infinite;
         animation: scroll 40s linear infinite;
         will-change: transform;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
       }
 
       .carousel-track:hover {
@@ -1238,6 +1242,8 @@
         user-select: none;
         transition: transform 0.2s;
         position: relative;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
         overflow: hidden;
       }
 
@@ -2211,6 +2217,8 @@
           overflow-x: hidden !important;
           width: 100vw !important;
           background-attachment: fixed !important;
+          cursor: pointer !important;
+          touch-action: manipulation !important;
         }
 
         .view-menu-item[data-view="columns"],
@@ -7363,13 +7371,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             }
           });
           carousel.innerHTML = html;
-          
-          // Dynamically set animation duration to match speed of 108px/sec (Carousel 2 original speed: 4320px in 40s)
-          const speedPxPerSec = 108;
-          const distancePx = items.length * 216; // 216px per item
-          const durationSec = distancePx / speedPxPerSec;
-          carousel.style.animationDuration = durationSec + "s";
-          carousel.style.webkitAnimationDuration = durationSec + "s";
+
         });
       }
 
