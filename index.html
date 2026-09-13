@@ -97,7 +97,7 @@
       .macos-desktop {
         background: #1d1d1f; /* fallback */
         background-image: url("/cire-logo.png"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
-        background-position: center -220.5px, center;
+        background-position: center center, center center;
         background-repeat: no-repeat, no-repeat;
         background-size: auto, cover;
         height: 100vh;
@@ -1197,8 +1197,6 @@
         -webkit-animation: scroll 40s linear infinite;
         animation: scroll 40s linear infinite;
         will-change: transform;
-        -webkit-transform: translate3d(0, 0, 0);
-        transform: translate3d(0, 0, 0);
       }
 
       .carousel-track:hover {
@@ -1212,21 +1210,21 @@
       }
 
       @-webkit-keyframes scroll {
-        0% { -webkit-transform: translateX(0); transform: translateX(0); }
-        100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+        0% { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+        100% { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
       }
       @keyframes scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(-50%, 0, 0); }
       }
 
       @-webkit-keyframes scroll-reverse {
-        0% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
-        100% { -webkit-transform: translateX(0); transform: translateX(0); }
+        0% { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+        100% { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
       }
       @keyframes scroll-reverse {
-        0% { transform: translateX(-50%); }
-        100% { transform: translateX(0); }
+        0% { transform: translate3d(-50%, 0, 0); }
+        100% { transform: translate3d(0, 0, 0); }
       }
 
       .carousel-item {
@@ -1242,8 +1240,6 @@
         user-select: none;
         transition: transform 0.2s;
         position: relative;
-        -webkit-transform: translate3d(0, 0, 0);
-        transform: translate3d(0, 0, 0);
         overflow: hidden;
       }
 
@@ -2084,6 +2080,8 @@
         }
 
         body {
+          height: 100dvh !important;
+          position: relative !important;
           overflow-y: auto !important;
           overflow-x: hidden !important;
         }
@@ -2212,8 +2210,8 @@
           gap: 40px !important;
           padding-top: 60px !important;
           padding-bottom: 60px !important;
-          height: auto !important;
-          min-height: 100vh !important;
+          height: 100dvh !important;
+          min-height: 100dvh !important;
           overflow-x: hidden !important;
           width: 100vw !important;
           background-attachment: fixed !important;
@@ -2500,7 +2498,7 @@
 
         /* Carousel position for mobile */
         .carousel-container {
-          position: fixed !important;
+          position: absolute !important;
           bottom: env(safe-area-inset-bottom, 20px) !important;
           top: auto !important;
           z-index: 10 !important;
