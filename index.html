@@ -1103,6 +1103,11 @@
         line-height: 1.6;
         color: #ccc;
       }
+      
+      #popup-power .popup-content p {
+        margin-bottom: 1.5em;
+        text-indent: 1.5em;
+      }
 
       .popup-content strong {
         color: #fff;
@@ -2067,6 +2072,11 @@
           background-repeat: no-repeat, no-repeat !important;
         }
 
+        body.light-mode::before {
+          background-color: #e5e5ea !important;
+          background-image: none !important;
+        }
+
         body {
           overflow-y: auto !important;
           overflow-x: hidden !important;
@@ -2494,18 +2504,34 @@
           gap: 2px !important;
         }
         .carousel-track-wrapper {
-          height: 105px !important; /* Scaled up by 40% (was 75px) */
+          height: 140px !important; /* Scaled up */
           padding: 2px 0 !important;
           position: relative !important;
-          margin-bottom: -10px !important;
+          margin-bottom: 5px !important; /* Fixed overlap */
         }
         .carousel-item {
-          flex: 0 0 100px !important; /* Scaled down width */
-          font-size: 0.8rem !important; /* Scaled down text */
+          flex: 0 0 130px !important; /* Scaled up width */
+          font-size: 0.9rem !important;
         }
         .carousel-track:hover {
           animation-play-state: running !important;
           -webkit-animation-play-state: running !important;
+        }
+
+        /* Product Detail Layout for Mobile */
+        .product-detail-body {
+          flex-direction: column !important;
+          gap: 20px !important;
+        }
+        .product-detail-body > div:first-child {
+          order: 2 !important;
+        }
+        .product-detail-body > div:last-child {
+          order: 1 !important;
+        }
+        #pd-toggles {
+          justify-content: center !important;
+          flex-wrap: wrap !important;
         }
       }
     </style>
@@ -3562,7 +3588,7 @@
                 dragging: true,
                 minZoom: 2,
                 maxZoom: 11,
-                worldCopyJump: true
+                worldCopyJump: window.innerWidth > 768
               });
 
               document.getElementById("wwn-map").style.background = "#000";
@@ -3988,13 +4014,13 @@
         </div>
         <div class="popup-content">
           <h1>Power Perfected in Position</h1>
-          <p style="text-indent: 2em">
+          <p>
             A chess game cannot begin without the pawn. <i>Sophisticated Ignorance</i> is built on the belief that elevation is earned through conviction and perseverance, regardless of circumstance. Whether one's wardrobe begins with the simplicity of <i>Foundations</i> or has matured into the refinement of <i>Crownworks</i>, each garment is designed to represent and complement a stage of personal growth.
           </p>
-          <p style="text-indent: 2em">
+          <p>
             Position alone does not create power; it is more so how power is leveraged. Through conviction, <b>Power is Perfected in Position.</b>
           </p>
-          <p style="text-indent: 2em">
+          <p>
             At its core, the brand is organized through a <b>symbolic classification system</b> that structures its universe of garments. Categories are defined by function, with each occupying a distinct role within the wardrobe. The symbols assigned to them serve as subtle markers of position, purpose, and progression.
           </p>
         </div>
@@ -4473,11 +4499,11 @@
         <div class="popup-content">
           <h1>Transcendence of Man</h1>
           <p style="text-indent: 2em">
-            &quot;Our debut collection the <b>Transcendence of Man</b>, reinterprets sacred iconography as a reflection of the human condition via <i>trials and revelations</i>. Each piece examines the tension between scars and magnificence, elaborating on the <b>paradox of suffering</b>: suffering not only has the power to wound, but also to refine. <i>Brilliance</i>, in this context, is not the absence of damage, but the result of having endured it.
+            Our debut collection the <b>Transcendence of Man</b>, reinterprets sacred iconography as a reflection of the human condition via <i>trials and revelations</i>. Each piece examines the tension between scars and magnificence, elaborating on the <b>paradox of suffering</b>: suffering not only has the power to wound, but also to refine. <i>Brilliance</i>, in this context, is not the absence of damage, but the result of having endured it.
           </p>
           <br /><br />
           <p style="text-indent: 2em">
-            As a whole, the collection invites <i>reflection on scars</i> not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.&quot;
+            As a whole, the collection invites <i>reflection on scars</i> not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.
           </p>
         </div>
       </div>
@@ -5804,13 +5830,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               textContent:
                 "Foundations: The Architecture of Self\n\nFoundations serves as the base layer of refinement; the stepping stones of your wardrobe designed for structure, comfort and everyday uniformity. Through simplicity and precision, Foundations defines the essentials. Where form takes shape and sophistication begins.",
             },
-            { name: "The Veil - Black", type: "document" },
-            { name: "The Veil - Camo", type: "document" },
-            { name: "The Cornerstone - Black", type: "document" },
-            { name: "The Cornerstone - White", type: "document" },
-            { name: "The Breakaway - Amethyst", type: "document" },
-            { name: "The Breakaway - Grapefruit", type: "document" },
-            { name: "The Breakaway - Graphite", type: "document" }
+            { name: "The Veil - Black", type: "image", src: "Foundations/The Veil/Black/Black Veil Front.png" },
+            { name: "The Veil - Camo", type: "image", src: "Foundations/The Veil/Camo/Camo Veil Front.png" },
+            { name: "The Cornerstone - Black", type: "image", src: "Foundations/Cornerstone/Cornerstone Black.png" },
+            { name: "The Cornerstone - White", type: "image", src: "Foundations/Cornerstone/Cornerstone White.png" },
+            { name: "The Breakaway - Amethyst", type: "image", src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.png" },
+            { name: "The Breakaway - Grapefruit", type: "image", src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.png" },
+            { name: "The Breakaway - Graphite", type: "image", src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.png" }
           ],
         },
         "si-fortifications": {
@@ -5822,8 +5848,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               textContent:
                 "Fortifications: The Shield of Style\n\nFortifications represents defense through design; luxurious garments built as armor. Each piece in this tier acts as both protection and proclamation. Constructed to endure, engineered to impress.",
             },
-            { name: "The Contradiction", type: "document" },
-            { name: "The Intersect", type: "document" }
+            { name: "The Contradiction", type: "image", src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.png" },
+            { name: "The Intersect", type: "image", src: "Fortifications/The Intersect/Intersect 1.png" }
           ],
         },
         "si-relics": {
@@ -5877,11 +5903,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               protected: true,
             },
             { name: "final", type: "folder", targetFolder: "tom-final" },
-            { name: "Beast", type: "document" },
-            { name: "Metamorphosis", type: "document" },
-            { name: "Humble", type: "document" },
-            { name: "Celestial Scars", type: "document" },
-            { name: "The Nails", type: "document" }
+            { name: "Beast", type: "image", src: "Beast Studio Photography/Rose/RG Beast Front.png" },
+            { name: "Metamorphosis", type: "image", src: "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front.png" },
+            { name: "Humble", type: "image", src: "Humble Studio Photography/Rose/RG Humble Front.png" },
+            { name: "Celestial Scars", type: "image", src: "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock n Link.png" },
+            { name: "The Nails", type: "image", src: "The Nails Studio Photography/Rose/RG Nails Gauge Macro.png" }
           ],
         },
         "tom-sketches": {
@@ -6375,6 +6401,53 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           nameEl.textContent = selectedFile.name.replace(/\.png$/, "");
       }
 
+      function updateDeepLinkToFrontmostWindow(ignoreElement = null) {
+        const url = new URL(window.location.origin + window.location.pathname);
+        const activeWindows = [];
+
+        document.querySelectorAll('.popup.active').forEach(p => {
+            if (p !== ignoreElement) {
+                activeWindows.push({ element: p, type: 'window', id: p.id });
+            }
+        });
+
+        const finder = document.getElementById("finder-window");
+        if (finder && finder.classList.contains("active") && finder !== ignoreElement) {
+            activeWindows.push({ element: finder, type: 'folder', id: selectedFolder });
+        }
+
+        const prodModal = document.getElementById("product-detail-modal");
+        if (prodModal && prodModal.style.display !== "none" && prodModal.style.display !== "" && prodModal !== ignoreElement) {
+            activeWindows.push({
+                element: prodModal,
+                type: 'file',
+                id: window.currentShowroomData && window.currentShowroomData[0] ? window.currentShowroomData[0].name : ""
+            });
+        }
+
+        if (activeWindows.length > 0) {
+            let topWindow = activeWindows[0];
+            let maxZ = parseInt(window.getComputedStyle(topWindow.element).zIndex) || 0;
+            for (let i = 1; i < activeWindows.length; i++) {
+                let z = parseInt(window.getComputedStyle(activeWindows[i].element).zIndex) || 0;
+                if (z > maxZ) {
+                    maxZ = z;
+                    topWindow = activeWindows[i];
+                }
+            }
+
+            if (topWindow.type === 'window') {
+                url.searchParams.set('window', topWindow.id);
+            } else if (topWindow.type === 'folder' && topWindow.id !== 'macintosh-hd') {
+                url.searchParams.set('folder', topWindow.id);
+            } else if (topWindow.type === 'file' && topWindow.id) {
+                url.searchParams.set('file', topWindow.id);
+            }
+        }
+        
+        window.history.pushState(null, '', url);
+      }
+
       function closePopup(popupId, updateHistory = true) {
         const popup = document.getElementById(popupId);
         if (popup) {
@@ -6382,23 +6455,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           popup.classList.remove("graphite-mode"); // Exit fullscreen
           
           if (updateHistory) {
-            const activePopups = Array.from(document.querySelectorAll('.popup.active')).filter(p => p.id !== popupId);
-            const url = new URL(window.location);
-            if (activePopups.length > 0) {
-              let topPopup = activePopups[0];
-              let maxZ = parseInt(window.getComputedStyle(topPopup).zIndex) || 0;
-              for (let i = 1; i < activePopups.length; i++) {
-                let z = parseInt(window.getComputedStyle(activePopups[i]).zIndex) || 0;
-                if (z > maxZ) {
-                  maxZ = z;
-                  topPopup = activePopups[i];
-                }
-              }
-              url.searchParams.set('window', topPopup.id);
-            } else {
-              url.searchParams.delete('window');
-            }
-            window.history.pushState(null, '', url);
+            updateDeepLinkToFrontmostWindow(popup);
           }
 
           // Pause any video inside the popup
@@ -7074,7 +7131,10 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
       function closeImagePopup(popupId) {
         const popup = document.getElementById(popupId);
-        if (popup) popup.remove();
+        if (popup) {
+          popup.remove();
+          updateDeepLinkToFrontmostWindow();
+        }
       }
 
       // Reusable draggable function
@@ -7418,6 +7478,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         "video",
         "maison",
         "power",
+        "transcendence-of-man-folder",
         "tom-sketches",
         "tom-renderings",
         "tom-final",
@@ -7500,13 +7561,21 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         // Update navigation history (only if not navigating from history)
         if (!fromHistory) {
-          // Remove any forward history if we're navigating from middle of stack
-          navigationHistory = navigationHistory.slice(0, historyIndex + 1);
-          // Only add to history if it's different from the current folder
-          const currentFolder = navigationHistory[historyIndex];
-          if (currentFolder !== folderKey) {
-            navigationHistory.push(folderKey);
-            historyIndex = navigationHistory.length - 1;
+          // Check if folderKey is already in the backward history stack
+          const existingIndex = navigationHistory.lastIndexOf(folderKey, historyIndex);
+          if (existingIndex !== -1 && existingIndex < historyIndex) {
+            // Unwind history if navigating to a parent/previous folder
+            historyIndex = existingIndex;
+            navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+          } else {
+            // Remove any forward history if we're navigating from middle of stack
+            navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+            // Only add to history if it's different from the current folder
+            const currentFolder = navigationHistory[historyIndex];
+            if (currentFolder !== folderKey) {
+              navigationHistory.push(folderKey);
+              historyIndex = navigationHistory.length - 1;
+            }
           }
         }
         
@@ -8420,8 +8489,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         finderWindow.classList.add("active");
 
         if (!preserveHistory) {
-          navigationHistory = [folderId];
-          historyIndex = 0;
+          if (folderId !== "macintosh-hd") {
+            navigationHistory = ["macintosh-hd", folderId];
+            historyIndex = 1;
+          } else {
+            navigationHistory = [folderId];
+            historyIndex = 0;
+          }
         }
 
         if (!skipCloseModal) {
@@ -8481,11 +8555,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         finderWindow.classList.remove("active");
         deselectAllFolders();
         
-        const modal = document.getElementById("product-detail-modal");
-        const modalActive = modal && modal.style.display !== "none" && modal.style.display !== "";
-        if (!modalActive) {
-            window.history.pushState({}, '', window.location.pathname);
-        }
+        updateDeepLinkToFrontmostWindow(finderWindow);
       }
 
       // Deselect all folders
@@ -8947,15 +9017,15 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         let launchDelay = 0;
         if (window.innerWidth <= 768) {
-          currentView = "list";
+          currentView = "icons";
           const viewLabel = document.getElementById("view-label");
           const viewIcon = document.getElementById("view-icon");
-          if (viewLabel) viewLabel.textContent = "List";
-          if (viewIcon) viewIcon.className = "fas fa-th-list";
+          if (viewLabel) viewLabel.textContent = "Icons";
+          if (viewIcon) viewIcon.className = "fas fa-th-large";
           
           document.querySelectorAll(".view-menu-item").forEach(i => i.classList.remove("selected"));
-          const listBtn = document.querySelector('.view-menu-item[data-view="list"]');
-          if (listBtn) listBtn.classList.add("selected");
+          const iconBtn = document.querySelector('.view-menu-item[data-view="icon"]');
+          if (iconBtn) iconBtn.classList.add("selected");
 
           // Background Image Interaction Logic
           const desktop = document.getElementById("desktop");
@@ -9052,6 +9122,23 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
           // Position all popups after opening
           positionInitialPopups();
+
+          if (window.innerWidth <= 768) {
+              const bootVideos = document.querySelectorAll('#popup-transcendence video, #popup-sb-logo video, #popup-power-video video');
+              bootVideos.forEach(v => {
+                  v.pause();
+                  const obs = new IntersectionObserver(entries => {
+                      entries.forEach(entry => {
+                          if (entry.isIntersecting) {
+                              entry.target.play().catch(e => console.error("Video play failed:", e));
+                          } else {
+                              entry.target.pause();
+                          }
+                      });
+                  }, { threshold: 0.1 });
+                  obs.observe(v);
+              });
+          }
 
           // Maison Manifest Delay - Block ONLY controls
           const maisonWindow = document.getElementById("popup-maison");
@@ -9500,8 +9587,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         }
         if (isOpeningModal) return;
         isOpeningModal = true;
-        const baseNameStr = item.name.split(" - ")[0];
-        const origProduct = window.CAROUSEL_PRODUCTS ? (window.CAROUSEL_PRODUCTS.find(p => p.name === baseNameStr && p.collection === "sophisticated-ignorance") || window.CAROUSEL_PRODUCTS.find(p => p.name === item.name) || item) : item;
+        const baseNameStr = item.name.split(" - ")[0].replace(/ Studio Photography$/i, "");
+        const origProduct = window.CAROUSEL_PRODUCTS ? (
+            window.CAROUSEL_PRODUCTS.find(p => p.name === baseNameStr && p.collection === "sophisticated-ignorance") || 
+            window.CAROUSEL_PRODUCTS.find(p => p.name === baseNameStr && p.collection === "sophisticated-brilliance") || 
+            window.CAROUSEL_PRODUCTS.find(p => p.name === item.name) || 
+            item
+        ) : item;
         try {
           const modal = document.getElementById("product-detail-modal");
           if (modal && modal.style.display === "flex") return;
@@ -9772,6 +9864,61 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 descContainer.innerHTML = descHtml;
             }
 
+            if (item.collection === "sophisticated-brilliance") {
+                let caratWeight = "N/A";
+                let clarity = "N/A";
+                let color = "N/A";
+                let dimensions = "N/A";
+                const baseNameUpper = (origProduct.name || "").toUpperCase();
+                
+                if (baseNameUpper.includes("BEAST")) {
+                    caratWeight = "45CTW"; clarity = "VS+"; color = "D-F"; dimensions = '2.5" x 1.75"';
+                } else if (baseNameUpper.includes("METAMORPHOSIS")) {
+                    caratWeight = "30CTW"; clarity = "VS+"; color = "D-F"; dimensions = '2.5" x 1.75"';
+                } else if (baseNameUpper.includes("THE NAILS")) {
+                    caratWeight = "2.36CTW"; clarity = "VS+"; color = "D-F"; dimensions = '20MM LENGTH';
+                } else if (baseNameUpper.includes("CELESTIAL SCARS")) {
+                    dimensions = '18MM GAUGE, 20" LENGTH';
+                }
+
+                const specHtml = `
+                    <div style="margin-top: 30px;">
+                        <h3 style="font-size: 14px; letter-spacing: 0.1em; margin-bottom: 15px; color: white;">SIZE & SPECIFICATIONS</h3>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.2);">
+                            <span style="font-weight: 600; color: white; font-size: 13px;">METAL</span>
+                            <span style="color: #aaa; font-size: 13px;">14KT GOLD</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.2);">
+                            <span style="font-weight: 600; color: white; font-size: 13px;">CARAT WEIGHT</span>
+                            <span style="color: #aaa; font-size: 13px;">${caratWeight}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.2);">
+                            <span style="font-weight: 600; color: white; font-size: 13px;">DIAMOND CLARITY</span>
+                            <span style="color: #aaa; font-size: 13px;">${clarity}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.2);">
+                            <span style="font-weight: 600; color: white; font-size: 13px;">DIAMOND COLOR</span>
+                            <span style="color: #aaa; font-size: 13px;">${color}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.2);">
+                            <span style="font-weight: 600; color: white; font-size: 13px;">DIMENSIONS</span>
+                            <span style="color: #aaa; font-size: 13px;">${dimensions}</span>
+                        </div>
+                    </div>
+                `;
+                
+                const collectionHtml = `
+                    <div style="margin-top: 30px;">
+                        <h3 style="font-size: 14px; letter-spacing: 0.1em; margin-bottom: 15px; color: white;">COLLECTION</h3>
+                        <div style="color: #d1d1d6; font-size: 14px; line-height: 1.5;">
+                            <b>Transcendence of Man</b><br><br>
+                            <div style="text-indent: 1.5em;">As a whole, the collection invites <i>reflection on scars</i> not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.</div>
+                        </div>
+                    </div>
+                `;
+                descContainer.innerHTML += specHtml + collectionHtml;
+            }
+
             infoContainer.innerHTML = "";
             perfContainer.innerHTML = "";
             reqContainer.innerHTML = "";
@@ -9792,13 +9939,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               infoContainer.appendChild(togglesContainer);
               
               if (isJewelry) {
-                reqContainer.previousElementSibling.innerText = "Collection";
-                reqContainer.previousElementSibling.style.color = "white";
-                reqContainer.previousElementSibling.style.fontSize = "16px";
-                reqContainer.previousElementSibling.style.margin = "0 0 20px 0";
-                reqContainer.previousElementSibling.style.fontWeight = "500";
-                reqContainer.innerHTML = "<li style='list-style:none; margin-left:-20px; font-size:14px; color:#d1d1d6;'>Transcendence of Man</li>";
-                
+                reqContainer.parentElement.style.display = "none";
                 perfContainer.style.display = "none";
                 if (perfContainer.previousElementSibling) perfContainer.previousElementSibling.style.display = "none";
                 
@@ -9830,7 +9971,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     currentCarouselImages = baseImages.map(img => 
                         img.replace(/Rose|Yellow|White/g, colorName).replace(/RG |YG |WG /g, abbrev + " ")
                     );
-                    currentCarouselIndex = 0;
+                    currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselImages.length - 1);
+                    if (currentCarouselIndex < 0) currentCarouselIndex = 0;
                     renderDots();
                     updateCarouselImage();
                   };
@@ -9906,7 +10048,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                            currentCarouselImages = relatedItem.images || [relatedItem.image || item.image];
                            
                            if (e && e.isTrusted) {
-                               currentCarouselIndex = 0;
+                               currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselImages.length - 1);
+                               if (currentCarouselIndex < 0) currentCarouselIndex = 0;
                            } else {
                                let clickedSrc = item.src || item.image;
                                let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
@@ -9997,13 +10140,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       }
 
       function closeProductDetail() {
-        const finderActive = document.getElementById("finder-window") && document.getElementById("finder-window").classList.contains("active");
-        if (!finderActive || selectedFolder === "macintosh-hd") {
-          window.history.pushState({}, '', window.location.pathname);
-        } else {
-          window.history.pushState({}, '', '?folder=' + encodeURIComponent(selectedFolder));
-        }
         const modal = document.getElementById("product-detail-modal");
+        updateDeepLinkToFrontmostWindow(modal);
         if (modal) {
           modal.classList.remove("visible");
           setTimeout(() => { modal.style.display = "none"; }, 300);
@@ -10033,19 +10171,25 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
            }
         }
 
-        document.getElementById("product-detail-modal").style.display = "none";
-
         if (category === "sophisticated-brilliance") {
             const brillianceModal = document.getElementById("brilliance-inquiry-form-modal");
             brillianceModal.style.display = "flex";
-            brillianceModal.style.zIndex = "99999999";
+            if (typeof highestWindowZIndex !== 'undefined' && highestWindowZIndex > 1000000) {
+              brillianceModal.style.zIndex = highestWindowZIndex + 1;
+            } else {
+              brillianceModal.style.zIndex = "1000000";
+            }
             setTimeout(() => brillianceModal.classList.add("visible"), 10);
             return;
         }
 
         const modal = document.getElementById("inquiry-form-modal");
         modal.style.display = "flex";
-        modal.style.zIndex = "99999999";
+        if (typeof highestWindowZIndex !== 'undefined' && highestWindowZIndex > 1000000) {
+          modal.style.zIndex = highestWindowZIndex + 1;
+        } else {
+          modal.style.zIndex = "1000000";
+        }
         setTimeout(() => modal.classList.add("visible"), 10);
 
         const yachtCheckbox = document.getElementById("addon-yacht");
@@ -10095,6 +10239,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
       function closeBrillianceInquiryForm() {
         const modal = document.getElementById("brilliance-inquiry-form-modal");
+        updateDeepLinkToFrontmostWindow(modal);
         modal.classList.remove("visible");
         setTimeout(() => {
           modal.style.display = "none";
@@ -10104,6 +10249,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
       function closeInquiryForm() {
         const modal = document.getElementById("inquiry-form-modal");
+        updateDeepLinkToFrontmostWindow(modal);
         modal.classList.remove("visible");
         modal.style.display = "none";
       }
@@ -10339,7 +10485,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             // Restore Finder Window
             let preserve = true;
             if (typeof navigationHistory !== 'undefined' && navigationHistory.includes(folderParam)) {
-                historyIndex = navigationHistory.indexOf(folderParam);
+                let foundIndex = navigationHistory.lastIndexOf(folderParam, historyIndex);
+                if (foundIndex !== -1) {
+                    historyIndex = foundIndex;
+                } else {
+                    historyIndex = navigationHistory.indexOf(folderParam);
+                }
             } else {
                 preserve = false;
             }
@@ -10347,6 +10498,20 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         } else if (windowToOpen) {
             // Restore standard window
             openPopup(windowToOpen, false);
+        } else {
+            // Base state (no params)
+            if (typeof closeFinderWindow === 'function') {
+                const finder = document.getElementById("finder-window");
+                if (finder && finder.style.display !== "none") {
+                    closeFinderWindow(false);
+                }
+            }
+            if (typeof navigationHistory !== 'undefined') {
+                historyIndex = 0;
+            }
+            if (window.innerWidth <= 768 && typeof openFinderWindow === 'function') {
+                openFinderWindow('macintosh-hd', false, false);
+            }
         }
       });
 
@@ -11617,13 +11782,6 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 <label>Company / Affiliation</label><input type="text" id="brilliance-company" placeholder="(Optional)" />
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-col">
-                <label>Referral Source</label><input type="text" id="brilliance-referral" />
-              </div>
-              <div class="form-col"></div>
-            </div>
-
             <h3 class="brilliance-form-section-title">Bespoke Requirements</h3>
             
             <label>Gold Tone Preference</label>
@@ -11643,31 +11801,47 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             </div>
 
             <label>Product(s) Interested In</label>
-            <div class="brilliance-checkbox-group" style="grid-template-columns: 1fr;">
+            <div class="brilliance-checkbox-group" style="grid-template-columns: repeat(3, 1fr);">
               <label class="brilliance-checkbox-item">
-                <input type="checkbox" name="brillianceProducts" value="Beast with Celestial Scars" />
-                <span>Beast with Celestial Scars</span>
+                <input type="checkbox" name="brillianceProducts" value="Beast" />
+                <span>Beast</span>
               </label>
               <label class="brilliance-checkbox-item">
-                <input type="checkbox" name="brillianceProducts" value="The Nails" />
-                <span>The Nails</span>
-              </label>
-              <label class="brilliance-checkbox-item">
-                <input type="checkbox" name="brillianceProducts" value="The Nails with Celestial Scars" />
-                <span>The Nails with Celestial Scars</span>
+                <input type="checkbox" name="brillianceProducts" value="Metamorphosis" />
+                <span>Metamorphosis</span>
               </label>
               <label class="brilliance-checkbox-item">
                 <input type="checkbox" name="brillianceProducts" value="Humble" />
                 <span>Humble</span>
               </label>
               <label class="brilliance-checkbox-item">
-                <input type="checkbox" name="brillianceProducts" value="Beast Humble Metamorphosis Pendant Set" />
-                <span>Beast Humble Metamorphosis Pendant Set</span>
+                <input type="checkbox" name="brillianceProducts" value="Celestial Scars" />
+                <span>Celestial Scars</span>
+              </label>
+              <label class="brilliance-checkbox-item">
+                <input type="checkbox" name="brillianceProducts" value="The Nails" />
+                <span>The Nails</span>
+              </label>
+              <label class="brilliance-checkbox-item">
+                <input type="checkbox" name="brillianceProducts" value="Accessory Set (Celestial Scars & The Nails)" />
+                <span>Accessory Set (Celestial Scars & The Nails)</span>
+              </label>
+              <label class="brilliance-checkbox-item">
+                <input type="checkbox" name="brillianceProducts" value="Pendant Set (Beast, Metamorphosis & Humble)" />
+                <span>Pendant Set (Beast, Metamorphosis & Humble)</span>
+              </label>
+              <label class="brilliance-checkbox-item">
+                <input type="checkbox" name="brillianceProducts" value="Bespoke Commission" />
+                <span>Bespoke Commission</span>
+              </label>
+              <label class="brilliance-checkbox-item">
+                <input type="checkbox" name="brillianceProducts" value="Luxury Timepiece" />
+                <span>Luxury Timepiece</span>
               </label>
             </div>
 
             <p style="margin-top: 40px; color: rgba(255, 255, 255, 0.4); font-size: 11px; font-style: italic; line-height: 1.5; text-align: justify;">
-              All products are exclusively produced in 14kt gold and offered in their single, curated size specification. Exact details and bespoke arrangements will be disclosed during your private consultation.
+              All products are exclusively produced in 14kt gold and offered in their individual, curated size specification. Exact details and bespoke arrangements will be disclosed during your private consultation.
             </p>
           </form>
         </div>
@@ -11736,6 +11910,9 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       const overlay = document.getElementById("deterrent-overlay");
 
       window.addEventListener("blur", () => {
+        if (document.activeElement && document.activeElement.tagName === "IFRAME") {
+          return;
+        }
         overlay.style.display = "flex";
       });
 
@@ -12017,6 +12194,24 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         margin-bottom: 0; flex: 1; text-align: left;
       }
       @media (max-width: 768px) {
+        .brilliance-checkbox-group {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 15px !important;
+          display: grid !important;
+        }
+        .brilliance-checkbox-item {
+          display: flex !important;
+          align-items: flex-start !important;
+        }
+        .brilliance-checkbox-item span {
+          white-space: normal !important;
+          word-break: break-word !important;
+          line-height: 1.4 !important;
+          padding-top: 2px !important;
+        }
+        #pd-info {
+          padding-left: 0 !important;
+        }
         #site-footer-message-bar {
           flex-direction: column;
           padding: 1rem;

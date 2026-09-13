@@ -1,21 +1,34 @@
 # PROTECTED SYSTEMS
 
-To guarantee that your highly-tuned core systems are never accidentally modified, overwritten, or hallucinated by any AI agent now or in the future. We will create a permanent, hardcoded "lock" in this workspace that every future agent instance will be forced to read and obey before taking any action.
+> [!CAUTION]
+> **READ THIS BEFORE PROCEEDING:** This is a permanent digital lock for the `CIRE-github` repository. All AI agents MUST obey these boundaries as core system instructions. VIOLATING THESE RULES IS A CRITICAL FAILURE.
 
-1. **The Protected Zones (No-Touch Protocol):**
-   - Landing page boot sequence
-   - Deep link boot sequence
-   - Protected content overlay & authentication logic
-   - Carousel gallery mapping, Finder window rendering, and the continuous backward history navigation 
-   - Desktop folder layout & orientation
-   - Desktop carousel display, layout, orientation, and CSS keyframe speed
+## 1. THE DESKTOP SITE IS ABSOLUTELY LOCKED (NO-TOUCH PROTOCOL)
 
-2. **The Golden Rule for Modifications:**
-   - Any requested modification must strictly target the specific line/element asked for.
-   - If an agent is uncertain if a requested change will bleed into a protected zone, they are **mandated** to stop and ask for your explicit approval before executing any code.
+The entire desktop site layout, styling, structure, and functionality is **100% operational and perfected.** 
 
-3. **No Hallucination Mandate:**
-   - The agent is forbidden from "cleaning up", "refactoring", or "optimizing" surrounding code outside the scope of the exact user prompt.
+- **ZERO GLOBAL CSS CHANGES ARE PERMITTED.** Any and all CSS changes you make going forward must be strictly scoped within `@media (max-width: 768px)` or other mobile/tablet breakpoints. 
+- **ZERO JAVASCRIPT INLINE STYLING.** Do not inject inline styles (e.g., `element.style.paddingLeft = "0"`) via JavaScript if that JavaScript executes on desktop. If a logic change is required, it must check `window.innerWidth` first, or be handled purely by mobile CSS.
+- **ZERO DOM STRUCTURE CHANGES.** Do not alter the HTML nesting or structure for desktop components. 
 
-> [!IMPORTANT]
-> Because this file is placed in the `.agents/rules/` directory, every single time you start a new conversation or ask an agent to perform a task, the agent will silently read this rule file and inherit these boundaries as core system instructions. It serves as a permanent digital lock.
+**If a user requests a UI fix, you MUST assume it applies ONLY to mobile/tablet, and you MUST guarantee your fix will not bleed into the desktop view.**
+
+## 2. Protected Core Systems
+
+The following components and systems are considered **Protected Zones** and must not be altered under any circumstances:
+
+- **Landing page boot sequence**
+- **Deep link boot sequence**
+- **Protected content overlay (`window.blur` event) & authentication logic**
+- **Carousel gallery mapping, Finder window rendering (`openFinderWindow`), and continuous backward history navigation (`navigateBack`)**
+- **Desktop folder layout & orientation**
+- **Desktop carousel display, layout, orientation, and CSS keyframe speed**
+
+## 3. The Golden Rule for Modifications
+
+- Any requested modification must **strictly** target the specific line or element asked for.
+- If you are uncertain whether a requested change will bleed into a protected zone, you are **mandated** to stop and ask for explicit approval from the user before executing any code.
+
+## 4. No Hallucination Mandate
+
+- You are **forbidden** from "cleaning up", "refactoring", or "optimizing" surrounding code outside the exact scope of the user's prompt. Stay strictly within the bounds of what was requested.
