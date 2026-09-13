@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   projectId: "cire-conglomerate",
@@ -16,4 +16,8 @@ const db = getFirestore(app);
 window.firebaseDB = db;
 window.firebaseAddDoc = addDoc;
 window.firebaseCollection = collection;
+window.firebaseGetDocs = getDocs;
 window.firebaseServerTimestamp = serverTimestamp;
+
+window.firebaseDoc = doc;
+window.firebaseDeleteDoc = deleteDoc;
