@@ -3991,11 +3991,9 @@
           <p style="text-indent: 2em">
             A chess game cannot begin without the pawn. <i>Sophisticated Ignorance</i> is built on the belief that elevation is earned through conviction and perseverance, regardless of circumstance. Whether one's wardrobe begins with the simplicity of <i>Foundations</i> or has matured into the refinement of <i>Crownworks</i>, each garment is designed to represent and complement a stage of personal growth.
           </p>
-          <br /><br />
           <p style="text-indent: 2em">
             Position alone does not create power; it is more so how power is leveraged. Through conviction, <b>Power is Perfected in Position.</b>
           </p>
-          <br /><br />
           <p style="text-indent: 2em">
             At its core, the brand is organized through a <b>symbolic classification system</b> that structures its universe of garments. Categories are defined by function, with each occupying a distinct role within the wardrobe. The symbols assigned to them serve as subtle markers of position, purpose, and progression.
           </p>
@@ -4047,7 +4045,7 @@
         <div class="popup-content">
           <h1>Foundations: The Architecture of Self</h1>
           <p style="text-align: center; font-style: italic; font-weight: 500">
-            Establish identity and structure — the groundwork of sophistication.
+            Establish identity and structure; the groundwork of sophistication.
           </p>
           <br />
           <p style="text-indent: 2em">
@@ -4115,7 +4113,7 @@
         <div class="popup-content">
           <h1>Relics: The Creed of Craft</h1>
           <p style="text-align: center; font-style: italic; font-weight: 500">
-            Carry heirlooms that endure — crafted in devotion to quality.
+            Carry heirlooms that endure; crafted in devotion to quality.
           </p>
           <br />
           <p style="text-indent: 2em">
@@ -10868,443 +10866,42 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 ><input type="text" id="inq-company" placeholder="(Optional)" />
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-col">
-                <label>Referral Source</label
-                ><input type="text" id="inq-referral" />
-              </div>
-              <div class="form-col"></div>
-            </div>
+            
 
-            <h3 class="form-section-title">Experience & Vehicle</h3>
+            <h3 class="form-section-title">Fine Jewelry Inquiry</h3>
             <div class="form-row">
               <div class="form-col">
-                <label>Experience Type</label>
-                <select id="inq-experience" required>
-                  <option value="">Select...</option>
-                  <option>Private Arrival</option>
-                  <option>Weekend Rental</option>
-                  <option>Photoshoot</option>
-                  <option>Music Video</option>
-                  <option>Wedding</option>
-                  <option>Real Estate Showing</option>
-                  <option>Brand Activation</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div class="form-col">
-                <label>Vehicle Category</label>
-                <input
-                  type="text"
-                  id="inq-category"
-                  readonly
-                  style="background: #1c1c1e; color: #8e8e93"
-                />
-              </div>
-            </div>
-            <label>Specific Model Desired</label>
-            <input
-              type="text"
-              id="inq-model"
-              readonly
-              style="background: #1c1c1e; color: #8e8e93; margin-bottom: 16px"
-            />
-
-            <div class="form-row">
-              <div class="form-col">
-                <label>Color Preference</label
-                ><input type="text" id="inq-color" />
-              </div>
-              <div class="form-col">
-                <label>Number of Vehicles</label
-                ><select id="inq-vehicle-count">
-                  <option>1</option>
-                  <option>2</option>
-                  <option>3+</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-col">
-                <label>Budget Range</label>
-                <div style="display: flex; align-items: center; gap: 16px">
-                  <input
-                    type="range"
-                    id="inq-budget"
-                    min="500"
-                    max="25000"
-                    step="500"
-                    value="5000"
-                    oninput="document.getElementById('budget-val').innerText = '$' + parseInt(this.value).toLocaleString() + (this.value == 25000 ? '+' : '')"
-                  />
-                  <span
-                    id="budget-val"
-                    style="
-                      color: white;
-                      font-size: 14px;
-                      min-width: 80px;
-                      text-align: right;
-                    "
-                    >$5,000</span
-                  >
-                </div>
-              </div>
-            </div>
-
-            <h3 class="form-section-title">Timing & Location</h3>
-            <div class="form-row">
-              <div class="form-col">
-                <label>Desired Date (Pick-up - Return)</label>
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <input
-                    type="date"
-                    id="inq-date-start"
-                    required
-                    style="flex: 1"
-                  />
-                  <span style="color: rgba(255, 255, 255, 0.5)">-</span>
-                  <input
-                    type="date"
-                    id="inq-date-end"
-                    required
-                    style="flex: 1"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-col">
-                <label>Start Time</label>
-                <div style="display: flex; gap: 4px; align-items: center">
-                  <select
-                    id="inq-time-hr"
-                    style="flex: 1; padding-left: 4px"
-                    required
-                  >
-                    <option value="01">01</option>
-                    <option value="02">02</option>
-                    <option value="03">03</option>
-                    <option value="04">04</option>
-                    <option value="05">05</option>
-                    <option value="06">06</option>
-                    <option value="07">07</option>
-                    <option value="08">08</option>
-                    <option value="09" selected>09</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                  </select>
-                  <span style="color: white; padding-top: 4px">:</span>
-                  <select
-                    id="inq-time-min"
-                    style="flex: 1; padding-left: 4px"
-                    required
-                  >
-                    <option value="00">00</option>
-                    <option value="05">05</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="25">25</option>
-                    <option value="30">30</option>
-                    <option value="35">35</option>
-                    <option value="40">40</option>
-                    <option value="45">45</option>
-                    <option value="50">50</option>
-                    <option value="55">55</option>
-                  </select>
-                  <select
-                    id="inq-time-ampm"
-                    style="flex: 1; padding-left: 4px"
-                    required
-                  >
-                    <option value="AM" selected>AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-col">
-                <label>End Time (Optional)</label>
-                <div style="display: flex; gap: 4px; align-items: center">
-                  <select id="inq-end-hr" style="flex: 1; padding-left: 4px">
-                    <option value="">--</option>
-                    <option value="01">01</option>
-                    <option value="02">02</option>
-                    <option value="03">03</option>
-                    <option value="04">04</option>
-                    <option value="05">05</option>
-                    <option value="06">06</option>
-                    <option value="07">07</option>
-                    <option value="08">08</option>
-                    <option value="09">09</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                  </select>
-                  <span style="color: white; padding-top: 4px">:</span>
-                  <select id="inq-end-min" style="flex: 1; padding-left: 4px">
-                    <option value="">--</option>
-                    <option value="00">00</option>
-                    <option value="05">05</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                    <option value="25">25</option>
-                    <option value="30">30</option>
-                    <option value="35">35</option>
-                    <option value="40">40</option>
-                    <option value="45">45</option>
-                    <option value="50">50</option>
-                    <option value="55">55</option>
-                  </select>
-                  <select id="inq-end-ampm" style="flex: 1; padding-left: 4px">
-                    <option value="">--</option>
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-top: 24px;
-                color: #d1d1d6;
-                text-transform: uppercase;
-              "
-              ><input type="checkbox" id="inq-flexible-timing" /> MY TIMING IS
-              FLEXIBLE</label
-            >
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-top: 12px;
-                color: #d1d1d6;
-                text-transform: uppercase;
-              "
-              ><input type="checkbox" id="inq-24-hour" /> 24-HOUR RENTAL OR
-              EVENT WINDOW</label
-            >
-
-            <div
-              class="form-row"
-              style="margin-top: 24px"
-              id="delivery-section"
-            >
-              <div class="form-col">
-                <label>Delivery</label>
-                <select id="inq-delivery" required onchange="toggleDelivery()">
-                  <option value="No">No</option>
-                  <option value="Yes">Yes</option>
+                <label>Color Preference</label>
+                <select id="inq-gold-color" required>
+                  <option value="">Select Gold Color...</option>
+                  <option value="14kt Yellow Gold">14kt Yellow Gold</option>
+                  <option value="14kt White Gold">14kt White Gold</option>
+                  <option value="14kt Rose Gold">14kt Rose Gold</option>
                 </select>
               </div>
               <div class="form-col"></div>
             </div>
-            <div class="form-row">
-              <div class="form-col">
-                <label id="location-label">Pickup/Drop-off Location</label>
-                <input type="text" id="inq-location" />
-              </div>
-              <div class="form-col">
-                <label>Out-of-state Plans?</label>
-                <select id="inq-out-of-state" required>
-                  <option value="No">No</option>
-                  <option value="Yes">Yes</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="driver-eligibility-section">
-              <h3 class="form-section-title">Driver Eligibility</h3>
-              <div class="form-row">
-                <div class="form-col">
-                  <label>Driver Age</label>
-                  <select id="inq-age" required>
-                    <option value="">Select Age...</option>
-                    <option value="Under 21">Under 21</option>
-                    <option value="21-24">21-24</option>
-                    <option value="25-30">25-30</option>
-                    <option value="31-40">31-40</option>
-                    <option value="41-50">41-50</option>
-                    <option value="51-60">51-60</option>
-                    <option value="60+">60+</option>
-                  </select>
-                </div>
-                <div class="form-col">
-                  <label>License Type</label>
-                  <select
-                    id="inq-license-type"
-                    required
-                    onchange="toggleInsuranceField()"
-                  >
-                    <option value="">Select...</option>
-                    <option value="US License">US License</option>
-                    <option value="International License">
-                      International License
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-col">
-                  <label>Full Coverage Insurance</label>
-                  <select id="inq-full-coverage" required>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </div>
-                <div class="form-col">
-                  <label>Additional Drivers?</label>
-                  <select
-                    id="inq-has-additional-drivers"
-                    onchange="toggleAdditionalDrivers()"
-                  >
-                    <option value="No">No</option>
-                    <option value="Yes">Yes</option>
-                  </select>
-                </div>
-              </div>
-              <div
-                class="form-row"
-                id="insurance-container"
-                style="display: none; margin-top: 24px"
-              >
-                <div class="form-col">
-                  <label id="insurance-label">Insurance State</label>
-                  <select id="inq-insurance-state" style="display: none">
-                    <option value="">Select State...</option>
-                    <option value="AL">AL</option>
-                    <option value="AK">AK</option>
-                    <option value="AZ">AZ</option>
-                    <option value="AR">AR</option>
-                    <option value="CA">CA</option>
-                    <option value="CO">CO</option>
-                    <option value="CT">CT</option>
-                    <option value="DE">DE</option>
-                    <option value="FL">FL</option>
-                    <option value="GA">GA</option>
-                    <option value="HI">HI</option>
-                    <option value="ID">ID</option>
-                    <option value="IL">IL</option>
-                    <option value="IN">IN</option>
-                    <option value="IA">IA</option>
-                    <option value="KS">KS</option>
-                    <option value="KY">KY</option>
-                    <option value="LA">LA</option>
-                    <option value="ME">ME</option>
-                    <option value="MD">MD</option>
-                    <option value="MA">MA</option>
-                    <option value="MI">MI</option>
-                    <option value="MN">MN</option>
-                    <option value="MS">MS</option>
-                    <option value="MO">MO</option>
-                    <option value="MT">MT</option>
-                    <option value="NE">NE</option>
-                    <option value="NV">NV</option>
-                    <option value="NH">NH</option>
-                    <option value="NJ">NJ</option>
-                    <option value="NM">NM</option>
-                    <option value="NY">NY</option>
-                    <option value="NC">NC</option>
-                    <option value="ND">ND</option>
-                    <option value="OH">OH</option>
-                    <option value="OK">OK</option>
-                    <option value="OR">OR</option>
-                    <option value="PA">PA</option>
-                    <option value="RI">RI</option>
-                    <option value="SC">SC</option>
-                    <option value="SD">SD</option>
-                    <option value="TN">TN</option>
-                    <option value="TX">TX</option>
-                    <option value="UT">UT</option>
-                    <option value="VT">VT</option>
-                    <option value="VA">VA</option>
-                    <option value="WA">WA</option>
-                    <option value="WV">WV</option>
-                    <option value="WI">WI</option>
-                    <option value="WY">WY</option>
-                  </select>
-                  <select id="inq-insurance-country" style="display: none">
-                    <option value="">Select Country...</option>
-                    <option value="UK">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="FR">France</option>
-                    <option value="DE">Germany</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="OTHER">Other...</option>
-                  </select>
-                </div>
-                <div class="form-col"></div>
-              </div>
-              <div
-                class="form-row"
-                id="additional-drivers-container"
-                style="display: none; margin-top: 24px"
-              >
-                <div class="form-col">
-                  <label>Additional Driver Name(s)</label
-                  ><input
-                    type="text"
-                    id="inq-add-driver-name"
-                    placeholder="(Optional)"
-                  />
-                </div>
-                <div class="form-col">
-                  <label>Additional Driver Age(s)</label>
-                  <select id="inq-add-driver-age">
-                    <option value="">Select Age...</option>
-                    <option value="Under 21">Under 21</option>
-                    <option value="21-24">21-24</option>
-                    <option value="25-30">25-30</option>
-                    <option value="31-40">31-40</option>
-                    <option value="41-50">41-50</option>
-                    <option value="51-60">51-60</option>
-                    <option value="60+">60+</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <h3 class="form-section-title">Concierge Add-ons</h3>
+            <label style="margin-top: 24px; color: rgba(255, 255, 255, 0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 400; display: block;">Products of Interest</label>
             <div class="checkbox-group">
               <label class="checkbox-item"
-                ><input type="checkbox" id="addon-chauffeur" />
-                <span>Chauffeur Request</span></label
+                ><input type="checkbox" id="item-beast-celestial" />
+                <span>The Beast with Celestial Scars</span></label
               >
               <label class="checkbox-item"
-                ><input type="checkbox" id="addon-photo" />
-                <span>Photographer / Videographer</span></label
+                ><input type="checkbox" id="item-nails" />
+                <span>The Nails</span></label
               >
               <label class="checkbox-item"
-                ><input type="checkbox" id="addon-security" />
-                <span>Security</span></label
+                ><input type="checkbox" id="item-nails-celestial" />
+                <span>The Nails with Celestial Scars</span></label
               >
               <label class="checkbox-item"
-                ><input type="checkbox" id="addon-hotel" />
-                <span>Hotel Pickup</span></label
+                ><input type="checkbox" id="item-humble" />
+                <span>Humble</span></label
               >
               <label class="checkbox-item"
-                ><input type="checkbox" id="addon-event" />
-                <span>Event Coordination</span></label
-              >
-              <label class="checkbox-item"
-                ><input type="checkbox" id="addon-multicar" />
-                <span>Multiple-Car Arrival</span></label
-              >
-              <label class="checkbox-item"
-                ><input type="checkbox" id="addon-yacht" />
-                <span>Yacht Pairing</span></label
-              >
-              <label class="checkbox-item"
-                ><input type="checkbox" id="addon-dinner" />
-                <span>Private Dinner / Nightlife</span></label
+                ><input type="checkbox" id="item-beast-humble-set" />
+                <span>Beast Humble Metamorphosis Pendant Set</span></label
               >
             </div>
 
@@ -11330,10 +10927,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               >
                 <input type="checkbox" required style="margin-top: 2px" />
                 <span
-                  >I understand CIRE Concierge is an arranging party and that
-                  all rentals are subject to partner approval, insurance
-                  verification, deposit requirements, and final rental
-                  agreement.</span
+                  >Please note: All products will be produced in 14kt gold and offered in one universal size specification, which will be disclosed during your private consultation.</span
                 >
               </label>
             </div>
