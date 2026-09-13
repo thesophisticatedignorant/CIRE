@@ -1,22 +1,21 @@
----
-name: CIRE Core System Protections
-description: Non-negotiable boundaries preventing the modification or hallucination of core functionalities.
----
+# PROTECTED SYSTEMS
 
-# STRICT BOUNDARIES: DO NOT MODIFY
+To guarantee that your highly-tuned core systems are never accidentally modified, overwritten, or hallucinated by any AI agent now or in the future. We will create a permanent, hardcoded "lock" in this workspace that every future agent instance will be forced to read and obey before taking any action.
 
-This project contains highly tuned and perfected frontend logic. **UNDER NO CIRCUMSTANCES** are you to modify, "refactor", "clean up", or hallucinate changes to the following systems unless the user explicitly and directly requests a change to them:
+1. **The Protected Zones (No-Touch Protocol):**
+   - Landing page boot sequence
+   - Deep link boot sequence
+   - Protected content overlay & authentication logic
+   - Carousel gallery mapping, Finder window rendering, and the continuous backward history navigation 
+   - Desktop folder layout & orientation
+   - Desktop carousel display, layout, orientation, and CSS keyframe speed
 
-## 1. Protected Zones (No-Touch Protocol)
-You must **stand clear** of the following elements and web functions:
-- **Landing Page Boot Sequence:** Any logic handling the initial site load and boot animations.
-- **Deep Link Boot Sequence:** Any logic handling routing, parameter parsing, or initialization when loading directly into a nested path.
-- **Protected Content Overlay:** The lock screen, authentication mechanics, password validation, and the visual overlay.
-- **Navigation & Carousels:** The carousel functionality, the Finder window behaviors, and the continuous backward history navigation mechanism (`navigationHistory`, `popstate`, `navigateBack`, `navigateForward`, `openGalleryView`, `selectFolder`). These operate on strict contingencies and must not be disrupted.
-- **Desktop Layout & Orientation:** The spatial arrangement, grid, folding, or display of the desktop folders.
-- **Carousel Display:** The carousel display format, orientation, visual layout, CSS keyframe speeds, and scrolling logic.
+2. **The Golden Rule for Modifications:**
+   - Any requested modification must strictly target the specific line/element asked for.
+   - If an agent is uncertain if a requested change will bleed into a protected zone, they are **mandated** to stop and ask for your explicit approval before executing any code.
 
-## 2. The Golden Rule
-- Only change exactly what the user asks you to change. 
-- If a requested change overlaps with any of the Protected Zones above, you MUST stop and ask the user for explicit clarification/approval before proceeding.
-- **DO NOT** attempt to optimize surrounding code, variable names, or CSS styles if they fall outside the immediate scope of the user's prompt.
+3. **No Hallucination Mandate:**
+   - The agent is forbidden from "cleaning up", "refactoring", or "optimizing" surrounding code outside the scope of the exact user prompt.
+
+> [!IMPORTANT]
+> Because this file is placed in the `.agents/rules/` directory, every single time you start a new conversation or ask an agent to perform a task, the agent will silently read this rule file and inherit these boundaries as core system instructions. It serves as a permanent digital lock.
