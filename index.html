@@ -3871,7 +3871,7 @@
         <div class="popup-content">
           <h1>Sophisticated Brilliance</h1>
           <p>
-            <i>Sophisticated Brilliance</i> is an <b>art house</b> disguised as a <b>luxury jewelry brand</b> where every creation doubles as <i>wearable art</i> and a <i>financial asset</i>. The brand represents <i>mastery, craftsmanship,</i> and <i>artistic depth</i>, merging the intracacies of traditional fine-jewelry with the progressive nature of hip-hop jewelry. Each piece embodies the philosophy of <i>Imperfection as Character</i>; beauty revealed through time, touch, and transformation. This is epitome of <b>Luxury in its Final Form</b>.
+            <i>Sophisticated Brilliance</i> is an <b>art house</b> disguised as a <b>luxury jewelry brand</b> where every creation doubles as <i>wearable art</i> and a <i>financial asset</i>. The brand represents <i>mastery, craftsmanship,</i> and <i>artistic depth</i>, merging the intricacies of traditional fine-jewelry with the progressive nature of hip-hop jewelry. Each piece embodies the philosophy of <i>Imperfection as Character</i>; beauty revealed through time, touch, and transformation. This is the epitome of <b>Luxury in its Final Form</b>.
           </p>
         </div>
       </div>
@@ -5795,7 +5795,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               name: "power perfected in position.rfd",
               type: "document",
               textContent:
-                "Every position holds potential — not as limitation, but as leverage. **Sophisticated Ignorance** is built on the belief that elevation is earned through conviction, not circumstance. Whether one begins at **Foundations** or reigns within **Crownworks**, each tier represents a stage of growth — a moment to master before advancing to the next. To wear the brand is to embrace progression: to elevate within your means, and to build power through a solid foundation and discipline. Because ascension is not promised — it's pursued. And through conviction, *Power is Perfected in Position*.\n\nAt its core, the collection is organized through a **symbolic classification system** that quietly structures the brand's universe of garments. Categories are defined by function and refinement, each occupying a distinct role within the wardrobe. The symbols that accompany them serve as markers of position and progression, not spectacle. Because power is not loud, it is precise, therefore, is perfected in position.",
+                "Every position holds potential — not as limitation, but as leverage. **Sophisticated Ignorance** is built on the belief that elevation is earned through conviction, not circumstance. Whether one begins at **Foundations** or reigns within **Crownworks**, each tier represents a stage of growth — a moment to master before advancing to the next. To wear the brand is to embrace progression: to elevate within your means, and to build power through a solid foundation and discipline. Because ascension is not promised — it's pursued. And through conviction, *Power is Perfected in Position*.\n\nAt its core, the collection is organized through a **symbolic classification system** that quietly structures the brand's universe of garments. Categories are defined by function and refinement, each occupying a distinct role within the wardrobe. The symbols that accompany them serve as markers of position and progression, not spectacle. Because power is not loud, it is precise; therefore, it is perfected in position.",
             },
             {
               name: "foundations",
@@ -6369,7 +6369,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                             <input type="password" placeholder="••••••••" onkeypress="checkSystemPassword(event)" style="background: rgba(255,255,255,0.05); border: 1px solid #3a3a3c; border-radius: 8px; padding: 6px 10px; width: 100%; max-width: 160px; color: white; outline: none; font-family: 'Courier New', monospace; text-align: center; font-size: 12px; box-sizing: border-box;">
                         </div>`;
           } else if (selectedFile.type === "image" && selectedFile.src) {
-            previewContainer.innerHTML = `<img src="${
+            previewContainer.innerHTML = `<img loading="lazy" decoding="async" src="${
               selectedFile.src
             }" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;" ondblclick="handleFileDoubleClick('${selectedFile.name.replace(
               /\.png$/,
@@ -6661,7 +6661,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     </div>
                 `;
         } else if (selectedFile?.type === "image" && selectedFile?.src) {
-          previewContent = `<img src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain; background: #1a1a1a;">`;
+          previewContent = `<img loading="lazy" decoding="async" src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain; background: #1a1a1a;">`;
         } else if (selectedFile?.type === "video" && selectedFile?.src) {
           previewContent = `<video src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
 
@@ -7036,7 +7036,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         const isVideo = src.endsWith(".mp4") || src.endsWith(".mov");
         const mediaHtml = isVideo ? 
             `<video src="${src}" style="max-width: 100%; display: block;" autoplay muted loop playsinline></video>` : 
-            `<img src="${src}" style="max-width: 100%; display: block;">`;
+            `<img loading="lazy" decoding="async" src="${src}" style="max-width: 100%; display: block;">`;
             
         popup.innerHTML = `
                 <div class="popup-titlebar">
@@ -7351,13 +7351,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             if (imgPath.endsWith('.html')) {
               html += `
                 <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; border-radius: 12px;" onclick="${clickAction}">
-                    <iframe src="/${imgPath}?carousel=true" style="width: 100%; height: 100%; border: none; pointer-events: none; border-radius: 12px; transform: scale(1.05);" scrolling="no" tabindex="-1"></iframe>
+                    <iframe loading="lazy" src="/${imgPath}?carousel=true" style="width: 100%; height: 100%; border: none; pointer-events: none; border-radius: 12px; transform: scale(1.05);" scrolling="no" tabindex="-1"></iframe>
                 </div>
               `;
             } else {
               html += `
                 <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer;" onclick="${clickAction}">
-                    <img src="/${imgPath}" alt="${hoverTitle.replace(/'/g, "\\'")}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; display: block;">
+                    <img loading="lazy" decoding="async" src="/${imgPath}" alt="${hoverTitle.replace(/'/g, "\\'")}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; display: block;">
                 </div>
               `;
             }
@@ -7873,9 +7873,14 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         });
       }
 
-      window.checkSystemPassword = function (e) {
+      window.checkSystemPassword = async function (e) {
         if (e.key === "Enter") {
-          if (e.target.value === "Divin3lyProt3ct3dHighlyFavor3d!") {
+          const msgBuffer = new TextEncoder().encode(e.target.value);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+          if (hashHex === "74e9a3a2c1af42125831215cf42f01ddbf8ab0b2bba9944a2ee392136c7be011") {
             isSystemUnlocked = true;
             populateContent();
             updateDesktopFolderColors();
@@ -7939,7 +7944,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                             let previewHtml;
 
                             if (file.type === "image" && file.src) {
-                              previewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 10px;"><img src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
+                              previewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 10px;"><img loading="lazy" decoding="async" src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
                             } else if (file.type === "video" && file.src) {
                               previewHtml = `<video src="${file.src}#t=0.1" style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 10px;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
                             } else if (
@@ -7985,7 +7990,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                             let previewHtml;
 
                             if (file.type === "image" && file.src) {
-                              previewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin-bottom: 10px;"><img src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
+                              previewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin-bottom: 10px;"><img loading="lazy" decoding="async" src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
                             } else if (file.type === "video" && file.src) {
                               previewHtml = `<video src="${file.src}#t=0.1" style="width: 64px; height: 64px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
                             } else if (
@@ -8050,7 +8055,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                         </div>
                     `;
           } else if (selectedFile?.type === "image" && selectedFile?.src) {
-            previewContent = `<img src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain;">`;
+            previewContent = `<img loading="lazy" decoding="async" src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain;">`;
           } else if (selectedFile?.type === "video" && selectedFile?.src) {
             previewContent = `<video src="${selectedFile.src}" style="width: 100%; height: 100%; object-fit: contain;" autoplay muted loop playsinline></video>`;
           } else if (selectedFile) {
@@ -8066,7 +8071,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                                 let itemPreviewHtml;
 
                                 if (file.type === "image" && file.src) {
-                                  itemPreviewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 10px;"><img src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
+                                  itemPreviewHtml = `<div style="display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 10px;"><img loading="lazy" decoding="async" src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;"></div>`;
                                 } else if (file.type === "video" && file.src) {
                                   itemPreviewHtml = `<video src="${file.src}#t=0.1" style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 10px;" muted playsinline></video>`;
                                 } else if (
@@ -8231,7 +8236,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                             <input type="password" placeholder="••••••••" onkeypress="checkSystemPassword(event)" style="background: rgba(255,255,255,0.05); border: 1px solid #3a3a3c; border-radius: 8px; padding: 6px 10px; width: 100%; max-width: 160px; color: white; outline: none; font-family: 'Courier New', monospace; text-align: center; font-size: 12px; box-sizing: border-box;">
                         </div>`;
           } else if (selectedFile?.type === "image" && selectedFile?.src) {
-            previewContent = `<img src="${
+            previewContent = `<img loading="lazy" decoding="async" src="${
               selectedFile.src
             }" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;" ondblclick="handleFileDoubleClick('${selectedFile.name.replace(
               /\\.png$/,
@@ -8399,7 +8404,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
             let previewHtml;
             if (file.type === "image" && file.src) {
-              previewHtml = `<img src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;">`;
+              previewHtml = `<img loading="lazy" decoding="async" src="${file.src}" style="width: 100%; height: 100%; object-fit: contain;">`;
             } else if (file.type === "video" && file.src) {
               previewHtml = `<video src="${file.src}#t=0.1" style="width: 100%; height: 100%; object-fit: cover;" muted playsinline onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"></video>`;
             } else if (file.type === "document" && file.textContent) {
