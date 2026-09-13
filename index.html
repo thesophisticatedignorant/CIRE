@@ -1210,21 +1210,21 @@
       }
 
       @-webkit-keyframes scroll {
-        0% { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-        100% { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
+        0% { -webkit-transform: translateX(0); transform: translateX(0); }
+        100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
       }
       @keyframes scroll {
-        0% { transform: translate3d(0, 0, 0); }
-        100% { transform: translate3d(-50%, 0, 0); }
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
       }
 
       @-webkit-keyframes scroll-reverse {
-        0% { -webkit-transform: translate3d(-50%, 0, 0); transform: translate3d(-50%, 0, 0); }
-        100% { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+        0% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+        100% { -webkit-transform: translateX(0); transform: translateX(0); }
       }
       @keyframes scroll-reverse {
-        0% { transform: translate3d(-50%, 0, 0); }
-        100% { transform: translate3d(0, 0, 0); }
+        0% { transform: translateX(-50%); }
+        100% { transform: translateX(0); }
       }
 
       .carousel-item {
@@ -1240,6 +1240,8 @@
         user-select: none;
         transition: transform 0.2s;
         position: relative;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
         overflow: hidden;
       }
 
@@ -2210,7 +2212,7 @@
           gap: 40px !important;
           padding-top: 60px !important;
           padding-bottom: 60px !important;
-          height: 100dvh !important;
+          height: auto !important;
           min-height: 100dvh !important;
           overflow-x: hidden !important;
           width: 100vw !important;
@@ -7370,6 +7372,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           });
           carousel.innerHTML = html;
 
+          const speedPxPerSec = 54;
+          const distancePx = items.length * 216; // 216px per item (200px + 16px gap)
+          const durationSec = distancePx / speedPxPerSec;
+          carousel.style.animationDuration = durationSec + "s";
+          carousel.style.webkitAnimationDuration = durationSec + "s";
         });
       }
 
