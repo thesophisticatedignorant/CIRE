@@ -95,15 +95,29 @@
       }
 
       .macos-desktop {
-        background: #1d1d1f; /* fallback */
-        background-image: url("/cire-logo.png"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
-        background-position: center center, center center;
-        background-repeat: no-repeat, no-repeat;
-        background-size: auto, cover;
         height: 100vh;
         position: relative;
         cursor: pointer;
         touch-action: manipulation;
+        background: transparent !important;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-color: #1d1d1f;
+        background-image: url("/cire-logo.png"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
+        background-position: center -220.5px, center center;
+        background-size: auto, cover;
+        background-repeat: no-repeat, no-repeat;
+      }
+      body.light-mode::before {
+        filter: invert(1);
       }
 
       .osm-dark-map {
@@ -1278,13 +1292,6 @@
         background-color: #f0f0f0;
       }
 
-      body.light-mode .macos-desktop {
-        background: #f0f0f0; /* fallback */
-        background-image: url("/cire-logo.png"), linear-gradient(135deg, #e8e8e8 0%, #f0f0f0 100%);
-        background-position: center -220.5px, center;
-        background-repeat: no-repeat, no-repeat;
-        background-size: auto, cover;
-      }
 
       body.light-mode .finder-window {
         background-color: rgba(255, 255, 255, 0.95);
@@ -2056,28 +2063,18 @@
         color: #636366;
       }
 
+
       @media screen and (max-width: 768px) {
         .macos-desktop {
           background: transparent !important;
         }
 
         body::before {
-          content: "";
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          z-index: -1 !important;
-          background-color: #1d1d1f !important;
-          background-image: url("/cire-logo.png"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%) !important;
-          background-position: center calc(50% - 60px), center center !important;
+          background-position: center calc(50% - 150px), center center !important;
           background-size: 100% auto, cover !important;
-          background-repeat: no-repeat, no-repeat !important;
         }
 
         body.light-mode::before {
-          background-color: #e5e5ea !important;
           filter: invert(1) !important;
         }
 
@@ -2542,6 +2539,116 @@
           flex-wrap: wrap !important;
         }
       }
+
+      /* Modals Light Mode Support */
+      body.light-mode #inquiry-form-modal > div,
+      body.light-mode #brilliance-inquiry-form-modal > div,
+      body.light-mode #product-detail-modal > div {
+        background: rgba(255, 255, 255, 0.85) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        color: #1d1d1f !important;
+      }
+      body.light-mode #inquiry-form-modal input,
+      body.light-mode #brilliance-inquiry-form-modal input,
+      body.light-mode #inquiry-form-modal select,
+      body.light-mode #brilliance-inquiry-form-modal select,
+      body.light-mode #inquiry-form-modal textarea,
+      body.light-mode #brilliance-inquiry-form-modal textarea {
+        background: rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        color: #1d1d1f !important;
+      }
+      body.light-mode #inquiry-form-modal h2,
+      body.light-mode #brilliance-inquiry-form-modal h2,
+      body.light-mode #inquiry-form-modal p,
+      body.light-mode #brilliance-inquiry-form-modal p,
+      body.light-mode #inquiry-form-modal span,
+      body.light-mode #brilliance-inquiry-form-modal span,
+      body.light-mode #inquiry-form-modal label,
+      body.light-mode #brilliance-inquiry-form-modal label,
+      body.light-mode #inquiry-form-modal button[type="button"],
+      body.light-mode #brilliance-inquiry-form-modal button[type="button"] {
+        color: #1d1d1f !important;
+      }
+      body.light-mode #inquiry-form-modal button[type="submit"],
+      body.light-mode #brilliance-inquiry-form-modal button[type="submit"] {
+        background: #1d1d1f !important;
+        color: white !important;
+      }
+      body.light-mode #pd-title,
+      body.light-mode #pd-desc,
+      body.light-mode #product-detail-modal h3,
+      body.light-mode #product-detail-modal p,
+      body.light-mode #product-detail-modal ul,
+      body.light-mode #product-detail-modal li,
+      body.light-mode #product-detail-modal span,
+      body.light-mode #product-detail-modal b,
+      body.light-mode #product-detail-modal div[style*="color"] {
+        color: #1d1d1f !important;
+      }
+      body.light-mode #product-detail-modal div[style*="border-bottom"] {
+        border-bottom-color: rgba(0, 0, 0, 0.2) !important;
+      }
+      body.light-mode #pd-toggles button {
+        color: #1d1d1f !important;
+        background: rgba(0, 0, 0, 0.05) !important;
+        border-color: rgba(0, 0, 0, 0.1) !important;
+      }
+      body.light-mode #pd-toggles button.active {
+        color: #000 !important;
+        background: rgba(0, 0, 0, 0.1) !important;
+        border-color: #000 !important;
+      }
+      body.light-mode #pd-share-btn {
+        background: rgba(0, 0, 0, 0.05) !important;
+        border-color: rgba(0, 0, 0, 0.2) !important;
+        color: #1d1d1f !important;
+      }
+      body.light-mode #product-detail-modal img,
+      body.light-mode #product-detail-modal .gallery-thumbnail-image-container img {
+        mix-blend-mode: normal !important;
+        filter: none !important;
+      }
+      body.light-mode #popup-restricted {
+        background: rgba(240, 240, 240, 0.95) !important;
+      }
+      body.light-mode #popup-restricted .popup-titlebar {
+        background: rgba(220, 220, 220, 0.9) !important;
+      }
+      body.light-mode #popup-restricted div {
+        color: #1d1d1f !important;
+      }
+
+      /* Finder Window Column & Gallery View Previews */
+      body.light-mode .column-preview,
+      body.light-mode .column-preview-image {
+        background-color: transparent !important;
+        border-color: rgba(0, 0, 0, 0.1) !important;
+      }
+      body.light-mode .column-preview-empty {
+        color: #1d1d1f !important;
+      }
+      body.light-mode .gallery-preview,
+      body.light-mode .gallery-info,
+      body.light-mode .gallery-thumbnails {
+        background-color: #f0f0f0 !important;
+      }
+      body.light-mode .gallery-info-section-title,
+      body.light-mode .gallery-info-row .label,
+      body.light-mode .gallery-info-row .value {
+        color: #1d1d1f !important;
+      }
+      body.light-mode .gallery-preview-content {
+        color: #1d1d1f !important;
+      }
+
+      /* Join Network Map Modal */
+      body.light-mode #popup-guestbook > div:nth-child(2) {
+        background: #f0f0f0 !important;
+      }
+      body.light-mode #wwn-map {
+        filter: invert(1) hue-rotate(180deg) brightness(0.95) !important;
+      }
     </style>
   </head>
 
@@ -2644,8 +2751,8 @@
               </div>
             </div>
           </div>
-          <div class="toolbar-button" id="share-btn" onclick="copyShareUrl('folder', currentPath, this)">
-            <i class="fas fa-share-alt"></i> Share
+          <div class="toolbar-button" id="share-btn" onclick="copyShareUrl('folder', selectedFolder, this)">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Share
           </div>
           <div class="toolbar-button" id="tags-btn">
             <i class="fas fa-tag"></i> Tags
@@ -7358,13 +7465,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             
             if (imgPath.endsWith('.html')) {
               html += `
-                <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; border-radius: 12px;" onclick="${clickAction}">
+                <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; border-radius: 12px; transform-style: preserve-3d; touch-action: pan-y;" onclick="${clickAction}">
                     <iframe src="/${imgPath}?carousel=true" style="width: 100%; height: 100%; border: none; pointer-events: none; border-radius: 12px; transform: scale(1.05);" scrolling="no" tabindex="-1"></iframe>
                 </div>
               `;
             } else {
               html += `
-                <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer;" onclick="${clickAction}">
+                <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; transform-style: preserve-3d; touch-action: pan-y;" onclick="${clickAction}">
                     <img src="/${imgPath}" alt="${hoverTitle.replace(/'/g, "\\'")}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; display: block;">
                 </div>
               `;
@@ -7372,9 +7479,10 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           });
           carousel.innerHTML = html;
 
-          const speedPxPerSec = 216;
+          const speedPxPerSec = 75;
           const distancePx = items.length * 216; // 216px per item (200px + 16px gap)
           const durationSec = distancePx / speedPxPerSec;
+          carousel.style.width = (allItems.length * 216) + "px";
           carousel.style.animationDuration = durationSec + "s";
           carousel.style.webkitAnimationDuration = durationSec + "s";
         });
@@ -7456,6 +7564,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                const folderKey = category === 'automotive' ? 'concierge-automotive' : 'concierge-maritime';
                navigationHistory = ["macintosh-hd", "cire-concierge", folderKey];
                historyIndex = 2;
+               window.history.replaceState({}, '', '?folder=cire-concierge');
+               window.history.pushState({}, '', '?folder=' + encodeURIComponent(folderKey));
                openFinderWindow(folderKey, true, skipCloseModal);
             }
             
@@ -8753,19 +8863,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         })
         .join("");
 
-      // Share button - copy to clipboard
-      shareBtn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        try {
-          await navigator.clipboard.writeText("cireconglomerate.com");
-          clipboardNotification.classList.add("show");
-          setTimeout(() => {
-            clipboardNotification.classList.remove("show");
-          }, 2000);
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      });
+      // Share button listener removed to allow inline onclick deep-linking
 
       // Draggable window (Fixed with bounds)
       const finderWin = document.getElementById("finder-window");
@@ -9601,9 +9699,9 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         isOpeningModal = true;
         const baseNameStr = item.name.split(" - ")[0].replace(/ Studio Photography$/i, "");
         const origProduct = window.CAROUSEL_PRODUCTS ? (
+            window.CAROUSEL_PRODUCTS.find(p => p.name === item.name) || 
             window.CAROUSEL_PRODUCTS.find(p => p.name === baseNameStr && p.collection === "sophisticated-ignorance") || 
             window.CAROUSEL_PRODUCTS.find(p => p.name === baseNameStr && p.collection === "sophisticated-brilliance") || 
-            window.CAROUSEL_PRODUCTS.find(p => p.name === item.name) || 
             item
         ) : item;
         try {
@@ -9612,13 +9710,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           
           // Spawn the corresponding Finder window behind the modal if it's not already open
           if (category === "high-jewelry" || category === "jewelry") {
-              openFinderWindow("concierge-jewelry");
+              openFinderWindow("concierge-jewelry", true, true, false);
           } else if (category === "automotive") {
-              openFinderWindow("concierge-automotive");
+              openFinderWindow("concierge-automotive", true, true, false);
           } else if (category === "maritime") {
-              openFinderWindow("concierge-maritime");
+              openFinderWindow("concierge-maritime", true, true, false);
           } else if (category === "clothing" || category === "fashion") {
-              openFinderWindow("concierge-clothing");
+              openFinderWindow("concierge-clothing", true, true, false);
           }
 
           const mainImage = document.getElementById("pd-image");
@@ -9740,6 +9838,10 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             carouselContainer.style.justifyContent = "center";
             carouselContainer.style.overflow = "hidden";
             carouselContainer.style.marginBottom = "20px";
+            if (item.collection === "sophisticated-brilliance") {
+                carouselContainer.style.backgroundColor = "#000";
+                carouselContainer.style.borderRadius = "12px";
+            }
             
             let currentCarouselImages = [];
             let currentCarouselIndex = 0;
@@ -10549,7 +10651,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         height: 100vh;
         background: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(20px);
-        z-index: 999999 !important;
+        z-index: 999998 !important;
         justify-content: center;
         align-items: center;
         opacity: 0;
@@ -10801,7 +10903,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         height: 100vh;
         background: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(20px);
-        z-index: 10001;
+        z-index: 999999 !important;
         justify-content: center;
         align-items: center;
         opacity: 0;
@@ -11579,7 +11681,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         height: 100vh;
         background: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(20px);
-        z-index: 10001;
+        z-index: 999999 !important;
         justify-content: center;
         align-items: center;
         opacity: 0;
@@ -12382,34 +12484,15 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
     
     <script>
       window.copyShareUrl = function(type, id, btnElement) {
-        // Create a URL representing the content (even if just cosmetic for now)
         const baseUrl = window.location.origin + window.location.pathname;
-        const url = baseUrl + "?ref=" + encodeURIComponent(id);
-        
-        navigator.clipboard.writeText(url).then(() => {
-          const toast = document.getElementById("link-copied-toast");
-          if (toast) {
-            toast.style.display = "block";
-            toast.style.opacity = "1";
-            setTimeout(() => {
-              toast.style.opacity = "0";
-              setTimeout(() => { toast.style.display = "none"; }, 300);
-            }, 2000);
-          }
-        });
-      };
-    </script>
-  </body>
-</html>
-<div id="link-copied-toast" style="position: fixed; top: 40px; left: 50%; transform: translateX(-50%); background: rgba(28,28,30,0.9); color: white; padding: 12px 24px; border-radius: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; z-index: 99999999; display: none; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-      Link Copied
-    </div>
-    
-    <script>
-      window.copyShareUrl = function(type, id, btnElement) {
-        // Create a URL representing the content (even if just cosmetic for now)
-        const baseUrl = window.location.origin + window.location.pathname;
-        const url = baseUrl + "?ref=" + encodeURIComponent(id);
+        let url = baseUrl;
+        if (type === 'folder') {
+            url += "?folder=" + encodeURIComponent(id);
+        } else if (type === 'file' || type === 'product') {
+            url += "?file=" + encodeURIComponent(id);
+        } else {
+            url += "?ref=" + encodeURIComponent(id);
+        }
         
         navigator.clipboard.writeText(url).then(() => {
           const toast = document.getElementById("link-copied-toast");
