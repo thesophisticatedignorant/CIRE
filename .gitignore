@@ -25,3 +25,14 @@ dist-ssr
 
 # Large Media Files
 public/untitled.mp4
+
+# Credentials — never commit or publish
+service-account.json
+**/service-account*.json
+.env
+.env.*
+
+# Service account keys downloaded from Google Cloud — never commit
+notifications/*.json
+*-firebase-adminsdk-*.json
+cire-conglomerate-*.json

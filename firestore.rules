@@ -21,14 +21,63 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // 4. Private Vehicle & Concierge Inquiries
-    match /private_inquiry/{docId} {
-      allow create: if request.resource.data.vehicle is string
+    // 4. CIRE Concierge Inquiries (vehicles)
+    //    Separate business line from Sophisticated Brilliance - deliberately a
+    //    separate collection so the two never mix.
+    //
+    //    The old shared `private_inquiry` rule required `vehicle is string`,
+    //    but the form writes `category` / `model` / `vehicleCount` and never a
+    //    `vehicle` key, so every submission was rejected and the error was
+    //    swallowed by the caller's catch block. Validated on name + email, the
+    //    same pair request_access uses and the same pair the form guarantees.
+    match /concierge_inquiry/{docId} {
+      allow create: if request.resource.data.name is string
                     && request.resource.data.email is string;
       allow read, update, delete: if false;
     }
 
-    // 5. Default Fallback Safety Net (Block all unhandled collections)
+    // 5. Sophisticated Brilliance Inquiries (jewellery)
+    match /brilliance_inquiry/{docId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.email is string;
+      allow read, update, delete: if false;
+    }
+
+    // 6. Join Network Submissions
+    //    The document itself is the map node: name, colour and coordinates.
+    //    Reads are open because the map plots these in every visitor's browser
+    //    - anything it can read is public by definition, so there is nothing
+    //    here that is not meant to be seen.
+    //
+    //    Contact details are NOT in this document. Firestore rules are
+    //    per-document and cannot expose one field while hiding another, so
+    //    email, Instagram handle and the raw IP geolocation live in the
+    //    private subcollection below, which nothing grants read access to.
+    //    READS ARE CLOSED PENDING MIGRATION. Documents written before the
+    //    split still carry `email`, `ig` and `locationData` at the top level,
+    //    so opening reads exposed them. Run scripts/migrate-join-network.cjs
+    //    to move those fields into the private subcollection, then change the
+    //    line below back to `allow read: if true;` and redeploy to restore the
+    //    map pins.
+    match /join_network/{docId} {
+      allow read: if false;
+      allow create: if request.resource.data.name is string;
+      allow update, delete: if false;
+
+      match /private/{privateDoc} {
+        allow create: if request.resource.data.email is string;
+        allow read, update, delete: if false;
+      }
+    }
+
+    // 7. Legacy: retained so historical documents stay readable to admin
+    //    tooling. Nothing writes here any more - concierge and brilliance
+    //    submissions go to their own collections above.
+    match /private_inquiry/{docId} {
+      allow read, write: if false;
+    }
+
+    // 8. Default Fallback Safety Net (Block all unhandled collections)
     match /{document=**} {
       allow read, write: if false;
     }

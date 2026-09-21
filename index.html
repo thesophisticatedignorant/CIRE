@@ -2,7 +2,174 @@
 <html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- ── Device Class Bootstrap ─────────────────────────────────────────
+         Single source of truth for viewport + input mode. Runs before first
+         paint so the layout never flashes.
+
+           data-layout : "stacked"  (phone column) | "windowed" (tablet/desktop)
+           data-input  : "touch"    (phone+tablet) | "mouse"
+           --vh        : true 1% of the VISIBLE viewport (address-bar aware)
+           --app-h     : full visible viewport height, in px
+
+         Layout mode and input mode are deliberately INDEPENDENT: a tablet is
+         windowed + touch, a combination the old `max-width:768px` breakpoint
+         could not express.
+    -->
+    <script>
+      (function () {
+        var d = document.documentElement;
+        var STACKED_MAX = 768; /* phone column layout */
+
+        function apply() {
+          var vv = window.visualViewport;
+          var h = (vv && vv.height) ? vv.height : window.innerHeight;
+          d.style.setProperty('--vh', (h * 0.01) + 'px');
+          d.style.setProperty('--app-h', h + 'px');
+          var touch = (window.matchMedia && matchMedia('(pointer: coarse)').matches)
+                      || navigator.maxTouchPoints > 1;
+          d.dataset.input = touch ? 'touch' : 'mouse';
+
+          /* A phone has to be identified by its SHORT side, not by the current
+             width: turn an iPhone sideways and innerWidth jumps past the 768
+             breakpoint, so the phone would silently adopt the tablet's windowed
+             layout.
+
+             The short side of the VIEWPORT is the right signal - it survives
+             rotation, and unlike `screen` it is not reported as the host
+             monitor under device emulation. A phone is <=600 in both
+             orientations (390 on an iPhone); an iPad is 1024 in both. */
+          var shortSide = Math.min(window.innerWidth, window.innerHeight);
+          var isPhone = touch && shortSide <= 600;
+          d.dataset.device = isPhone ? 'phone' : (touch ? 'tablet' : 'desktop');
+          d.dataset.orientation =
+            window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+
+          /* Phones stay stacked in both orientations - the landscape gate below
+             covers the screen anyway, and this stops the layout thrashing
+             between modes behind it. */
+          d.dataset.layout =
+            (isPhone || window.innerWidth <= STACKED_MAX) ? 'stacked' : 'windowed';
+        }
+
+        window.CIRE = window.CIRE || {};
+        window.CIRE.isTouch = function () { return d.dataset.input === 'touch'; };
+        window.CIRE.isStacked = function () { return d.dataset.layout === 'stacked'; };
+        window.CIRE.refreshDeviceClass = apply;
+
+        apply();
+        addEventListener('resize', apply);
+        /* iOS reports stale dimensions immediately after rotation - re-apply. */
+        addEventListener('orientationchange', function () { apply(); setTimeout(apply, 250); });
+        /* visualViewport is what actually fires when the address bar collapses. */
+        if (window.visualViewport) { visualViewport.addEventListener('resize', apply); }
+
+        /* Back-compat with the previous detector's global name. */
+        window.detectAddressBar = apply;
+
+        /* Zoom lock. The `user-scalable=no` / `maximum-scale=1` pair in the
+           viewport meta covers Android and Chrome, but iOS Safari has ignored
+           both since iOS 10 - pinch-zoom there can only be stopped by
+           cancelling WebKit's non-standard gesture events. Touch devices only:
+           a desktop browser's zoom stays untouched. */
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (type) {
+          document.addEventListener(type, function (e) {
+            if (d.dataset.input === 'touch') e.preventDefault();
+          }, { passive: false });
+        });
+
+        /* Double-tap-to-zoom is a separate mechanism from pinch; `manipulation`
+           is what suppresses it. */
+        document.addEventListener('dblclick', function (e) {
+          if (d.dataset.input === 'touch') e.preventDefault();
+        }, { passive: false });
+      })();
+    </script>
+
+    <!-- ── WebP delivery ──────────────────────────────────────────────────
+         Every PNG under public/ has a WebP twin (see webp_assets.cjs): same
+         path, same pixels, ~88% fewer bytes. Almost every product image is
+         injected by JS from concierge_inventory.js rather than written into
+         this file, so the swap has to happen at runtime.
+
+         It hooks the `src` SETTER rather than waiting for the element to land
+         in the DOM. An image begins downloading the moment `src` is assigned,
+         even while detached, and the carousels preload through detached
+         `new Image()` objects that never get inserted at all - a
+         MutationObserver alone would let those PNGs download in full and then
+         fetch the WebP on top, making the page heavier rather than lighter.
+         The observer is still here, but only to catch `setAttribute('src')`
+         and markup-authored tags, which bypass the setter.
+
+         Fail-safe by construction: if a .webp is missing or will not decode,
+         the error handler restores the original .png, so a missing twin costs
+         one wasted request and never a broken image. -->
+    <script>
+      (function () {
+        var PNG = /\.png($|\?)/i;
+        var toWebp = function (u) {
+          return u.replace(PNG, function (_, q) { return '.webp' + (q || ''); });
+        };
+
+        /* Restore the PNG if the WebP twin is missing or undecodable. */
+        function armFallback(img, original, put) {
+          img.addEventListener('error', function onError() {
+            img.removeEventListener('error', onError);
+            img.__webpFallback = original;
+            put(original);
+          });
+        }
+
+        var desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+        if (desc && desc.set) {
+          Object.defineProperty(HTMLImageElement.prototype, 'src', {
+            configurable: true,
+            enumerable: desc.enumerable,
+            get: function () { return desc.get.call(this); },
+            set: function (value) {
+              if (typeof value === 'string' && PNG.test(value) && this.__webpFallback !== value) {
+                var img = this, original = value;
+                armFallback(img, original, function (u) { desc.set.call(img, u); });
+                value = toWebp(original);
+              }
+              desc.set.call(this, value);
+            },
+          });
+        }
+
+        /* setAttribute() does not go through the property setter. */
+        function swapAttr(img) {
+          var src = img.getAttribute('src');
+          if (!src || !PNG.test(src) || img.__webpFallback === src) return;
+          armFallback(img, src, function (u) { img.setAttribute('src', u); });
+          img.setAttribute('src', toWebp(src));
+        }
+
+        function sweep(node) {
+          if (!node || node.nodeType !== 1) return;
+          if (node.tagName === 'IMG') swapAttr(node);
+          var imgs = node.querySelectorAll ? node.querySelectorAll('img') : [];
+          for (var i = 0; i < imgs.length; i++) swapAttr(imgs[i]);
+        }
+
+        new MutationObserver(function (records) {
+          for (var i = 0; i < records.length; i++) {
+            var r = records[i];
+            if (r.type === 'attributes') swapAttr(r.target);
+            else for (var j = 0; j < r.addedNodes.length; j++) sweep(r.addedNodes[j]);
+          }
+        }).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['src'],
+        });
+
+        addEventListener('DOMContentLoaded', function () { sweep(document.body); });
+      })();
+    </script>
+
     <title>CIRE Conglomerate | The Pinnacle of Luxury</title>
 
     <!-- Google Site Verification -->
@@ -111,7 +278,7 @@
         height: 100vh;
         z-index: -1;
         background-color: #1d1d1f;
-        background-image: url("/cire-logo.png"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
+        background-image: url("/cire-logo.webp"), linear-gradient(135deg, #2c2c2e 0%, #1d1d1f 100%);
         background-position: center -220.5px, center center;
         background-size: auto, cover;
         background-repeat: no-repeat, no-repeat;
@@ -2523,16 +2690,32 @@
           -webkit-animation-play-state: running !important;
         }
 
-        /* Product Detail Layout for Mobile */
+        /* Product Detail Layout for Mobile
+           Target order on a phone: Metal Treatment, Description,
+           Size & Specifications, then Collection LAST.
+
+           `display: contents` dissolves the right-hand column so its blocks
+           become siblings of the left one and `order` can interleave them.
+           Without it Collection would ride along with Metal Treatment to the
+           top of the page instead of closing it out. */
         .product-detail-body {
           flex-direction: column !important;
           gap: 20px !important;
         }
-        .product-detail-body > div:first-child {
+        .product-detail-body > div:last-child {
+          display: contents !important;
+        }
+        #pd-info-block {
+          order: 1 !important;
+        }
+        #pd-req-block {
           order: 2 !important;
         }
-        .product-detail-body > div:last-child {
-          order: 1 !important;
+        .product-detail-body > div:first-child {
+          order: 3 !important;
+        }
+        #pd-collection-block {
+          order: 4 !important;
         }
         #pd-toggles {
           justify-content: center !important;
@@ -3694,16 +3877,49 @@
               if (window._wwnMapInitialized) return;
               window._wwnMapInitialized = true;
 
+              /* At zoom z the whole world is 256 * 2^z px tall. If the map
+                 container is taller than that, Leaflet has no tile data to
+                 draw past +/-85 deg latitude and you get the black band at the
+                 top. Derive the floor zoom from the container instead of
+                 hardcoding 2, so the world always fills the viewport. */
+              const _mapEl = document.getElementById("wwn-map");
+              const _fitZoom = Math.max(
+                2,
+                Math.ceil(Math.log2(Math.max(1, _mapEl.clientHeight) / 256))
+              );
+
               window.wwnMap = L.map("wwn-map", {
-                center: [40, -95],
-                zoom: 2,
+                center: [30, -40],
+                zoom: _fitZoom,
                 zoomControl: false,
                 attributionControl: false,
                 scrollWheelZoom: true,
                 dragging: true,
-                minZoom: 2,
+                minZoom: _fitZoom,
                 maxZoom: 11,
-                worldCopyJump: window.innerWidth > 768
+                maxBounds: [[-85, -Infinity], [85, Infinity]],
+                maxBoundsViscosity: 1.0,
+                worldCopyJump: !(window.CIRE && CIRE.isStacked())
+              });
+
+              /* Recompute on rotation: the container changes height but
+                 Leaflet keeps the old zoom floor, reopening the gap. */
+              window.wwnRefitMap = function () {
+                if (!window.wwnMap || !_mapEl) return;
+                const z = Math.max(
+                  2,
+                  Math.ceil(Math.log2(Math.max(1, _mapEl.clientHeight) / 256))
+                );
+                window.wwnMap.setMinZoom(z);
+                if (window.wwnMap.getZoom() < z) window.wwnMap.setZoom(z);
+                window.wwnMap.invalidateSize();
+              };
+              addEventListener("orientationchange", function () {
+                setTimeout(window.wwnRefitMap, 300);
+              });
+              addEventListener("resize", function () {
+                clearTimeout(window._wwnRefitT);
+                window._wwnRefitT = setTimeout(window.wwnRefitMap, 200);
               });
 
               document.getElementById("wwn-map").style.background = "#000";
@@ -3854,16 +4070,33 @@
                   window.firebaseCollection
                 ) {
                   try {
-                    await window.firebaseAddDoc(
+                    /* Split across one document and a locked subcollection.
+
+                       The map plots these nodes in every visitor's browser, so
+                       whatever it reads is public by definition - and Firestore
+                       rules are per-document, they cannot expose `name` while
+                       hiding `email`. So the parent document carries only what
+                       the plot needs (name, colour, coordinates) and everything
+                       that identifies or contacts a person goes to
+                       join_network/{id}/private/contact, which no rule grants
+                       read access to. Still one collection; the contact details
+                       are simply somewhere a rule can deny separately.
+
+                       `locationData` is raw IP geolocation - it carries the
+                       visitor's IP address and ISP - so it belongs on the
+                       private side too. */
+                    const timestamp = window.firebaseServerTimestamp
+                      ? window.firebaseServerTimestamp()
+                      : new Date();
+
+                    const nodeRef = await window.firebaseAddDoc(
                       window.firebaseCollection(
                         window.firebaseDB,
                         "join_network",
                       ),
                       {
                         name: name,
-                        email: email,
                         location_input: location,
-                        instagram: ig,
                         color_preference: color,
                         color: color, // For map rendering
                         city: locationData.city || "Unknown",
@@ -3871,10 +4104,27 @@
                         lat: locationData.lat || null,
                         lon: locationData.lon || null,
                         lng: locationData.lon || null, // Map fallback
-                        locationData: locationData, // Full raw data
-                        timestamp: window.firebaseServerTimestamp ? window.firebaseServerTimestamp() : new Date(),
+                        timestamp: timestamp,
                       },
                     );
+
+                    if (window.firebaseSetDoc && window.firebaseDoc) {
+                      await window.firebaseSetDoc(
+                        window.firebaseDoc(
+                          window.firebaseDB,
+                          "join_network",
+                          nodeRef.id,
+                          "private",
+                          "contact",
+                        ),
+                        {
+                          email: email,
+                          instagram: ig,
+                          locationData: locationData, // Full raw data
+                          timestamp: timestamp,
+                        },
+                      );
+                    }
                   } catch (fbErr) {
                     console.error("Firebase Error: ", fbErr);
                   }
@@ -5343,7 +5593,7 @@
                 "
               >
                 <img
-                  src="/cire-logo.png"
+                  src="/cire-logo.webp"
                   style="width: 150px; filter: grayscale(100%) brightness(200%)"
                   alt="CIRE Logo"
                 />
@@ -5530,7 +5780,7 @@
           <!-- Items generated by JS -->
         </div>
       </div>
-      <div style="text-align: center; margin-top: 5px; margin-bottom: 5px; z-index: 1000; position: relative;">
+      <div id="concierge-toggle-bar" style="text-align: center; margin-top: 5px; margin-bottom: 5px; z-index: 1000; position: relative;">
         <button id="toggle-concierge-btn" onclick="toggleConciergeInventory()" style="background: rgba(28,28,30,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 14px; border-radius: 20px; font-family: Helvetica, Arial, sans-serif; font-size: 0.65rem; text-transform: uppercase; cursor: pointer; letter-spacing: 1px; transition: all 0.3s ease;">Expand Concierge Inventory &#x25BE;</button>
       </div>
     </div>
@@ -5557,11 +5807,11 @@
      collection: "sophisticated-brilliance",
      description: "Pendant I: <b>Beast</b> explores the instinct to <b>conceal pain rather than confront it.</b> Material brilliance is concentrated within the damaged areas, suggesting attempts to mask unresolved wounds. The reverse mosaic setting is intentional depicting an uneven, fragmented surface representing the <b>\"rough around the edges\"</b> nature of the unhealed man.",
      images: [
-        "Beast Studio Photography/Rose/RG Beast Front.png",
-        "Beast Studio Photography/Rose/RG Beast Front Left.png",
-        "Beast Studio Photography/Rose/RG Beast Front Right.png",
-        "Beast Studio Photography/Rose/RG Beast Back.png",
-        "Beast Studio Photography/Rose/RG Beast on Celestial Scars.png"
+        "Beast Studio Photography/Rose/RG Beast Front.webp",
+        "Beast Studio Photography/Rose/RG Beast Front Left.webp",
+        "Beast Studio Photography/Rose/RG Beast Front Right.webp",
+        "Beast Studio Photography/Rose/RG Beast Back.webp",
+        "Beast Studio Photography/Rose/RG Beast on Celestial Scars.webp"
      ]
   },
   {
@@ -5569,11 +5819,11 @@
      collection: "sophisticated-brilliance",
      description: "Pendant II: <i>Metamorphosis</i> represents <b>movement between denial and acceptance.</b> The more traditional stone-setting arrangement introduces structure and order, signifying discipline, self-awareness, and progression <b>along the journey of refinement.</b>",
      images: [
-        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front.png",
-        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front Left.png",
-        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front Right.png",
-        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Back.png",
-        "Metamorphosis Studio Photography/Rose/RG Metamorphosis on Celestial Scars.png"
+        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front.webp",
+        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front Left.webp",
+        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front Right.webp",
+        "Metamorphosis Studio Photography/Rose/RG Metamorphosis Back.webp",
+        "Metamorphosis Studio Photography/Rose/RG Metamorphosis on Celestial Scars.webp"
      ]
   },
   {
@@ -5581,11 +5831,11 @@
      collection: "sophisticated-brilliance",
      description: "Pendant III: <i>Humble</i> <b>embodies acceptance.</b> The wounds remain visible and unembellished, free of excess. With no stones present, the piece depicts <b>resilience shown through transparency</b> rather than display.",
      images: [
-        "Humble Studio Photography/Rose/RG Humble Front.png",
-        "Humble Studio Photography/Rose/RG Humble Front Left.png",
-        "Humble Studio Photography/Rose/RG Humble Front Right.png",
-        "Humble Studio Photography/Rose/RG Humble Back.png",
-        "Humble Studio Photography/Rose/RG Humble on Celestial Scars.png"
+        "Humble Studio Photography/Rose/RG Humble Front.webp",
+        "Humble Studio Photography/Rose/RG Humble Front Left.webp",
+        "Humble Studio Photography/Rose/RG Humble Front Right.webp",
+        "Humble Studio Photography/Rose/RG Humble Back.webp",
+        "Humble Studio Photography/Rose/RG Humble on Celestial Scars.webp"
      ]
   },
   {
@@ -5593,10 +5843,10 @@
      collection: "sophisticated-brilliance",
      description: "Cuban Chain: <i>Celestial Scars.</i> The forged link reimagined into a reversible interpretation of the Cuban link. One side bears intentional surface scarring with a sandblasted finish; the other remains smooth and polished. The duality represents the <b>coexistence of damage and refinement;</b> the choice to reveal or conceal, without denying either.",
      images: [
-        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock n Link.png",
-        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock Closeup Alt.png",
-        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Link Macro.png",
-        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Neck Bust.png"
+        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock n Link.webp",
+        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock Closeup Alt.webp",
+        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Link Macro.webp",
+        "Celestial Scars Studio Photography/Rose/RG Celestial Scars Neck Bust.webp"
      ]
   },
   {
@@ -5604,10 +5854,10 @@
      collection: "sophisticated-brilliance",
      description: "Earrings: <i>The Nails</i> transform symbols of suffering into emblems of endurance. The <i>Nova-cut center stone</i>, with <b>over 150 facets</b>, refracts exceptional light while maintaining clarity, signifying <b>pressure turned into brilliance.</b> The <i>gauge-inspired backing</i>, secured with a screw-back mechanism and flooded with pavé-set stones, references the <b>transformation of an object</b> once associated with force and cruelty into an ornament of intention.",
      images: [
-        "The Nails Studio Photography/Rose/RG Nails Gauge Macro.png",
-        "The Nails Studio Photography/Rose/RG Nails Head On.png",
-        "The Nails Studio Photography/Rose/RG Nails Gauge Dominant View.png",
-        "The Nails Studio Photography/Rose/RG Nails Front Left.png"
+        "The Nails Studio Photography/Rose/RG Nails Gauge Macro.webp",
+        "The Nails Studio Photography/Rose/RG Nails Head On.webp",
+        "The Nails Studio Photography/Rose/RG Nails Gauge Dominant View.webp",
+        "The Nails Studio Photography/Rose/RG Nails Front Left.webp"
      ]
   },
   {
@@ -5618,9 +5868,9 @@
      sizes: ["ONE SIZE"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Protection through perception.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Polyester / Spandex blend</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">FEATURES</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Converts between balaclava, neck gaiter, and skull cap</li><li style="margin-bottom: 6px;">Reflective Foundations insignia at side</li><li style="margin-bottom: 6px;">Reflective Inferno logo at rear</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
-        "Foundations/The Veil/Black/Black Veil Front.png",
-        "Foundations/The Veil/Black/Black Veil Side.png",
-        "Foundations/The Veil/Black/Black Veil Back.png"
+        "Foundations/The Veil/Black/Black Veil Front.webp",
+        "Foundations/The Veil/Black/Black Veil Side.webp",
+        "Foundations/The Veil/Black/Black Veil Back.webp"
      ]
   },
   {
@@ -5631,9 +5881,9 @@
      sizes: ["ONE SIZE"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Protection through perception.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Polyester / Spandex blend</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">FEATURES</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Converts between balaclava, neck gaiter, and skull cap</li><li style="margin-bottom: 6px;">Reflective Foundations insignia at side</li><li style="margin-bottom: 6px;">Reflective Inferno logo at rear</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
-        "Foundations/The Veil/Camo/Camo Veil Front.png",
-        "Foundations/The Veil/Camo/Camo Veil Side.png",
-        "Foundations/The Veil/Camo/Camo Veil Back.png"
+        "Foundations/The Veil/Camo/Camo Veil Front.webp",
+        "Foundations/The Veil/Camo/Camo Veil Side.webp",
+        "Foundations/The Veil/Camo/Camo Veil Back.webp"
      ]
   },
   {
@@ -5651,8 +5901,8 @@
          "Imported"
      ],
      images: [
-        "Foundations/Cornerstone/Cornerstone Black.png",
-        "Foundations/Cornerstone/Cornerstone Black Closeup.png"
+        "Foundations/Cornerstone/Cornerstone Black.webp",
+        "Foundations/Cornerstone/Cornerstone Black Closeup.webp"
      ]
   },
   {
@@ -5663,8 +5913,8 @@
      sizes: ["S", "M", "L", "XL", "XXL"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Simplicity as sophistication.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Cotton, Slim Fit</li><li style="margin-bottom: 6px;">Ribbed crewneck collar</li><li style="margin-bottom: 6px;">180 GSM medium-weight fabric</li><li style="margin-bottom: 6px;">Metallic foil Foundations insignia at front left hem</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
-        "Foundations/Cornerstone/Cornerstone White.png",
-        "Foundations/Cornerstone/Cornerstone White Closeup.png"
+        "Foundations/Cornerstone/Cornerstone White.webp",
+        "Foundations/Cornerstone/Cornerstone White Closeup.webp"
      ]
   },
   {
@@ -5675,12 +5925,12 @@
      sizes: ["S", "M", "L", "XL", "XXL"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Transformation in motion.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">HOODIE</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Sublimated gradient design featuring the New York City skyline</li><li style="margin-bottom: 6px;">Contoured hood for comfort and profile</li><li style="margin-bottom: 6px;">Drop-tail hem and zippered side pockets</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia on left arm</li><li style="margin-bottom: 6px;">260 GSM midweight fabric for structured flexibility</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">TRACKPANT</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Coordinated gradient detailing along side seam</li><li style="margin-bottom: 6px;">Tearaway snaps along side seam for adjustable styling</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia at left pocket</li><li style="margin-bottom: 6px;">Elastic waistband with drawstring</li><li style="margin-bottom: 6px;">Durable and breathable interior mesh lining</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div></div>`,
      images: [
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.png",
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front Zoomed.png",
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Back.png",
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Front.png",
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Side.png",
-        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Back.png"
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.webp",
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front Zoomed.webp",
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Back.webp",
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Front.webp",
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Side.webp",
+        "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Back.webp"
      ]
   },
   {
@@ -5691,12 +5941,12 @@
      sizes: ["S", "M", "L", "XL", "XXL"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Transformation in motion.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">HOODIE</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Sublimated gradient design featuring the New York City skyline</li><li style="margin-bottom: 6px;">Contoured hood for comfort and profile</li><li style="margin-bottom: 6px;">Drop-tail hem and zippered side pockets</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia on left arm</li><li style="margin-bottom: 6px;">260 GSM midweight fabric for structured flexibility</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">TRACKPANT</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Coordinated gradient detailing along side seam</li><li style="margin-bottom: 6px;">Tearaway snaps along side seam for adjustable styling</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia at left pocket</li><li style="margin-bottom: 6px;">Elastic waistband with drawstring</li><li style="margin-bottom: 6px;">Durable and breathable interior mesh lining</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div></div>`,
      images: [
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.png",
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front Zoomed.png",
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Back.png",
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Front.png",
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Side.png",
-        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Back.png"
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.webp",
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front Zoomed.webp",
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Back.webp",
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Front.webp",
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Side.webp",
+        "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Back.webp"
      ]
   },
   {
@@ -5707,12 +5957,12 @@
      sizes: ["S", "M", "L", "XL", "XXL"],
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Transformation in motion.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">HOODIE</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Sublimated gradient design featuring the New York City skyline</li><li style="margin-bottom: 6px;">Contoured hood for comfort and profile</li><li style="margin-bottom: 6px;">Drop-tail hem and zippered side pockets</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia on left arm</li><li style="margin-bottom: 6px;">260 GSM midweight fabric for structured flexibility</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">TRACKPANT</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Polyester, double-knit construction</li><li style="margin-bottom: 6px;">Coordinated gradient detailing along side seam</li><li style="margin-bottom: 6px;">Tearaway snaps along side seam for adjustable styling</li><li style="margin-bottom: 6px;">Embroidered Foundations insignia at left pocket</li><li style="margin-bottom: 6px;">Elastic waistband with drawstring</li><li style="margin-bottom: 6px;">Durable and breathable interior mesh lining</li><li style="margin-bottom: 6px;">Machine wash cold, line dry</li></ul></div></div>`,
      images: [
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.png",
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front Zoomed.png",
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Back.png",
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Front.png",
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Side.png",
-        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Back.png"
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.webp",
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front Zoomed.webp",
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Back.webp",
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Front.webp",
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Side.webp",
+        "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Back.webp"
      ]
   },
   {
@@ -5724,12 +5974,12 @@
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Elegance built on chaos.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">EXTERIOR<br>COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Reversible construction:<ul style="padding-left: 20px; list-style-type: circle; margin-top: 5px;"><li style="margin-bottom: 5px;">Side 1: NASCAR-inspired appliqués</li><li style="margin-bottom: 5px;">Side 2: Fresco mural featuring Inferno insignia</li></ul></li><li style="margin-bottom: 6px;">Contrast color trims and accent panels</li><li style="margin-bottom: 6px;">Embroidered appliqués and detailed graphics</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">TECHNICAL<br>COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Cotton midweight build for moderate temperatures</li><li style="margin-bottom: 6px;">Ribbed knit cuffs and waist hem</li><li style="margin-bottom: 6px;">Long sleeves, mock neck design</li><li style="margin-bottom: 6px;">Two front slip pockets</li><li style="margin-bottom: 6px;">Full snap closure, tonal hardware</li><li style="margin-bottom: 6px;">Dry clean only</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
         { title: "Contradiction Ext 360", type: "iframe", src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 360 Autoplay.html" },
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.png",
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 2.png",
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 3.png",
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 4.png",
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 5.png",
-        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 6.png"
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.webp",
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 2.webp",
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 3.webp",
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 4.webp",
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 5.webp",
+        "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 6.webp"
      ]
   },
   {
@@ -5741,12 +5991,12 @@
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Elegance built on chaos.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">EXTERIOR<br>COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Reversible construction:<ul style="padding-left: 20px; list-style-type: circle; margin-top: 5px;"><li style="margin-bottom: 5px;">Side 1: NASCAR-inspired appliqués</li><li style="margin-bottom: 5px;">Side 2: Fresco mural featuring Inferno insignia</li></ul></li><li style="margin-bottom: 6px;">Contrast color trims and accent panels</li><li style="margin-bottom: 6px;">Embroidered appliqués and detailed graphics</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">TECHNICAL<br>COMPOSITION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% Cotton midweight build for moderate temperatures</li><li style="margin-bottom: 6px;">Ribbed knit cuffs and waist hem</li><li style="margin-bottom: 6px;">Long sleeves, mock neck design</li><li style="margin-bottom: 6px;">Two front slip pockets</li><li style="margin-bottom: 6px;">Full snap closure, tonal hardware</li><li style="margin-bottom: 6px;">Dry clean only</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
         { title: "Contradiction Rev 360", type: "iframe", src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 360 Autoplay.html" },
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 1.png",
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 2.png",
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 3.png",
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 4.png",
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 5.png",
-        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 6.png"
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 1.webp",
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 2.webp",
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 3.webp",
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 4.webp",
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 5.webp",
+        "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 6.webp"
      ]
   },
   {
@@ -5758,12 +6008,12 @@
      description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>The worlds of asphalt and agility collide.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">CONSTRUCTION</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">100% premium leather shell</li><li style="margin-bottom: 6px;">Ergonomic tailoring for dynamic mobility</li><li style="margin-bottom: 6px;">Branded hardware and tonal stitching</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">FEATURES</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Reinforced elbow panels for durability and control</li><li style="margin-bottom: 6px;">Fully lined interior for structural comfort</li><li style="margin-bottom: 6px;">Optional back-protector compatibility</li><li style="margin-bottom: 6px;">Inquire for bespoke customization options</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
      images: [
         { title: "Intersect 360", type: "iframe", src: "Fortifications/The Intersect/Intersect 360.html" },
-        "Fortifications/The Intersect/Intersect 1.png",
-        "Fortifications/The Intersect/Intersect 2.png",
-        "Fortifications/The Intersect/Intersect 3.png",
-        "Fortifications/The Intersect/Intersect 4.png",
-        "Fortifications/The Intersect/Intersect 5.png",
-        "Fortifications/The Intersect/Intersect 6.png"
+        "Fortifications/The Intersect/Intersect 1.webp",
+        "Fortifications/The Intersect/Intersect 2.webp",
+        "Fortifications/The Intersect/Intersect 3.webp",
+        "Fortifications/The Intersect/Intersect 4.webp",
+        "Fortifications/The Intersect/Intersect 5.webp",
+        "Fortifications/The Intersect/Intersect 6.webp"
      ]
   }
 ];
@@ -5828,13 +6078,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             {
               name: "CIRE Logo BWwoBG.png",
               type: "image",
-              src: "/CIRE Logo BWwoBG.png",
+              src: "/CIRE Logo BWwoBG.webp",
             },
-            { name: "art house.png", type: "image", src: "/art house.png" },
+            { name: "art house.png", type: "image", src: "/art house.webp" },
             {
               name: "fashion house.png",
               type: "image",
-              src: "/fashion house.png",
+              src: "/fashion house.webp",
             },
           ],
         },
@@ -5945,13 +6195,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               textContent:
                 "Foundations: The Architecture of Self\n\nFoundations serves as the base layer of refinement; the stepping stones of your wardrobe designed for structure, comfort and everyday uniformity. Through simplicity and precision, Foundations defines the essentials. Where form takes shape and sophistication begins.",
             },
-            { name: "The Veil - Black", type: "image", src: "Foundations/The Veil/Black/Black Veil Front.png" },
-            { name: "The Veil - Camo", type: "image", src: "Foundations/The Veil/Camo/Camo Veil Front.png" },
-            { name: "The Cornerstone - Black", type: "image", src: "Foundations/Cornerstone/Cornerstone Black.png" },
-            { name: "The Cornerstone - White", type: "image", src: "Foundations/Cornerstone/Cornerstone White.png" },
-            { name: "The Breakaway - Amethyst", type: "image", src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.png" },
-            { name: "The Breakaway - Grapefruit", type: "image", src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.png" },
-            { name: "The Breakaway - Graphite", type: "image", src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.png" }
+            { name: "The Veil - Black", type: "image", src: "Foundations/The Veil/Black/Black Veil Front.webp" },
+            { name: "The Veil - Camo", type: "image", src: "Foundations/The Veil/Camo/Camo Veil Front.webp" },
+            { name: "The Cornerstone - Black", type: "image", src: "Foundations/Cornerstone/Cornerstone Black.webp" },
+            { name: "The Cornerstone - White", type: "image", src: "Foundations/Cornerstone/Cornerstone White.webp" },
+            { name: "The Breakaway - Amethyst", type: "image", src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.webp" },
+            { name: "The Breakaway - Grapefruit", type: "image", src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.webp" },
+            { name: "The Breakaway - Graphite", type: "image", src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.webp" }
           ],
         },
         "si-fortifications": {
@@ -5963,8 +6213,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               textContent:
                 "Fortifications: The Shield of Style\n\nFortifications represents defense through design; luxurious garments built as armor. Each piece in this tier acts as both protection and proclamation. Constructed to endure, engineered to impress.",
             },
-            { name: "The Contradiction", type: "image", src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.png" },
-            { name: "The Intersect", type: "image", src: "Fortifications/The Intersect/Intersect 1.png" }
+            { name: "The Contradiction", type: "image", src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.webp" },
+            { name: "The Intersect", type: "image", src: "Fortifications/The Intersect/Intersect 1.webp" }
           ],
         },
         "si-relics": {
@@ -6018,11 +6268,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               protected: true,
             },
             { name: "final", type: "folder", targetFolder: "tom-final" },
-            { name: "Beast", type: "image", src: "Beast Studio Photography/Rose/RG Beast Front.png" },
-            { name: "Metamorphosis", type: "image", src: "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front.png" },
-            { name: "Humble", type: "image", src: "Humble Studio Photography/Rose/RG Humble Front.png" },
-            { name: "Celestial Scars", type: "image", src: "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock n Link.png" },
-            { name: "The Nails", type: "image", src: "The Nails Studio Photography/Rose/RG Nails Gauge Macro.png" }
+            { name: "Beast", type: "image", src: "Beast Studio Photography/Rose/RG Beast Front.webp" },
+            { name: "Metamorphosis", type: "image", src: "Metamorphosis Studio Photography/Rose/RG Metamorphosis Front.webp" },
+            { name: "Humble", type: "image", src: "Humble Studio Photography/Rose/RG Humble Front.webp" },
+            { name: "Celestial Scars", type: "image", src: "Celestial Scars Studio Photography/Rose/RG Celestial Scars Lock n Link.webp" },
+            { name: "The Nails", type: "image", src: "The Nails Studio Photography/Rose/RG Nails Gauge Macro.webp" }
           ],
         },
         "tom-sketches": {
@@ -6031,17 +6281,17 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             {
               name: "sketch: beast.png",
               type: "image",
-              src: "/beast-jp.png",
+              src: "/beast-jp.webp",
             },
             {
               name: "sketch: metamorphosis.png",
               type: "image",
-              src: "/Metamorphosis.png",
+              src: "/Metamorphosis.webp",
             },
             {
               name: "sketch: humble.png",
               type: "image",
-              src: "/humble-jp.png",
+              src: "/humble-jp.webp",
             },
             {
               name: "sketch: celestial scars.png",
@@ -6391,7 +6641,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             vid.play().catch(e => console.log("Video play prevented", e));
           }
           
-          if (window.innerWidth <= 768) {
+          if (CIRE.isStacked()) {
             // Move popup to top of desktop
             const desktop = document.getElementById("desktop");
             const toggleContainer = desktop.querySelector(".toggle-container");
@@ -6432,6 +6682,16 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           // Bring to front
           highestWindowZIndex++;
           popup.style.zIndex = highestWindowZIndex;
+
+          /* Until this moment the popup was hidden, so offsetWidth was 0 and
+             the clamp inside positionInitialPopups() silently no-opped. Now
+             that it has real dimensions, clamp again: a fixed-width window on
+             a narrow tablet would otherwise hang off the viewport edge. */
+          if (window.CIRE && CIRE.isTouch() && !CIRE.isStacked()) {
+            requestAnimationFrame(function () {
+              if (window.clampWindowToViewport) window.clampWindowToViewport(popup);
+            });
+          }
 
           // Reset popup content scroll
           const content = popup.querySelector('.popup-content');
@@ -6722,7 +6982,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             return;
         }
 
-        if (window.innerWidth <= 768) {
+        if (CIRE.isTouch()) {
             if (selectedFile) {
                 if (selectedFile.type === "folder") {
                     selectFolder(selectedFile.targetFolder);
@@ -6908,7 +7168,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         const clickedFile = currentFiles[index];
 
         if (clickedFile) {
-          if (window.innerWidth <= 768) {
+          if (CIRE.isTouch()) {
             if (clickedFile.type === "folder") {
                 selectFolder(clickedFile.targetFolder);
             } else {
@@ -7220,7 +7480,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         popup.style.top = "100px";
         popup.style.width = "320px";
 
-        if (window.innerWidth <= 768) {
+        if (CIRE.isStacked()) {
             const desktop = document.getElementById("desktop");
             const toggleContainer = desktop.querySelector(".toggle-container");
             if (toggleContainer && toggleContainer.nextSibling) {
@@ -7347,55 +7607,55 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         // Hardcoded images for Carousel 1 based on specific order
         const topImagesList = [
-            { src: "Foundations/The Veil/Black/Black Veil Front.png", name: "The Veil - Black", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Veil/Black/Black Veil Side.png", name: "The Veil - Black", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Veil/Black/Black Veil Back.png", name: "The Veil - Black", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Veil/Camo/Camo Veil Front.png", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Veil/Camo/Camo Veil Side.png", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Veil/Camo/Camo Veil Back.png", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
-            { src: "Foundations/Cornerstone/Cornerstone Black.png", name: "The Cornerstone - Black", collection: "sophisticated-ignorance" },
-            { src: "Foundations/Cornerstone/Cornerstone Black Closeup.png", name: "The Cornerstone - Black", collection: "sophisticated-ignorance" },
-            { src: "Foundations/Cornerstone/Cornerstone White.png", name: "The Cornerstone - White", collection: "sophisticated-ignorance" },
-            { src: "Foundations/Cornerstone/Cornerstone White Closeup.png", name: "The Cornerstone - White", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front Zoomed.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Back.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Front.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Side.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Back.png", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front Zoomed.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Back.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Front.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Side.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Back.png", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front Zoomed.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Back.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Front.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Side.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
-            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Back.png", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Black/Black Veil Front.webp", name: "The Veil - Black", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Black/Black Veil Side.webp", name: "The Veil - Black", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Black/Black Veil Back.webp", name: "The Veil - Black", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Camo/Camo Veil Front.webp", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Camo/Camo Veil Side.webp", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Veil/Camo/Camo Veil Back.webp", name: "The Veil - Camo", collection: "sophisticated-ignorance" },
+            { src: "Foundations/Cornerstone/Cornerstone Black.webp", name: "The Cornerstone - Black", collection: "sophisticated-ignorance" },
+            { src: "Foundations/Cornerstone/Cornerstone Black Closeup.webp", name: "The Cornerstone - Black", collection: "sophisticated-ignorance" },
+            { src: "Foundations/Cornerstone/Cornerstone White.webp", name: "The Cornerstone - White", collection: "sophisticated-ignorance" },
+            { src: "Foundations/Cornerstone/Cornerstone White Closeup.webp", name: "The Cornerstone - White", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Front Zoomed.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Hoodie Back.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Front.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Side.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Amethyst/Breakaway Amethyst Pants Back.webp", name: "The Breakaway - Amethyst", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Front Zoomed.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Hoodie Back.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Front.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Side.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Grapefruit/Breakaway Grapefruit Pants Back.webp", name: "The Breakaway - Grapefruit", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Front Zoomed.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Hoodie Back.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Front.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Side.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
+            { src: "Foundations/The Breakaway/Graphite/Breakaway Graphite Pants Back.webp", name: "The Breakaway - Graphite", collection: "sophisticated-ignorance" },
             { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 360 Autoplay.html", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance", type: "iframe" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 2.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 3.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 4.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 5.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 6.png", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 1.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 2.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 3.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 4.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 5.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Exterior/Contradiction Ext. 6.webp", name: "The Contradiction - Exterior", collection: "sophisticated-ignorance" },
             { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 360 Autoplay.html", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance", type: "iframe" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 1.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 2.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 3.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 4.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 5.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 6.png", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 1.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 2.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 3.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 4.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 5.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Contradiction/Contradiction Reverse/Contradiction Rev. 6.webp", name: "The Contradiction - Reverse", collection: "sophisticated-ignorance" },
             { src: "Fortifications/The Intersect/Intersect 360.html", name: "The Intersect", collection: "sophisticated-ignorance", type: "iframe" },
-            { src: "Fortifications/The Intersect/Intersect 1.png", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 2.png", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 3.png", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 4.png", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 5.png", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 6.png", name: "The Intersect", collection: "sophisticated-ignorance" }
+            { src: "Fortifications/The Intersect/Intersect 1.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Intersect/Intersect 2.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Intersect/Intersect 3.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Intersect/Intersect 4.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Intersect/Intersect 5.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Fortifications/The Intersect/Intersect 6.webp", name: "The Intersect", collection: "sophisticated-ignorance" }
         ];
 
         const bottomImagesList = window.CAROUSEL_PRODUCTS
@@ -7712,7 +7972,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           highestWindowZIndex++;
           finderWindow.style.zIndex = highestWindowZIndex;
           
-          if (window.innerWidth <= 768) {
+          if (CIRE.isStacked()) {
             // Move finder window to top of desktop
             const desktop = document.getElementById("desktop");
             const toggleContainer = desktop.querySelector(".toggle-container");
@@ -8042,7 +8302,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         const files = folderData[selectedFolder]?.files || [];
 
-        if (window.innerWidth <= 768 && (currentView === "columns" || currentView === "gallery")) {
+        if (CIRE.isStacked() && (currentView === "columns" || currentView === "gallery")) {
           currentView = "icons";
         }
 
@@ -8546,7 +8806,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                   return;
               }
               
-              if (window.innerWidth <= 768 && selectedGalleryIndex === index) {
+              if (CIRE.isTouch() && selectedGalleryIndex === index) {
                   if (file.type === "folder") {
                     selectFolder(file.targetFolder);
                   } else {
@@ -8644,7 +8904,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         highestWindowZIndex++;
         finderWindow.style.zIndex = highestWindowZIndex;
 
-        if (window.innerWidth <= 768) {
+        if (CIRE.isStacked()) {
           // Move finder window to top of desktop
           const desktop = document.getElementById("desktop");
           const toggleContainer = desktop.querySelector(".toggle-container");
@@ -8726,7 +8986,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             if (window.restoreDesktopWindows) window.restoreDesktopWindows();
           }
           e.stopPropagation();
-          if (window.innerWidth <= 768) {
+          if (CIRE.isTouch()) {
             // On mobile, a single tap should open the folder
             folder.dispatchEvent(new Event("dblclick"));
           } else {
@@ -8735,6 +8995,32 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           }
         });
       });
+
+      /* `.list-item`, `.icon-view-item` and `.column-item` all route through
+         handleFileSingleClick / selectColumnItem, which already open on a
+         single tap when CIRE.isTouch(). The large gallery preview pane is the
+         one surface still gated behind a bare inline `ondblclick`, which
+         iPadOS synthesises only inconsistently - and which
+         `touch-action: manipulation` suppresses outright in some WebKit
+         builds. Give it the same tap-again-to-open rule the gallery
+         thumbnails already use. */
+      (function enableGalleryPreviewTouchOpen() {
+        var SEL = ".gallery-preview-content";
+        var armed = null;
+        document.addEventListener("click", function (e) {
+          if (!window.CIRE || !CIRE.isTouch()) return;
+          var pane = e.target.closest && e.target.closest(SEL);
+          if (!pane) { armed = null; return; }
+          if (armed === pane) {
+            armed = null;
+            pane.dispatchEvent(
+              new MouseEvent("dblclick", { bubbles: true, cancelable: true }),
+            );
+          } else {
+            armed = pane;
+          }
+        });
+      })();
 
       // Click on desktop to deselect folders
       desktop.addEventListener("click", (e) => {
@@ -8787,7 +9073,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           e.stopPropagation();
           let view = item.dataset.view;
           
-          if (window.innerWidth <= 768 && (view === "columns" || view === "gallery")) {
+          if (CIRE.isStacked() && (view === "columns" || view === "gallery")) {
             view = "icons"; // Prevent switching to columns or gallery on mobile
           }
           currentView = view;
@@ -8916,24 +9202,34 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       });
 
         // Desktop Folder Positioning - Responsive to window size
+
+        /* The top of the carousel band is the floor everything sits above.
+           It used to be guessed as `innerHeight - 350`; the real band is a
+           different height, so on shorter viewports (a non-maximised desktop
+           window, an iPad in landscape) the guess sat BELOW the real top and
+           the folder column ran over the carousel. Measure it instead, and
+           keep the constant only as a fallback for the first paint, before
+           the carousel exists. */
+        function getCarouselTop() {
+          const band = document.querySelector(".carousel-container");
+          if (band) {
+            const top = band.getBoundingClientRect().top;
+            if (top > 0) return top;
+          }
+          return window.innerHeight - 350;
+        }
+        window.getCarouselTop = getCarouselTop;
+
         function positionDesktopFolders() {
-          const startY = 100;
           const rightEdge = window.innerWidth - 100;
-          const topOfCarousel = window.innerHeight - 350; // carousel + ~30px clearance
+          const TOGGLE_CLEARANCE = 85;  // never ride up over the theme toggle
+          const BAND_GAP = 8;           // breathing room above the carousel
+          const floor = getCarouselTop() - BAND_GAP;
 
-          const leftFolders = ["macintosh-hd", "inquiry"];
-          let leftY = startY + 90; 
-          leftFolders.forEach((id) => {
-            const el =
-              document.getElementById(id) ||
-              document.querySelector(`[data-folder="${id}"]`);
-            if (el) {
-              el.style.top = leftY + "px";
-              el.style.left = "20px";
-              leftY += (el.offsetHeight || 100) + 15; 
-            }
-          });
-
+          /* The RIGHT column is the anchor: it stacks upward off the carousel,
+             so its span defines the usable part of the desktop. The left pair
+             is then centred against that span - the same arrangement on every
+             device class, not just tablets. */
           const rightFolders = [
             "sophisticated-ignorance",
             "sophisticated-brilliance",
@@ -8941,25 +9237,94 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             "cire-concierge",
             "cire-canon",
           ];
-          
-          let totalRightHeight = rightFolders.length * 100;
-          let gapYRight = 5; // Strictly fixed at 5px (was 10px, reduced further for visibility)
-          
-          let requiredHeight = totalRightHeight + (rightFolders.length - 1) * gapYRight;
-          let rightY = topOfCarousel - requiredHeight;
-          
-          // Prevent going off the top of the screen and obstructing the theme toggle switch
-          rightY = Math.max(85, rightY);
-
-          rightFolders.forEach((id) => {
-            const el =
+          const rightEls = rightFolders
+            .map((id) =>
               document.getElementById(id) ||
-              document.querySelector(`[data-folder="${id}"]`);
-            if (el) {
-              el.style.top = rightY + "px";
-              el.style.left = rightEdge + "px";
-              rightY += (el.offsetHeight || 100) + gapYRight;
-            }
+              document.querySelector(`[data-folder="${id}"]`))
+            .filter(Boolean);
+          if (!rightEls.length) return;
+
+          const rightHeights = rightEls.map((el) => el.offsetHeight || 100);
+          const rightTotal = rightHeights.reduce((a, b) => a + b, 0);
+          const slots = Math.max(1, rightEls.length - 1);
+
+          /* Where the column WANTS to sit. This is the long-standing anchor and
+             it is what the approved portrait-tablet layout looks like, so it is
+             kept verbatim - including its nominal 100px-per-folder estimate,
+             which is what lifts the column clear of the carousel rather than
+             flush against it. */
+          const legacyTop =
+            (window.innerHeight - 350) - (rightEls.length * 100 + slots * 5);
+
+          /* Where it is ALLOWED to sit. On a short viewport - a non-maximised
+             desktop window, an iPad in landscape - the anchor bottoms out at
+             the toggle clearance and the stack used to spill over the carousel.
+             Tighten the gaps before letting that happen. */
+          let gapYRight = 5;
+          let stackHeight = rightTotal + gapYRight * slots;
+          if (floor - stackHeight < TOGGLE_CLEARANCE) {
+            const room = floor - TOGGLE_CLEARANCE - rightTotal;
+            gapYRight = Math.max(0, Math.min(5, room / slots));
+            stackHeight = rightTotal + gapYRight * slots;
+          }
+
+          const rightTop = Math.min(
+            Math.max(TOGGLE_CLEARANCE, legacyTop),
+            Math.max(TOGGLE_CLEARANCE, floor - stackHeight),
+          );
+
+          let rightY = rightTop;
+          rightEls.forEach((el, i) => {
+            el.style.top = rightY + "px";
+            el.style.left = rightEdge + "px";
+            rightY += rightHeights[i] + gapYRight;
+          });
+          const rightBottom = rightY - gapYRight;
+
+          const leftFolders = ["macintosh-hd", "inquiry"];
+          const leftEls = leftFolders
+            .map((id) =>
+              document.getElementById(id) ||
+              document.querySelector(`[data-folder="${id}"]`))
+            .filter(Boolean);
+          if (!leftEls.length) return;
+
+          const gapYLeft = 15;
+          const leftHeights = leftEls.map((el) => el.offsetHeight || 100);
+          const leftStackHeight =
+            leftHeights.reduce((a, b) => a + b, 0) + gapYLeft * (leftEls.length - 1);
+
+          /* Anchor the left pair to the CENTRE OF THE VIEWPORT, not to the
+             right column.
+
+             The right column hangs off the carousel, which is a fixed distance
+             from the bottom of the screen. On a tall portrait tablet that puts
+             it low and centring against it looks right; on a wide, short
+             viewport - a desktop window, an iPad in landscape - it clamps up
+             against the theme-toggle clearance and drags the left pair up with
+             it, leaving the folders pinned near the top. That is why the same
+             rule read as "correct" in portrait and "hasn't moved" in landscape.
+
+             The viewport centre is stable across both. It lands within ~5px of
+             the approved portrait-tablet position, so that layout is unchanged.
+             Phones keep their own placement: the stacked column positions these
+             as a fixed overlay and that arrangement is already signed off. */
+          let leftY;
+          if (window.CIRE && CIRE.isStacked()) {
+            leftY = Math.max(
+              TOGGLE_CLEARANCE,
+              rightTop + ((rightBottom - rightTop) - leftStackHeight) / 2,
+            );
+          } else {
+            const centred = (window.innerHeight - leftStackHeight) / 2;
+            const lowest = floor - leftStackHeight;   // never touch the carousel
+            leftY = Math.max(TOGGLE_CLEARANCE, Math.min(centred, lowest));
+          }
+
+          leftEls.forEach((el, i) => {
+            el.style.top = leftY + "px";
+            el.style.left = "20px";
+            leftY += leftHeights[i] + gapYLeft;
           });
         }
 
@@ -9069,6 +9434,66 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       );
 
       // Position initial popups relative to viewport center
+      /* ── Layout band ────────────────────────────────────────────────────
+         The usable vertical strip between the theme toggle and the top of the
+         carousel. The RIGHT folder column has always been anchored to this
+         band (hence its correct position on tall screens); windows, the left
+         folders and the background logo were pinned to hardcoded top offsets
+         instead, which is why they bunch at the top on a portrait tablet.   */
+      function getLayoutBand() {
+        const top = 85;
+        const bottom = Math.max(top + 200, window.innerHeight - 350);
+        return { top: top, bottom: bottom, height: bottom - top };
+      }
+      window.getLayoutBand = getLayoutBand;
+
+      /* Keep a window fully inside the viewport. setInitialPos previously
+         applied `centerX + offset` with no clamp, so a fixed-width window such
+         as Join Network (760px) overflowed a 1024px portrait iPad by ~123px. */
+      function clampWindowToViewport(el) {
+        if (!el || !el.offsetWidth) return;
+        const pad = 8;
+        const maxLeft = window.innerWidth - el.offsetWidth - pad;
+        const left = parseFloat(el.style.left) || 0;
+        if (left > maxLeft) el.style.left = Math.max(pad, maxLeft) + "px";
+        else if (left < pad) el.style.left = pad + "px";
+
+        const maxTop = window.innerHeight - el.offsetHeight - pad;
+        const top = parseFloat(el.style.top) || 0;
+        if (top > maxTop) el.style.top = Math.max(pad, maxTop) + "px";
+      }
+      window.clampWindowToViewport = clampWindowToViewport;
+
+      /* Centre the five boot windows within the layout band. Tablet only:
+         desktop proportions are already correct and phones use the stacked
+         column layout, so neither should shift. */
+      function centerWindowClusterInBand() {
+        if (!window.CIRE || !CIRE.isTouch() || CIRE.isStacked()) return;
+        const ids = ["popup-maison", "popup-transcendence", "popup-brilliance",
+                     "popup-ignorance", "popup-power", "popup-power-video"];
+        const els = ids
+          .map(function (id) { return document.getElementById(id); })
+          .filter(function (el) { return el && el.offsetHeight; });
+        if (!els.length) return;
+
+        let minTop = Infinity, maxBottom = -Infinity;
+        els.forEach(function (el) {
+          const t = parseFloat(el.style.top) || 0;
+          if (t < minTop) minTop = t;
+          if (t + el.offsetHeight > maxBottom) maxBottom = t + el.offsetHeight;
+        });
+
+        const band = getLayoutBand();
+        const offset = band.top + (band.height - (maxBottom - minTop)) / 2 - minTop;
+        if (offset <= 0) return; /* never pull windows upward */
+
+        els.forEach(function (el) {
+          el.style.top = ((parseFloat(el.style.top) || 0) + offset) + "px";
+          clampWindowToViewport(el);
+        });
+      }
+      window.centerWindowClusterInBand = centerWindowClusterInBand;
+
       function positionInitialPopups() {
         const centerX = window.innerWidth / 2;
 
@@ -9081,6 +9506,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             el.style.left = centerX + offset + "px";
             el.style.top = top;
             el.dataset.centerOffset = offset; // Store relative position
+            clampWindowToViewport(el);
           }
         }
 
@@ -9092,6 +9518,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         setInitialPos("popup-coming-soon", 26, "200px");
         setInitialPos("popup-power", -274, "120px");
         setInitialPos("popup-power-video", -71, "52px");
+
+        centerWindowClusterInBand();
       }
 
       
@@ -9125,8 +9553,16 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         let shouldDelay = isNormalBoot || isDeepLinkFirstVisit;
 
+        /* How long Join Network holds the foreground before the desktop
+           becomes interactive. 3s for BOTH boot sequences - the normal
+           home-page load and the deep-link path that fires once per 24h.
+           This single constant drives all three holds below - the Maison
+           titlebar blocker, the phone scroll lock and the guestbook
+           interaction blocker - so they can never drift apart. */
+        const BOOT_HOLD_MS = 3000;
+
         let launchDelay = 0;
-        if (window.innerWidth <= 768) {
+        if (CIRE.isStacked()) {
           currentView = "icons";
           const viewLabel = document.getElementById("view-label");
           const viewIcon = document.getElementById("view-icon");
@@ -9142,7 +9578,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           const tutorialOverlay = document.getElementById("mobile-tutorial-overlay");
           let isRevealed = false;
           
-          if (window.innerWidth <= 768) {
+          if (CIRE.isStacked()) {
               document.body.classList.add("scroll-locked");
               desktop.style.backgroundImage = "url('/bg_placeholder.png')";
               desktop.style.transition = "background-image 0.5s ease-in-out";
@@ -9191,6 +9627,10 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         positionDesktopFolders();
         generateCarousels();
+        /* The first call ran before the carousel band existed, so it could only
+           use the fallback height. Now that the band is in the DOM, re-run with
+           its measured top so the folder column sits correctly above it. */
+        requestAnimationFrame(() => positionDesktopFolders());
 
         const hasJoined =
           localStorage.getItem("cire_network_joined") === "true";
@@ -9233,7 +9673,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           // Position all popups after opening
           positionInitialPopups();
 
-          if (window.innerWidth <= 768) {
+          if (CIRE.isStacked()) {
               const bootVideos = document.querySelectorAll('#popup-transcendence video, #popup-sb-logo video, #popup-power-video video');
               bootVideos.forEach(v => {
                   v.pause();
@@ -9271,26 +9711,26 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                   if (titlebar.contains(blocker)) {
                     titlebar.removeChild(blocker);
                   }
-                }, 5000);
+                }, BOOT_HOLD_MS);
               } else {
                 if (titlebar.contains(blocker)) titlebar.removeChild(blocker);
               }
             }
           }
 
-          // 5-Second Scroll Restriction on Mobile
-          if (window.innerWidth <= 768) {
+          // Scroll restriction on phones for the boot hold
+          if (CIRE.isStacked()) {
             document.body.classList.add("scroll-locked");
             if (shouldDelay) {
               setTimeout(() => {
                 document.body.classList.remove("scroll-locked");
-              }, 5000);
+              }, BOOT_HOLD_MS);
             } else {
               document.body.classList.remove("scroll-locked");
             }
           }
 
-          // Enforce Graphite Mode with 5s delay for Guestbook
+          // Enforce Graphite Mode for the Guestbook boot hold
           setTimeout(() => {
             const gbWindow = document.getElementById("popup-guestbook");
             if (gbWindow) {
@@ -9339,12 +9779,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 });
 
                 // Normalise z-index to fall into standard layer hierarchy
-                highestZIndex++;
-                gbWindow.style.zIndex = highestZIndex;
+                highestWindowZIndex++;
+                gbWindow.style.zIndex = highestWindowZIndex;
               };
 
               if (shouldDelay) {
-                setTimeout(removeBlocker, 5000); // RESTORED TO 5000ms per user request
+                setTimeout(removeBlocker, BOOT_HOLD_MS);
               } else {
                 removeBlocker();
               }
@@ -9359,7 +9799,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       document.addEventListener(
         "click",
         (e) => {
-          if (window.innerWidth <= 768) {
+          if (CIRE.isTouch()) {
             const target = e.target.closest("[ondblclick]");
             if (target) {
               if (target.getAttribute('data-mobile-clicked')) return;
@@ -10021,21 +10461,33 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     </div>
                 `;
                 
-                const collectionHtml = `
-                    <div style="margin-top: 30px;">
-                        <h3 style="font-size: 14px; letter-spacing: 0.1em; margin-bottom: 15px; color: white;">COLLECTION</h3>
-                        <div style="color: #d1d1d6; font-size: 14px; line-height: 1.5;">
-                            <b>Transcendence of Man</b><br><br>
-                            <div style="text-indent: 1.5em;">As a whole, the collection invites <i>reflection on scars</i> not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.</div>
-                        </div>
-                    </div>
+                /* Collection now lives in the right-hand column beneath Metal
+                   Treatment rather than trailing the specs. */
+                const collectionBody = `
+                    <b>Transcendence of Man</b><br><br>
+                    <div style="text-indent: 1.5em;">As a whole, the collection invites <i>reflection on scars</i> not as disfigurements, but as evidence of transformation. These works of art crafted out of precious gemstones and metals are designed to acknowledge struggle while recognizing that refinement is a process, and brilliance is achieved through endurance.</div>
                 `;
-                descContainer.innerHTML += specHtml + collectionHtml;
+                const collectionEl = document.getElementById("pd-collection");
+                const collectionBlock = document.getElementById("pd-collection-block");
+                if (collectionEl && collectionBlock) {
+                    collectionEl.innerHTML = collectionBody;
+                    collectionBlock.style.display = "";
+                }
+                descContainer.innerHTML += specHtml;
             }
 
             infoContainer.innerHTML = "";
             perfContainer.innerHTML = "";
             reqContainer.innerHTML = "";
+
+            /* The modal is a singleton, so anything not repopulated for THIS
+               product has to be cleared or it leaks in from the last one. */
+            if (item.collection !== "sophisticated-brilliance") {
+              const cEl = document.getElementById("pd-collection");
+              const cBlock = document.getElementById("pd-collection-block");
+              if (cEl) cEl.innerHTML = "";
+              if (cBlock) cBlock.style.display = "none";
+            }
 
             if (item.collection === "sophisticated-brilliance" || item.collection === "sophisticated-ignorance") {
               const isJewelry = (item.collection === "sophisticated-brilliance");
@@ -10368,6 +10820,110 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         modal.style.display = "none";
       }
 
+      /* Sophisticated Brilliance (jewellery) is a separate business line from
+         CIRE Concierge (vehicles); the two must never share storage.
+
+         Previously both forms called submitInquiry(), which reads the CONCIERGE
+         form's `inq-*` field ids. The brilliance form has none of those ids, so
+         a jewellery submission sent the vehicle form's values - blank in
+         practice - wrote them to the shared `private_inquiry` collection, and
+         then ran the vehicle form's cleanup (insurance container, budget
+         readout). This handler reads the brilliance form's own fields and
+         writes to its own collection, validated by the same name + email rule
+         that request_access uses. */
+      async function submitBrillianceInquiry(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = document.querySelector(
+          'button[form="brilliance-inquiry-form"]',
+        );
+        const originalText = btn ? btn.innerText : "";
+        if (btn) {
+          btn.disabled = true;
+          btn.innerText = "Submitting...";
+        }
+
+        const val = (id) => {
+          const el = document.getElementById(id);
+          return el ? el.value.trim() : "";
+        };
+
+        const name = val("brilliance-name");
+        const email = val("brilliance-email");
+        const phone = (
+          val("brilliance-country-code") + " " + val("brilliance-phone")
+        ).trim();
+        const company = val("brilliance-company");
+        const toneEl = form.querySelector('input[name="goldTone"]:checked');
+        const goldTone = toneEl ? toneEl.value : "";
+        const products = Array.from(
+          form.querySelectorAll('input[name="brillianceProducts"]:checked'),
+        ).map((el) => el.value);
+
+        // Local copy first, so a Firestore outage never loses the enquiry.
+        try {
+          const entries = JSON.parse(
+            localStorage.getItem("cire_brilliance_inquiries") || "[]",
+          );
+          entries.push({ name, email, phone, company, goldTone, products,
+                         ts: new Date().toISOString() });
+          localStorage.setItem(
+            "cire_brilliance_inquiries", JSON.stringify(entries),
+          );
+        } catch (lsErr) {
+          console.error("Local store error", lsErr);
+        }
+
+        let locationData = {};
+        try {
+          const ipRes = await fetch("http://ip-api.com/json/");
+          if (ipRes.ok) locationData = await ipRes.json();
+        } catch (err) {
+          console.error("IP API Error", err);
+        }
+
+        let stored = false;
+        if (
+          window.firebaseDB &&
+          window.firebaseAddDoc &&
+          window.firebaseCollection
+        ) {
+          try {
+            await window.firebaseAddDoc(
+              window.firebaseCollection(window.firebaseDB, "brilliance_inquiry"),
+              {
+                name,
+                email,
+                phone,
+                company,
+                goldTone,
+                products,
+                locationData: locationData,
+                timestamp: window.firebaseServerTimestamp(),
+              },
+            );
+            stored = true;
+          } catch (fbErr) {
+            /* Surfaced, not swallowed: a rejected write used to look identical
+               to a successful one from the visitor's side. */
+            console.error("Firebase Error: ", fbErr);
+          }
+        }
+
+        if (btn) {
+          btn.innerText = stored ? "Request Sent" : "Saved \u2014 Retrying";
+          btn.style.background = stored ? "#32d74b" : "#ff9f0a";
+        }
+        setTimeout(() => {
+          closeBrillianceInquiryForm();
+          if (btn) {
+            btn.innerText = originalText;
+            btn.style.background = "#fff";
+            btn.disabled = false;
+          }
+        }, 2000);
+      }
+
       async function submitInquiry(e) {
         e.preventDefault();
         const btn = document.getElementById("inq-submit-btn");
@@ -10421,7 +10977,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         const twentyFourHour = getCheck("inq-24-hour");
 
         const delivery = getVal("inq-delivery");
-        const location = getVal("inq-dynamic-location");
+        /* The input is `inq-location`; it was being read as
+           "inq-dynamic-location", which matches nothing, so every concierge
+           inquiry submitted an empty pickup/drop-off location. The "dynamic"
+           part is the LABEL (`location-label`), whose text changes with the
+           delivery option - not the field id. */
+        const location = getVal("inq-location");
         const outOfState = getVal("inq-out-of-state");
 
         const driverAge = getVal("inq-age");
@@ -10457,7 +11018,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           console.error("IP API Error", err);
         }
 
-        // Add to Firebase Firestore - 'private_inquiry' collection
+        // Add to Firebase Firestore - 'concierge_inquiry' collection (vehicles only)
         if (
           window.firebaseDB &&
           window.firebaseAddDoc &&
@@ -10465,7 +11026,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         ) {
           try {
             await window.firebaseAddDoc(
-              window.firebaseCollection(window.firebaseDB, "private_inquiry"),
+              window.firebaseCollection(window.firebaseDB, "concierge_inquiry"),
               {
                 name,
                 email,
@@ -10623,7 +11184,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             if (typeof navigationHistory !== 'undefined') {
                 historyIndex = 0;
             }
-            if (window.innerWidth <= 768 && typeof openFinderWindow === 'function') {
+            if (CIRE.isStacked() && typeof openFinderWindow === 'function') {
                 openFinderWindow('macintosh-hd', false, false);
             }
         }
@@ -10799,9 +11360,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               ></ul>
             </div>
             <div
+              id="pd-right-column"
               style="flex: 1; display: flex; flex-direction: column; gap: 24px"
             >
               <div
+                id="pd-info-block"
                 style="
                   background: rgba(255, 255, 255, 0.03);
                   border-radius: 16px;
@@ -10830,7 +11393,35 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                   "
                 ></ul>
               </div>
+              <!-- Sits beneath Metal Treatment in the right-hand column on
+                   desktop and tablet; re-ordered to last on phones. Hidden
+                   until a product that has a collection blurb populates it. -->
               <div
+                id="pd-collection-block"
+                style="
+                  display: none;
+                  background: rgba(255, 255, 255, 0.03);
+                  border-radius: 16px;
+                  padding: 24px;
+                "
+              >
+                <h3
+                  style="
+                    color: white;
+                    font-size: 16px;
+                    margin: 0 0 20px 0;
+                    font-weight: 500;
+                  "
+                >
+                  Collection
+                </h3>
+                <div
+                  id="pd-collection"
+                  style="color: #d1d1d6; font-size: 14px; line-height: 1.5"
+                ></div>
+              </div>
+              <div
+                id="pd-req-block"
                 style="
                   background: rgba(255, 255, 255, 0.03);
                   border-radius: 16px;
@@ -11747,7 +12338,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           </button>
         </div>
         <div style="padding: 24px; overflow-y: auto; flex: 1">
-          <form id="brilliance-inquiry-form" onsubmit="submitInquiry(event)">
+          <form id="brilliance-inquiry-form" onsubmit="submitBrillianceInquiry(event)">
             <style>
               #brilliance-inquiry-form label {
                 display: block;
@@ -12355,6 +12946,171 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           width: 100% !important;
         }
       }
+
+      /* ══════════════════════════════════════════════════════════════════
+         TOUCH LAYER  —  phones AND tablets
+         ------------------------------------------------------------------
+         Additive by design. The `max-width:768px` block above still owns the
+         phone-only STACKED layout and is untouched. Everything here is about
+         INPUT + VIEWPORT, which tablets share with phones even though they
+         keep the windowed desktop layout.
+         ══════════════════════════════════════════════════════════════════ */
+
+      /* `manipulation` removes the 300ms double-tap-to-zoom wait. It works
+         together with the gesture-level zoom lock in the head script - see the
+         note there about iOS ignoring the viewport meta tag. */
+      html[data-input="touch"],
+      html[data-input="touch"] body,
+      html[data-input="touch"] #desktop,
+      html[data-input="touch"] .popup-window,
+      html[data-input="touch"] .finder-window,
+      html[data-input="touch"] .desktop-folder {
+        touch-action: manipulation;
+      }
+
+      /* Address-bar-aware sizing. These were previously locked inside the
+         phone breakpoint, so tablets never received them. */
+      html[data-input="touch"] #product-detail-modal {
+        height: calc(var(--vh, 1vh) * 100) !important;
+      }
+      html[data-input="touch"] #product-detail-modal > div {
+        max-height: calc(var(--vh, 1vh) * 90) !important;
+        margin-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Product carousel. Two separate problems live here.
+
+         1. The inline `height: 65vh` resolves against iOS's LARGE viewport
+            (address bar hidden), so the box overflows the visible area.
+            `--vh` sizes it against what is actually on screen instead.
+
+         2. The carousel is a flex ITEM in a column, and a flex item shrinks
+            below its `height` unless something stops it. The inline
+            `min-height: 400px` was that stop; dropping it to 0 let the box
+            collapse - partially in portrait (the cropped image) and all the
+            way to 0 in landscape, where the surrounding copy is taller than
+            the viewport and the image disappeared entirely. `flex: 0 0 auto`
+            is the real fix: the height is honoured and the modal scrolls,
+            instead of the image being squeezed out of existence. */
+      html[data-input="touch"] #custom-gallery-carousel {
+        flex: 0 0 auto !important;
+        height: calc(var(--vh, 1vh) * 50) !important;
+        min-height: 260px !important;
+        max-height: calc(var(--vh, 1vh) * 55) !important;
+      }
+      html[data-input="touch"] #custom-gallery-carousel img {
+        object-fit: contain !important;
+      }
+
+      /* Background logo: `center -220.5px` pins the image's TOP edge, which on
+         a tall portrait tablet leaves it stranded high with dead space below.
+         Band centre works out to a constant offset from the viewport centre:
+             85 + (H - 350 - 85)/2  ==  H/2 - 132.5
+         so calc(50% - 132.5px) centres the logo in the band at ANY height.
+         Percentages in background-position align the image's 50% point with
+         the container's, which is what makes the identity hold. */
+      html[data-input="touch"][data-layout="windowed"] body::before {
+        height: var(--app-h, 100vh) !important;
+        background-position: center calc(50% - 132.5px), center center !important;
+      }
+
+      /* The toggle sits at a hardcoded 20px inset, which on a notched or
+         address-bar-overlaid tablet lands underneath browser chrome. Push it
+         inside the safe area; `env()` resolves to 0 where there is no inset,
+         so desktop is unaffected. */
+      html[data-input="touch"] .toggle-container {
+        top: calc(20px + env(safe-area-inset-top)) !important;
+        right: calc(20px + env(safe-area-inset-right)) !important;
+      }
+
+      /* Finder rows are tap-to-select-then-tap-to-open on touch; give them a
+         real hit target so the second tap is not a game of chance. */
+      html[data-input="touch"] .list-item,
+      html[data-input="touch"] .icon-view-item,
+      html[data-input="touch"] .column-item {
+        min-height: 44px;
+      }
+
+      /* ── Portrait gate (phones only) ─────────────────────────────────────
+         The phone experience is a single stacked column and is not designed to
+         be read sideways, so landscape is closed off rather than laid out.
+         Tablets are unaffected - they keep both orientations. */
+      #orientation-gate {
+        display: none;
+      }
+      html[data-device="phone"][data-orientation="landscape"] #orientation-gate {
+        display: flex !important;
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 24px;
+        text-align: center;
+        background: #0d0d0d;
+        color: #e8e8e8;
+        font-family: monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      /* Nothing behind the gate should scroll or be reachable. */
+      html[data-device="phone"][data-orientation="landscape"] body {
+        overflow: hidden !important;
+      }
+
+      #orientation-gate .gate-icon {
+        font-size: 44px;
+        color: #8e8e93;
+      }
+      #orientation-gate .gate-title {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      #orientation-gate .gate-sub {
+        font-size: 11px;
+        color: #8e8e93;
+        letter-spacing: 0.08em;
+        text-transform: none;
+        max-width: 34ch;
+        line-height: 1.6;
+      }
+
+      /* The carousel band is fixed to the bottom of the screen and the expand
+         button sat 5px off that edge - underneath the home indicator on any
+         device that has one, which made it look clipped and half-tappable.
+         env() resolves to 0 where there is no inset, so a desktop browser is
+         unaffected; touch devices get the inset plus a little breathing room
+         so the button clears the indicator rather than just touching it. */
+      #concierge-toggle-bar {
+        margin-bottom: calc(5px + env(safe-area-inset-bottom)) !important;
+      }
+      html[data-input="touch"] #concierge-toggle-bar {
+        margin-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+      }
+
+      /* Join Network is a fixed 760px window; on a 1024px portrait iPad that
+         overflows the right edge by ~123px. Clamp it to the viewport. */
+      html[data-input="touch"][data-layout="windowed"] #popup-guestbook {
+        width: min(760px, calc(100vw - 32px)) !important;
+        max-width: calc(100vw - 32px) !important;
+        /* graphite-mode pins `left: 40px !important`, which overflows as soon
+           as the viewport drops below 800px. Centre instead, so the window is
+           correct at every tablet width rather than at one of them. */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        height: calc(var(--vh, 1vh) * 82) !important;
+        max-height: calc(var(--vh, 1vh) * 82) !important;
+      }
+      html[data-input="touch"][data-layout="windowed"] #popup-guestbook > div:not(.popup-titlebar) {
+        height: calc(100% - 28px) !important;
+      }
+      /* Map and form share the window height instead of overflowing it. */
+      html[data-input="touch"][data-layout="windowed"] #popup-guestbook #wwn-map {
+        height: 100% !important;
+      }
+
     </style>
     <!-- HARDCODED COOKIE BANNER -->
     <div id="site-footer-message-bar">
@@ -12514,19 +13270,17 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         });
       };
     </script>
+      <!-- Portrait gate: shown only on phones held in landscape.
+         LAST element in the body on purpose - the consent bar sets its display
+         inline with !important and shares the maximum z-index, so the gate can
+         only win the tie by painting after it. -->
+    <div id="orientation-gate" role="alertdialog" aria-live="polite">
+      <i class="fas fa-mobile-screen gate-icon" aria-hidden="true"></i>
+      <div class="gate-title">Please rotate your device</div>
+      <div class="gate-sub">
+        CIRE is presented in portrait. Turn your phone upright to continue.
+      </div>
+    </div>
 
-    <!-- Address Bar Detector -->
-    <script>
-      function detectAddressBar() {
-        // Calculates the true 1% of the visible height
-        let vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-      }
-      // Listen for resizes and orientation changes
-      window.addEventListener('resize', detectAddressBar);
-      window.addEventListener('orientationchange', detectAddressBar);
-      // Initialize on boot
-      detectAddressBar();
-    </script>
-  </body>
+</body>
 </html>
