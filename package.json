@@ -10,7 +10,8 @@
     "build": "vite build && node prune_dist_png.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "assets:webp": "node webp_assets.cjs"
+    "assets:webp": "node webp_assets.cjs && node normalize_aspect.cjs && node webp_thumbs.cjs",
+    "assets:thumbs": "node webp_thumbs.cjs"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

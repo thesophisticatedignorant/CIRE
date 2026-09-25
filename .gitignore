@@ -36,3 +36,28 @@ service-account.json
 notifications/*.json
 *-firebase-adminsdk-*.json
 cire-conglomerate-*.json
+
+# Session scratch — working copies, one-off patch scripts, saved diffs.
+# Kept out of history deliberately; none of it is part of the build.
+.claude/
+scratch/
+*.patch
+.git_diff_*.txt
+maison*.txt
+cire_live.html
+live_site.html
+old_index_temp.html
+scratch_cire.html
+shop_page.html
+index_*.html
+patch_*.py
+clean_migration.py
+run_migration.cjs
+run_test.cjs
+extracted_carousel.js
+temp_carousel.js
+jewelry_generated.js
+script0.js
+script5.js
+test.js
+test2.js

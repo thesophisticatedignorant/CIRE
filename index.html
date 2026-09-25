@@ -1345,6 +1345,44 @@
         color: #333;
       }
 
+      /* The Power Perfected video window sets its titlebar colour inline
+         (`background: rgba(30,30,30,.95)`), and an inline declaration outranks
+         the ordinary light-mode rules above - so it was the one default window
+         that stayed dark when the theme was toggled. The window body itself is
+         deliberately transparent (it frames a video), so only the bar flips. */
+      body.light-mode #popup-power-video .popup-titlebar {
+        background-color: rgba(220, 220, 220, 0.9) !important;
+      }
+      body.light-mode #popup-power-video .popup-title {
+        color: #555 !important;
+      }
+
+      /* The product gallery's action bar hardcodes #151516 inline, so in light
+         mode the sheet went pale while its footer stayed black. */
+      body.light-mode #pd-footer {
+        background: #e8e8ea !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+      }
+      body.light-mode #pd-inquiry-btn {
+        background: #1c1c1e !important;
+        color: #fff !important;
+      }
+
+      /* Section titles across the two columns.
+         The right-hand cards carry 24px of padding, so "Colorways" / "Metal
+         Treatment" sit 24px below where "Description" would otherwise start.
+
+         Lifting the CARD to meet the heading was the first attempt, but that
+         dragged its rounded border up against the image carousel and read as
+         clipped. Dropping the left column instead leaves the card sitting
+         naturally in its own box and still puts both headings on one line.
+         Phones stack the columns, so this is scoped to the windowed layout. */
+      @media (min-width: 601px) {
+        .product-detail-body > div:first-child {
+          padding-top: 24px;
+        }
+      }
+
       body.light-mode .popup-content p {
         color: #444;
       }
@@ -2701,6 +2739,11 @@
         .product-detail-body {
           flex-direction: column !important;
           gap: 20px !important;
+          /* Inline `align-items: flex-start` is right for the two-column desktop
+             layout, but once this becomes a column it shrinks every card to its
+             own content width - which is why Colorways rendered as a narrow box
+             instead of spanning the sheet. */
+          align-items: stretch !important;
         }
         .product-detail-body > div:last-child {
           display: contents !important;
@@ -2716,6 +2759,21 @@
         }
         #pd-collection-block {
           order: 4 !important;
+        }
+
+        /* Sophisticated Ignorance and Sophisticated Brilliance read
+           Colorways / Metal Treatment, then Description, then the closing
+           block - Position for Ignorance, Collection for Brilliance. That
+           puts the description ahead of pd-req-block, so those two swap.
+           Concierge listings keep Vehicle Information -> Requirements ->
+           Description, which is unaffected. */
+        #product-detail-modal[data-collection="sophisticated-ignorance"] .product-detail-body > div:first-child,
+        #product-detail-modal[data-collection="sophisticated-brilliance"] .product-detail-body > div:first-child {
+          order: 2 !important;
+        }
+        #product-detail-modal[data-collection="sophisticated-ignorance"] #pd-req-block,
+        #product-detail-modal[data-collection="sophisticated-brilliance"] #pd-req-block {
+          order: 3 !important;
         }
         #pd-toggles {
           justify-content: center !important;
@@ -6015,11 +6073,26 @@
         "Fortifications/The Intersect/Intersect 5.webp",
         "Fortifications/The Intersect/Intersect 6.webp"
      ]
+  },
+  {
+     name: "The Creed",
+     collection: "sophisticated-ignorance",
+     price: "1270",
+     colors: ["Amethyst"],
+     sizes: ["12oz"],
+     description: `<p style="margin-bottom: 12px; line-height: 1.5;"><i>Every strike makes a statement.</i></p><div style="display: flex; gap: 40px; text-align: left;"><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">DETAILS</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Individually hand-crafted from 100% genuine full-grain cowhide leather</li><li style="margin-bottom: 6px;">Double-stitched seams for structural reinforcement</li><li style="margin-bottom: 6px;">Hand-screen-printed texture application</li></ul></div><div style="flex: 1;"><h3 style="font-weight: bold; letter-spacing: 0.1em; margin-bottom: 15px; font-size: 14px;">DETAILS</h3><ul style="padding-left: 20px; list-style-type: disc; color: #d1d1d6; font-size: 14px; margin: 0; line-height: 1.5;"><li style="margin-bottom: 6px;">Triple-layer foam padding for maximum impact absorption</li><li style="margin-bottom: 6px;">Embroidered Inferno logo and Foundations insignia</li><li style="margin-bottom: 6px;">Bespoke customization options available upon inquiry</li><li style="margin-bottom: 6px;">Imported</li></ul></div></div>`,
+     images: [
+        "Relics/The Creed/The Creed - Front.webp",
+        "Relics/The Creed/The Creed - Over n Under.webp",
+        "Relics/The Creed/The Creed - Headgear.webp",
+        "Relics/The Creed/The Creed - Groin Protector.webp"
+     ]
   }
 ];
 
 // --- INJECTED TIER MAPPING ---
 const tierMapping = {
+    "The Creed": { tier: "Relics", tierDesc: "Relics serve as timeless leather goods that embody strength through subtlety and refinement through utility. Each piece is designed to be carried, aged, and remembered.", desc: "Every strike makes a statement." },
     "The Veil": { tier: "Foundations", tierDesc: "Foundations serves as the base layer of refinement; the stepping stones of your wardrobe designed for structure, comfort and everyday uniformity. Through simplicity and precision, Foundations defines the essentials. Where form takes shape and sophistication begins.", desc: "Protection through perception." },
     "The Cornerstone": { tier: "Foundations", tierDesc: "Foundations serves as the base layer of refinement; the stepping stones of your wardrobe designed for structure, comfort and everyday uniformity. Through simplicity and precision, Foundations defines the essentials. Where form takes shape and sophistication begins.", desc: "Simplicity as sophistication." },
     "The Breakaway": { tier: "Foundations", tierDesc: "Foundations serves as the base layer of refinement; the stepping stones of your wardrobe designed for structure, comfort and everyday uniformity. Through simplicity and precision, Foundations defines the essentials. Where form takes shape and sophistication begins.", desc: "Transformation in motion." },
@@ -6225,6 +6298,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               type: "document",
               textContent:
                 "Relics: The Creed of Craft\n\nRelics serve as timeless leather goods that embody strength through subtlety and refinement through utility. Each piece is designed to be carried, aged, and remembered.",
+            },
+            {
+              name: "The Creed",
+              type: "image",
+              src: "Relics/The Creed/The Creed - Front.webp",
             },],
         },
         "si-dominion": {
@@ -7587,6 +7665,9 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           setTimeout(() => {
             thirdWrapper.style.height = "";
             thirdWrapper.style.opacity = "1";
+            /* Its items only have a width now that it is displayed, so this is
+               the first point at which the loop can be measured correctly. */
+            if (window.syncCarouselMetrics) window.syncCarouselMetrics();
           }, 10);
           btn.innerHTML = "Collapse Concierge Inventory &#x25B4;";
         } else {
@@ -7655,7 +7736,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             { src: "Fortifications/The Intersect/Intersect 3.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
             { src: "Fortifications/The Intersect/Intersect 4.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
             { src: "Fortifications/The Intersect/Intersect 5.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
-            { src: "Fortifications/The Intersect/Intersect 6.webp", name: "The Intersect", collection: "sophisticated-ignorance" }
+            { src: "Fortifications/The Intersect/Intersect 6.webp", name: "The Intersect", collection: "sophisticated-ignorance" },
+            { src: "Relics/The Creed/The Creed - Front.webp", name: "The Creed", collection: "sophisticated-ignorance" },
+            { src: "Relics/The Creed/The Creed - Over n Under.webp", name: "The Creed", collection: "sophisticated-ignorance" },
+            { src: "Relics/The Creed/The Creed - Headgear.webp", name: "The Creed", collection: "sophisticated-ignorance" },
+            { src: "Relics/The Creed/The Creed - Groin Protector.webp", name: "The Creed", collection: "sophisticated-ignorance" }
         ];
 
         const bottomImagesList = window.CAROUSEL_PRODUCTS
@@ -7723,29 +7808,121 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                  clickAction = `openGalleryView('${derivedCategory ? derivedCategory.replace(/'/g, "\\'") : ''}', '${parsedTitle.replace(/'/g, "\\'")}', '${parsedColor.replace(/'/g, "\\'")}', '/${imgPath.replace(/'/g, "\\'")}', '${folderKey}')`;
             }
             
+            /* Carousel items are drawn at 130-200px wide, but a decoded bitmap
+               costs width*height*4 regardless of display size. Handing these
+               the full-resolution originals came to ~1GB of bitmap across the
+               three carousels, which mobile Safari answers by discarding and
+               reloading the tab - the "page refreshing itself" mid-cycle.
+               Thumbnails are ~90% cheaper; the gallery modal still gets the
+               original. Falls back to the full image if a thumb is missing. */
+            const thumbPath = imgPath.replace(/\.webp$/i, '-thumb.webp');
+
             if (imgPath.endsWith('.html')) {
               html += `
                 <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; border-radius: 12px; transform-style: preserve-3d; touch-action: pan-y;" onclick="${clickAction}">
-                    <iframe src="/${imgPath}?carousel=true" style="width: 100%; height: 100%; border: none; pointer-events: none; border-radius: 12px; transform: scale(1.05);" scrolling="no" tabindex="-1"></iframe>
+                    <iframe data-src="/${imgPath}?carousel=true" style="width: 100%; height: 100%; border: none; pointer-events: none; border-radius: 12px; transform: scale(1.05);" scrolling="no" tabindex="-1"></iframe>
                 </div>
               `;
             } else {
               html += `
                 <div class="carousel-item" data-title="${hoverTitle.replace(/'/g, "\\'")}" style="padding: 0; overflow: hidden; background: #000; cursor: pointer; transform-style: preserve-3d; touch-action: pan-y;" onclick="${clickAction}">
-                    <img src="/${imgPath}" alt="${hoverTitle.replace(/'/g, "\\'")}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; display: block;">
+                    <img src="/${thumbPath}" onerror="if(!this.dataset.full){this.dataset.full=1;this.src='/${imgPath}';}" alt="${hoverTitle.replace(/'/g, "\\'")}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; display: block;">
                 </div>
               `;
             }
           });
           carousel.innerHTML = html;
 
-          const speedPxPerSec = 75;
-          const distancePx = items.length * 216; // 216px per item (200px + 16px gap)
-          const durationSec = distancePx / speedPxPerSec;
-          carousel.style.width = (allItems.length * 216) + "px";
-          carousel.style.animationDuration = durationSec + "s";
-          carousel.style.webkitAnimationDuration = durationSec + "s";
+          applyCarouselMetrics(carousel, items.length);
         });
+
+        hydrateCarouselFrames();
+      }
+
+      /* The seamless loop depends on translateX(-50%) landing exactly on the
+         start of the duplicated copy, which only holds if the declared width
+         matches the real layout.
+
+         The stride was hardcoded as 216px (a 200px item plus a 16px gap), but
+         the phone breakpoint uses 130px items with a 2px gap - a stride of 132.
+         On a phone the track was therefore declared ~64% too wide and the wrap
+         fell far short of the second copy, so the marquee visibly jumped.
+         Measure the stride off the DOM instead of assuming it. */
+      function applyCarouselMetrics(carousel, itemsPerCopy) {
+        const kids = carousel.children;
+        if (!kids.length) return;
+
+        /* A hidden carousel measures 0-wide items, which previously left the
+           stride as nothing but the 16px gap - carousel 3 starts collapsed, so
+           it was sized 120 * 16 = 1920px and wrapped after four items instead
+           of sixty. Bail out unless the items are actually laid out; the
+           reveal handler re-runs this once they are. */
+        const itemWidth = kids[0].getBoundingClientRect().width;
+        if (!itemWidth) return;
+
+        const gapPx = parseFloat(getComputedStyle(carousel).columnGap || "0") || 0;
+        const stride = itemWidth + gapPx;
+        if (stride < 1) return;
+
+        const speedPxPerSec = 75;
+        const durationSec = (itemsPerCopy * stride) / speedPxPerSec;
+
+        carousel.style.width = kids.length * stride + "px";
+        carousel.style.animationDuration = durationSec + "s";
+        carousel.style.webkitAnimationDuration = durationSec + "s";
+      }
+
+      /* Re-measure when the breakpoint changes, otherwise rotating a phone
+         leaves the track sized for the previous stride. Cheap: no rebuild, so
+         the iframes are never re-fetched. */
+      window.syncCarouselMetrics = function () {
+        [
+          ["carousel-top", 0],
+          ["carousel-bottom", 0],
+          ["carousel-third", 0],
+        ].forEach(([id]) => {
+          const el = document.getElementById(id);
+          if (el && el.children.length) {
+            applyCarouselMetrics(el, el.children.length / 2);
+          }
+        });
+      };
+
+      /* The 360 viewers are whole documents, and the carousel renders each one
+         twice - once per duplicated copy. Loading all six up front meant every
+         visitor downloaded and ran them before the first frame of animation,
+         which is what stalled the marquee as the Fortifications run came round.
+
+         Each frame is attached only once it is within a viewport's width of
+         being seen, and is never torn down again, so a looping carousel does
+         not re-fetch the same document on every pass. */
+      function hydrateCarouselFrames() {
+        const pending = document.querySelectorAll(".carousel-item iframe[data-src]");
+        if (!pending.length) return;
+
+        const attach = (frame) => {
+          if (!frame.dataset.src) return;
+          frame.src = frame.dataset.src;
+          delete frame.dataset.src;
+        };
+
+        if (!("IntersectionObserver" in window)) {
+          pending.forEach(attach);
+          return;
+        }
+
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              attach(entry.target.querySelector("iframe"));
+              obs.unobserve(entry.target);
+            });
+          },
+          { root: null, rootMargin: "0px 100% 0px 100%", threshold: 0 },
+        );
+
+        pending.forEach((frame) => io.observe(frame.closest(".carousel-item")));
       }
 
         window.openGalleryView = function(category, title, color, imgPath, folderKey) {
@@ -7764,16 +7941,16 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                    window.history.pushState({}, '', '?folder=' + encodeURIComponent(folderKey));
                }
 
-               // Remove forward history
-               navigationHistory = navigationHistory.slice(0, historyIndex + 1);
-               // Append new folders sequentially
-               newPath.forEach(p => {
-                   if (navigationHistory.length === 0 || navigationHistory[navigationHistory.length - 1] !== p) {
-                       navigationHistory.push(p);
-                   }
-               });
-               
+               /* Fabricated, not appended - the same rule the Concierge
+                  gallery follows. A carousel selection has no Finder trail
+                  behind it, so we synthesise the route the visitor WOULD have
+                  taken to reach this product: Macintosh HD > the brand folder >
+                  the category folder > the product itself. Closing the gallery
+                  then leaves Back walking that canonical path, so the last
+                  gallery is one step away and its folder is right behind it for
+                  picking something else. */
                let fullTitle = title + (color ? ` - ${color}` : '');
+               navigationHistory = ["macintosh-hd"].concat(newPath);
                navigationHistory.push(`product:${encodeURIComponent(fullTitle)}:${category}`);
                historyIndex = navigationHistory.length - 1;
                
@@ -7822,8 +7999,18 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
          window.openConciergeGalleryView = function(name, make, model, imgPath, category, skipCloseModal = false) {
             if (typeof openFinderWindow === 'function') {
                const folderKey = category === 'automotive' ? 'concierge-automotive' : 'concierge-maritime';
+               /* Deliberately fabricated, not appended. A carousel selection
+                  has no Finder trail behind it, so we synthesise the path the
+                  visitor WOULD have taken to reach this gallery through the
+                  Finder - Macintosh HD > CIRE Concierge > the category folder
+                  - and Back then walks that canonical route. */
                navigationHistory = ["macintosh-hd", "cire-concierge", folderKey];
-               historyIndex = 2;
+               /* The product sits on top of the fabricated folder path, exactly
+                  as openGalleryView does it. Without this entry Back skipped
+                  the category folder and landed on CIRE Concierge, so choosing
+                  a different vehicle meant navigating back down again. */
+               navigationHistory.push(`product:${encodeURIComponent(name)}:${category}`);
+               historyIndex = navigationHistory.length - 1;
                window.history.replaceState({}, '', '?folder=cire-concierge');
                window.history.pushState({}, '', '?folder=' + encodeURIComponent(folderKey));
                openFinderWindow(folderKey, true, skipCloseModal);
@@ -7919,6 +8106,29 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       }
 
       // Select folder
+      /* Human-readable name for a folder, for the Finder titlebar.
+         Six of the folderData entries carry no `label` (the canon-* and
+         concierge-* ones), so fall back to the name their parent folder lists
+         them under, and finally to a tidied-up key. */
+      function getFolderTitle(folderKey) {
+        if (!folderKey) return "Macintosh HD";
+
+        const entry = folderData[folderKey];
+        if (entry && entry.label) return entry.label;
+
+        for (const key in folderData) {
+          const files = (folderData[key] && folderData[key].files) || [];
+          const match = files.find((f) => f.targetFolder === folderKey);
+          if (match && match.name) return match.name;
+        }
+
+        return folderKey
+          .replace(/^(si|canon|concierge)-/, "")
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+      window.getFolderTitle = getFolderTitle;
+
       function selectFolder(folderKey, fromHistory = false, updateBrowserHistory = true) {
         if (folderKey === "join-network") {
           openPopup("popup-guestbook");
@@ -7963,9 +8173,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           item.classList.toggle("active", item.dataset.folder === folderKey);
         });
 
-        // Update window title
-        // Update window title - ALWAYS Macintosh HD per user request
-        windowTitle.textContent = "Macintosh HD";
+        // Update window title to the folder actually being viewed.
+        windowTitle.textContent = getFolderTitle(folderKey);
 
         // Bring Finder to front when Macintosh HD is clicked
         if (folderKey === "macintosh-hd") {
@@ -7988,14 +8197,20 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           }
         }
 
-        // If it's a top-level folder, we need to explicitly open it
-        // and pass fromHistory to preserve the back stack!
+        /* Top-level folders need the window explicitly opened. preserveHistory
+           is ALWAYS true here: selectFolder has just maintained the back stack
+           itself, a few lines above. Passing `fromHistory` instead meant that
+           any ordinary navigation to one of these four folders hit
+           openFinderWindow's reset branch and flattened the stack to
+           ["macintosh-hd", folderKey] - so a trail like
+           Sophisticated Ignorance -> CIRE Canon lost its middle and Back
+           jumped straight to Macintosh HD. */
         if (
           ["macintosh-hd", "request-access", "sophisticated-ignorance", "cire-canon"].includes(
             folderKey,
           )
         ) {
-          openFinderWindow(folderKey, fromHistory);
+          openFinderWindow(folderKey, true);
         }
 
         // Populate files (no longer opens popup for SB/SI - just shows folder contents)
@@ -8868,6 +9083,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         }
 
         selectedFolder = folderId || "macintosh-hd";
+        /* openFinderWindow sets selectedFolder directly rather than going
+           through selectFolder, so the titlebar has to be updated here too -
+           otherwise opening a gallery straight from a carousel left the
+           previous folder's name in the titlebar. */
+        windowTitle.textContent = getFolderTitle(selectedFolder);
         finderWindow.classList.add("active");
 
         if (!preserveHistory) {
@@ -9037,21 +9257,19 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         .getElementById("close-btn")
         .addEventListener("click", closeFinderWindow);
 
-      // Back button
+      /* No click listeners here on purpose.
+         Both toolbar buttons already carry inline onclick handlers
+         (`onclick="navigateBack()"` / `"navigateForward()"` in the markup).
+         Binding a listener as well meant ONE press ran the handler TWICE, so
+         every Back and Forward moved two entries at a time - which is why a
+         single Back from a product folder appeared to jump straight to
+         Macintosh HD, and why Forward never landed where it should. */
       const backBtn = document.querySelector(
         ".toolbar-button .fa-chevron-left",
       )?.parentElement;
-      if (backBtn) {
-        backBtn.addEventListener("click", navigateBack);
-      }
-
-      // Forward button
       const forwardBtn = document.querySelector(
         ".toolbar-button .fa-chevron-right",
       )?.parentElement;
-      if (forwardBtn) {
-        forwardBtn.addEventListener("click", navigateForward);
-      }
 
       // Initialize button states
       updateNavigationButtons();
@@ -9411,6 +9629,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         "resize",
         debounce(() => {
           positionDesktopFolders();
+          if (window.syncCarouselMetrics) window.syncCarouselMetrics();
 
           // Reposition ALL open windows relative to new center
           // This maintains their visual position relative to the center of the screen
@@ -10480,6 +10699,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             perfContainer.innerHTML = "";
             reqContainer.innerHTML = "";
 
+            /* The phone layout stacks these blocks in a different order per
+               collection, and CSS cannot see `item`. Tag the modal so the
+               stylesheet can. */
+            const pdModal = document.getElementById("product-detail-modal");
+            if (pdModal) pdModal.dataset.collection = item.collection || "";
+
             /* The modal is a singleton, so anything not repopulated for THIS
                product has to be cleared or it leaks in from the last one. */
             if (item.collection !== "sophisticated-brilliance") {
@@ -10713,6 +10938,23 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           setTimeout(() => { modal.style.display = "none"; }, 300);
         }
         
+        /* Step the history cursor off the product and back onto the folder
+           now on screen. Closing the gallery left historyIndex pointing at the
+           product while the Finder showed its parent folder, so the cursor and
+           the view disagreed: Back moved to the folder that was ALREADY
+           displayed (a press that visibly did nothing), and Forward read as
+           disabled because the cursor sat at the end of the trail.
+
+           With the cursor on the folder, Back goes up a level and Forward
+           reopens the gallery just closed - which is the point of the
+           fabricated trail. */
+        if (typeof navigationHistory !== "undefined" &&
+            String(navigationHistory[historyIndex] || "").startsWith("product:") &&
+            historyIndex > 0) {
+          historyIndex--;
+          if (typeof updateNavigationButtons === "function") updateNavigationButtons();
+        }
+
         // Return active metal to Rose
         const defaultToggle = document.querySelector(".metal-toggle[data-metal='rose']");
         if (defaultToggle) defaultToggle.click();
@@ -11115,11 +11357,16 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 if (listingData) {
                    const category = listingData.category === 'automotive' ? 'automotive' : (listingData.category === 'maritime' ? 'maritime' : listingData.category);
                    window.currentShowroomData = window.CONCIERGE_INVENTORY.filter(d => d.category === category);
-                   openFinderWindow(`concierge-${category}`, false, true); // ensure finder is open in bg without adding to history
+                   /* 4th arg is updateBrowserHistory, which defaults to TRUE -
+                      so this pushed a new entry WHILE HANDLING popstate. That
+                      discarded the forward entry and left the device's forward
+                      gesture dead. The comment always said "without adding to
+                      history"; the argument was simply never passed. */
+                   openFinderWindow(`concierge-${category}`, false, true, false);
                    setTimeout(() => {
                        const index = window.currentShowroomData.findIndex(d => d.name === listingData.name);
                        if (index !== -1 && typeof openProductDetail === 'function') {
-                           isOpeningModal = true;
+                           isOpeningModal = false; // openProductDetail bails out if this is true
                            openProductDetail(index, category, false);
                        }
                    }, 100);
@@ -11140,12 +11387,39 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                         image: carouselData.images ? carouselData.images[0] : "",
                         collection: carouselData.collection
                     }];
-                    const targetFolder = carouselData.collection === 'sophisticated-ignorance' ? 'sophisticated-ignorance' : 'concierge-clothing';
-                    openFinderWindow(targetFolder, false, true);
+                    /* Restore the folder this product actually sits in, not
+                       the brand folder. The fabricated trail records it (e.g.
+                       si-foundations, not sophisticated-ignorance), so closing
+                       the gallery leaves you where the other colourways are.
+                       The hardcoded pair stays as the fallback for a product
+                       that somehow is not in the trail. */
+                    let targetFolder = carouselData.collection === 'sophisticated-ignorance' ? 'sophisticated-ignorance' : 'concierge-clothing';
+                    let productIdx = -1;
+                    if (typeof navigationHistory !== 'undefined') {
+                        productIdx = navigationHistory.map(h => String(h)).findIndex(
+                            h => h.startsWith('product:') &&
+                                 decodeURIComponent(h.split(':')[1] || '') === carouselData.name);
+                        if (productIdx > 0) {
+                            for (let i = productIdx - 1; i >= 0; i--) {
+                                if (!String(navigationHistory[i]).startsWith('product:')) {
+                                    targetFolder = navigationHistory[i];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    /* preserveHistory is on only when this product is already in
+                       the trail. Passing false there wiped the fabricated path,
+                       so a Back straight after a Forward skipped every
+                       intermediate folder and landed at Macintosh HD. When the
+                       product is NOT in the trail (a cold deep link) there is
+                       nothing worth keeping, so the reset is correct. */
+                    openFinderWindow(targetFolder, productIdx > 0, true, false);
+                    if (productIdx > 0) historyIndex = productIdx; // land ON the product
                     
                     setTimeout(() => {
                         if (typeof openProductDetail === 'function') {
-                            isOpeningModal = true;
+                            isOpeningModal = false; // openProductDetail bails out if this is true
                             openProductDetail(0, carouselData.collection, false);
                         }
                     }, 100);
@@ -11453,6 +11727,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           </div>
         </div>
         <div
+          id="pd-footer"
           style="
             padding: 24px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -11462,6 +11737,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           "
         >
           <button
+            id="pd-inquiry-btn"
             onclick="openInquiryForm()"
             style="
               background: white;
