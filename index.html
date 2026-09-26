@@ -3272,23 +3272,50 @@
                   outline: none;
                 "
               />
+              <p style="color: rgba(255,255,255,0.35); font-size: 0.58rem; letter-spacing: 0.06em; margin: -3px 0 2px 2px; font-family: Helvetica, Arial, sans-serif;">PRIVATE &mdash; NEVER SHOWN ON THE MAP</p>
 
-              <input
-                type="text"
-                id="join-location"
-                placeholder="LOCATION (OPTIONAL)"
-                style="
-                  width: 100%;
-                  padding: 8px 10px;
-                  background: rgba(255, 255, 255, 0.05);
-                  border: 1px solid #333;
-                  color: #fff;
-                  font-size: 0.78rem;
-                  font-family: Helvetica, Arial, sans-serif;
-                  box-sizing: border-box;
-                  outline: none;
-                "
-              />
+              <div style="position: relative">
+                <input
+                  type="text"
+                  id="join-location"
+                  placeholder="LOCATION (OPTIONAL)"
+                  autocomplete="off"
+                  style="
+                    width: 100%;
+                    padding: 8px 10px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid #333;
+                    color: #fff;
+                    font-size: 0.78rem;
+                    font-family: Helvetica, Arial, sans-serif;
+                    box-sizing: border-box;
+                    outline: none;
+                  "
+                />
+                <div
+                  id="join-location-suggestions"
+                  style="
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    z-index: 40;
+                    max-height: 148px;
+                    overflow-y: auto;
+                    background: #101010;
+                    border: 1px solid #333;
+                    border-top: none;
+                  "
+                ></div>
+              </div>
+              <!-- Filled in only when a suggestion is chosen. The map plots
+                   these, so a typed-but-unconfirmed place yields no pin. -->
+              <input type="hidden" id="join-lat" />
+              <input type="hidden" id="join-lon" />
+              <input type="hidden" id="join-city" />
+              <input type="hidden" id="join-country" />
+              <p style="color: rgba(255,255,255,0.35); font-size: 0.58rem; letter-spacing: 0.06em; margin: -3px 0 2px 2px; font-family: Helvetica, Arial, sans-serif;">TYPE, THEN CHOOSE A SUGGESTION TO SET YOUR PIN</p>
 
               <input
                 type="text"
@@ -3306,7 +3333,43 @@
                   outline: none;
                 "
               />
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 7px;
+                  cursor: pointer;
+                  color: rgba(255, 255, 255, 0.5);
+                  font-size: 0.6rem;
+                  letter-spacing: 0.06em;
+                  font-family: Helvetica, Arial, sans-serif;
+                  margin: 1px 0 2px 2px;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="join-ig-public"
+                  style="width: 12px; height: 12px; accent-color: #fff; cursor: pointer; flex: 0 0 auto;"
+                />
+                SHOW MY HANDLE ON THE MAP
+              </label>
 
+              <!-- Stated plainly, because the map publishes some of this. -->
+              <p
+                style="
+                  color: rgba(255, 255, 255, 0.32);
+                  font-size: 0.57rem;
+                  line-height: 1.45;
+                  letter-spacing: 0.03em;
+                  font-family: Helvetica, Arial, sans-serif;
+                  margin: 6px 0 0 0;
+                "
+              >
+                Joining places your name, chosen city and node colour on the public
+                map, along with your Instagram handle if you opt in above. Your email
+                address and network location are held privately and are never
+                displayed. Write to us at any time to be removed.
+              </p>
               <button
                 type="submit"
                 style="
@@ -4087,6 +4150,102 @@
               window._placeNode = placeNode;
             };
 
+            /* ── Location autocomplete ──────────────────────────────
+               The member picks their own place, so the pin comes from their
+               choice rather than an IP lookup. That matters twice over: the
+               free IP service only answers over plain HTTP, which a browser on
+               an HTTPS page blocks outright, and a chosen city is a truer
+               answer than whatever a VPN or carrier NAT resolves to.
+
+               Nominatim (OpenStreetMap) is free and needs no key. Its usage
+               policy asks for at most one request a second, hence the debounce,
+               and the lookup only fires once there are three characters to go
+               on. */
+            (function wireLocationAutocomplete() {
+              const input = document.getElementById("join-location");
+              const list = document.getElementById("join-location-suggestions");
+              if (!input || !list) return;
+
+              const lat = document.getElementById("join-lat");
+              const lon = document.getElementById("join-lon");
+              const city = document.getElementById("join-city");
+              const country = document.getElementById("join-country");
+
+              let timer = null;
+              let seq = 0;
+
+              const clearPick = () => {
+                lat.value = lon.value = city.value = country.value = "";
+              };
+              const hide = () => {
+                list.style.display = "none";
+                list.innerHTML = "";
+              };
+
+              const render = (places) => {
+                list.innerHTML = "";
+                if (!places.length) return hide();
+
+                places.forEach((place) => {
+                  const row = document.createElement("div");
+                  row.textContent = place.display_name;
+                  row.style.cssText =
+                    "padding:7px 10px;font-size:0.68rem;color:rgba(255,255,255,0.75);" +
+                    "cursor:pointer;font-family:Helvetica,Arial,sans-serif;" +
+                    "border-bottom:1px solid rgba(255,255,255,0.07);line-height:1.3;";
+                  row.onmouseover = () => {
+                    row.style.background = "rgba(255,255,255,0.08)";
+                  };
+                  row.onmouseout = () => {
+                    row.style.background = "transparent";
+                  };
+                  /* mousedown, not click: the input's blur would tear the list
+                     down before a click ever landed. */
+                  row.onmousedown = (ev) => {
+                    ev.preventDefault();
+                    const a = place.address || {};
+                    input.value = place.display_name;
+                    lat.value = place.lat;
+                    lon.value = place.lon;
+                    city.value =
+                      a.city || a.town || a.village || a.municipality ||
+                      a.county || a.state || "";
+                    country.value = a.country || "";
+                    hide();
+                  };
+                  list.appendChild(row);
+                });
+                list.style.display = "block";
+              };
+
+              input.addEventListener("input", () => {
+                clearPick(); // typing past a choice invalidates it
+                const q = input.value.trim();
+                clearTimeout(timer);
+                if (q.length < 3) return hide();
+
+                timer = setTimeout(async () => {
+                  const mine = ++seq;
+                  try {
+                    const res = await fetch(
+                      "https://nominatim.openstreetmap.org/search?format=json" +
+                        "&addressdetails=1&limit=5&q=" + encodeURIComponent(q),
+                      { headers: { Accept: "application/json" } },
+                    );
+                    if (!res.ok) return hide();
+                    const places = await res.json();
+                    if (mine !== seq) return; // a newer keystroke already won
+                    render(Array.isArray(places) ? places : []);
+                  } catch (err) {
+                    console.error("Location lookup failed", err);
+                    hide();
+                  }
+                }, 450);
+              });
+
+              input.addEventListener("blur", () => setTimeout(hide, 120));
+            })();
+
             // ── Form Submit ────────────────────────────────────────
             document
               .getElementById("join-network-form")
@@ -4110,16 +4269,34 @@
                 btn.textContent = "SUBMITTING...";
                 errMsg.style.display = "none";
 
-                // Save to localStorage (fallback)
+                /* Network location, kept for the private record only.
+
+                   Over HTTPS this has to be an HTTPS endpoint: the previous
+                   http://ip-api.com call was active mixed content, so every
+                   browser on the live site blocked it, the catch swallowed the
+                   error, and locationData was silently empty every time. The
+                   free ip-api tier answers only over plain HTTP, so it cannot
+                   be fixed by changing the scheme - hence a different service.
+
+                   The map no longer depends on this; coordinates come from the
+                   place the member picked. */
                 var locationData = {};
                 try {
-                  const ipRes = await fetch("http://ip-api.com/json/");
+                  const ipRes = await fetch("https://ipwho.is/");
                   if (ipRes.ok) {
                     locationData = await ipRes.json();
                   }
                 } catch (err) {
-                  console.error("IP API Error", err);
+                  console.error("IP lookup failed", err);
                 }
+
+                const igPublic =
+                  !!document.getElementById("join-ig-public").checked;
+                const pickedLat = document.getElementById("join-lat").value;
+                const pickedLon = document.getElementById("join-lon").value;
+                const pickedCity = document.getElementById("join-city").value;
+                const pickedCountry =
+                  document.getElementById("join-country").value;
 
                 // Add to Firebase Firestore - ONE UNIFIED DESTINATION (join_network)
                 if (
@@ -4128,61 +4305,69 @@
                   window.firebaseCollection
                 ) {
                   try {
-                    /* Split across one document and a locked subcollection.
+                    /* Two flat collections rather than one document and a
+                       subcollection.
 
                        The map plots these nodes in every visitor's browser, so
-                       whatever it reads is public by definition - and Firestore
-                       rules are per-document, they cannot expose `name` while
-                       hiding `email`. So the parent document carries only what
-                       the plot needs (name, colour, coordinates) and everything
-                       that identifies or contacts a person goes to
-                       join_network/{id}/private/contact, which no rule grants
-                       read access to. Still one collection; the contact details
-                       are simply somewhere a rule can deny separately.
+                       whatever it can read is public by definition - and
+                       Firestore rules are per-document, they cannot expose
+                       `name` while hiding `email`. Keeping the public node and
+                       the private record in separate top-level collections
+                       makes that boundary a single rule each, and lets the
+                       notifier read private records as one collection instead
+                       of walking a subcollection per node.
 
                        `locationData` is raw IP geolocation - it carries the
-                       visitor's IP address and ISP - so it belongs on the
-                       private side too. */
+                       visitor's address and ISP - so it is private always. The
+                       Instagram handle goes public only if its box was ticked,
+                       and is written to the private record either way so it is
+                       never lost. */
                     const timestamp = window.firebaseServerTimestamp
                       ? window.firebaseServerTimestamp()
                       : new Date();
+
+                    // Coordinates come from the chosen place; a typed-but-
+                    // unconfirmed location leaves these null and plots nothing.
+                    const lat = pickedLat ? parseFloat(pickedLat) : null;
+                    const lon = pickedLon ? parseFloat(pickedLon) : null;
+
+                    const publicNode = {
+                      name: name,
+                      color_preference: color,
+                      color: color, // For map rendering
+                      city: pickedCity || "Unknown",
+                      country: pickedCountry || "Unknown",
+                      lat: lat,
+                      lon: lon,
+                      lng: lon, // Map fallback
+                      timestamp: timestamp,
+                    };
+                    if (igPublic && ig) publicNode.instagram = ig;
 
                     const nodeRef = await window.firebaseAddDoc(
                       window.firebaseCollection(
                         window.firebaseDB,
                         "join_network",
                       ),
+                      publicNode,
+                    );
+
+                    await window.firebaseAddDoc(
+                      window.firebaseCollection(
+                        window.firebaseDB,
+                        "join_network_private",
+                      ),
                       {
+                        nodeId: nodeRef.id, // ties the record to its pin
                         name: name,
+                        email: email,
+                        instagram: ig,
+                        instagramPublic: igPublic,
                         location_input: location,
-                        color_preference: color,
-                        color: color, // For map rendering
-                        city: locationData.city || "Unknown",
-                        country: locationData.country || "Unknown",
-                        lat: locationData.lat || null,
-                        lon: locationData.lon || null,
-                        lng: locationData.lon || null, // Map fallback
+                        locationData: locationData, // raw IP geolocation
                         timestamp: timestamp,
                       },
                     );
-
-                    if (window.firebaseSetDoc && window.firebaseDoc) {
-                      await window.firebaseSetDoc(
-                        window.firebaseDoc(
-                          window.firebaseDB,
-                          "join_network",
-                          nodeRef.id,
-                          "private",
-                          "contact",
-                        ),
-                        {
-                          email: email,
-                          instagram: ig,
-                          locationData: locationData, // Full raw data
-                          timestamp: timestamp,
-                        },
-                      );
-                    }
                   } catch (fbErr) {
                     console.error("Firebase Error: ", fbErr);
                   }
@@ -11118,7 +11303,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         let locationData = {};
         try {
-          const ipRes = await fetch("http://ip-api.com/json/");
+          const ipRes = await fetch("https://ipwho.is/");
           if (ipRes.ok) locationData = await ipRes.json();
         } catch (err) {
           console.error("IP API Error", err);
@@ -11252,7 +11437,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
         var locationData = {};
         try {
-          const ipRes = await fetch("http://ip-api.com/json/");
+          const ipRes = await fetch("https://ipwho.is/");
           if (ipRes.ok) {
             locationData = await ipRes.json();
           }
@@ -12954,7 +13139,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
           var locationData = {};
           try {
-            const ipRes = await fetch("http://ip-api.com/json/");
+            const ipRes = await fetch("https://ipwho.is/");
             if (ipRes.ok) {
               locationData = await ipRes.json();
             }

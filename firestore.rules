@@ -64,10 +64,25 @@ service cloud.firestore {
       allow create: if request.resource.data.name is string;
       allow update, delete: if false;
 
+      // Legacy. Documents written during the subcollection era keep their
+      // contact record here; nothing writes to it any more.
       match /private/{privateDoc} {
         allow create: if request.resource.data.email is string;
         allow read, update, delete: if false;
       }
+    }
+
+    // 6b. Join Network - private half
+    //     Email, Instagram handle and raw IP geolocation for each node, tied
+    //     back to its pin by `nodeId`. Write-only: the form adds records, the
+    //     notifier reads them with a service account, and nothing else can
+    //     read them at all. A separate top-level collection rather than a
+    //     subcollection so the public/private split is one rule each and the
+    //     private side can be read as a single collection by admin tooling.
+    match /join_network_private/{docId} {
+      allow create: if request.resource.data.email is string
+                    && request.resource.data.nodeId is string;
+      allow read, update, delete: if false;
     }
 
     // 7. Legacy: retained so historical documents stay readable to admin

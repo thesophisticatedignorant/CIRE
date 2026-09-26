@@ -124,6 +124,13 @@ function poll() {
  * JWT. Apps Script can do RS256 natively, so this needs no external library.
  */
 function getAccessToken_() {
+  /* Tokens are valid for an hour, so minting one per run burnt a UrlFetch call
+     every five minutes for no reason - 288 a day against the daily quota. Cache
+     it for 55 minutes and reuse, leaving a 5 minute margin before expiry. */
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('sa_access_token');
+  if (cached) return cached;
+
   var raw = PropertiesService.getScriptProperties().getProperty('FIREBASE_SA_KEY');
   if (!raw) throw new Error('FIREBASE_SA_KEY is not set in Script Properties. See README.md.');
 
@@ -156,6 +163,7 @@ function getAccessToken_() {
   if (!body.access_token) {
     throw new Error('Could not get an access token: ' + res.getContentText());
   }
+  cache.put('sa_access_token', body.access_token, 3300);
   return body.access_token;
 }
 
