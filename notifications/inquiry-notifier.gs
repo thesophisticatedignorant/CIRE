@@ -1,9 +1,10 @@
 /**
  * CIRE — inquiry notifier
  * ---------------------------------------------------------------------------
- * Polls the three inquiry collections in Firestore and emails you when
- * something new arrives: a short plain-text summary in the body, and a
- * formatted PDF attached with the full detail.
+ * Polls the inquiry collections listed in COLLECTIONS below - across one or
+ * more Firebase projects - and emails you when something new arrives: a
+ * short plain-text summary in the body, and a formatted PDF attached with
+ * the full detail.
  *
  * Runs on Google Apps Script's free tier. No Blaze plan, no Cloud Functions,
  * no third-party service holding your data.
@@ -14,6 +15,12 @@
  *   3. Set RECIPIENT_EMAIL below.
  *   4. Run setUp() once, then install a 5-minute time-driven trigger on poll().
  *
+ * To watch a collection in a different Firebase project (as with
+ * acquisitionRequests below, in sophisticated-ignorance-adec4), grant this
+ * same service account the "Cloud Datastore User" role on that project too -
+ * its IAM & Admin page, not the original project's. One key, multiple
+ * projects.
+ *
  * The service account key is a credential. It lives in Script Properties and
  * nowhere else — never commit it, never paste it into a chat.
  */
@@ -23,13 +30,21 @@
 /** Where notifications go. */
 var RECIPIENT_EMAIL = 'cireconglomerate@gmail.com';
 
-var PROJECT_ID = 'cire-conglomerate';
-
-/** Collection id → the label used in notifications. */
+/**
+ * Collection id → where it lives and how to read it.
+ *   label          - shown in notifications
+ *   projectId      - each site can be its own Firebase project; the same
+ *                     service account just needs the Cloud Datastore User
+ *                     role granted on every project listed here, in that
+ *                     project's own IAM page
+ *   timestampField - the field each form's writes use for ordering/dedup;
+ *                     not every site names it the same thing
+ */
 var COLLECTIONS = {
-  request_access: 'Access Request',
-  concierge_inquiry: 'Concierge Inquiry',
-  brilliance_inquiry: 'Brilliance Inquiry',
+  request_access: { label: 'Access Request', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
+  concierge_inquiry: { label: 'Concierge Inquiry', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
+  brilliance_inquiry: { label: 'Brilliance Inquiry', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
+  acquisitionRequests: { label: 'Sophisticated Ignorance Inquiry', projectId: 'sophisticated-ignorance-adec4', timestampField: 'createdAt' },
 };
 
 /**
@@ -42,14 +57,16 @@ var COLLECTIONS = {
  */
 var SECTIONS = [
   { title: 'Contact', fields: {
-      name: 'Name', email: 'Email', phone: 'Phone',
+      name: 'Name', displayName: 'Name', email: 'Email', phone: 'Phone',
       company: 'Company', referral: 'Referred by', instagram: 'Instagram',
+      socials: 'Social Media',
   }},
   { title: 'Request', fields: {
       interest: 'Interested in', message: 'Message',
       goldTone: 'Gold tone', products: 'Products',
       category: 'Category', model: 'Model', color: 'Colour',
       vehicleCount: 'Vehicles', budget: 'Budget', experience: 'Experience',
+      status: 'Status', remarks: 'Remarks / Customization',
   }},
   { title: 'Schedule', fields: {
       dateStart: 'Start date', dateEnd: 'End date',
@@ -67,10 +84,13 @@ var SECTIONS = [
       addDriverName: 'Additional driver', addDriverAge: 'Additional driver age',
   }},
   { title: 'Add-ons', fields: { addons: 'Add-ons' } },
+  { title: 'Order', fields: {
+      zipCode: 'ZIP code', subtotal: 'Subtotal', tax: 'Tax', total: 'Total value',
+  }},
 ];
 
-/** Never rendered as ordinary rows — handled separately or not shown. */
-var SKIP_FIELDS = { timestamp: 1, locationData: 1 };
+/** Never rendered as ordinary rows — handled separately (items, locationData) or not useful (internal ids). */
+var SKIP_FIELDS = { timestamp: 1, createdAt: 1, locationData: 1, items: 1, userId: 1, taxRate: 1 };
 
 // ── Entry points ───────────────────────────────────────────────────────────
 
@@ -95,11 +115,12 @@ function poll() {
   var found = [];
 
   Object.keys(COLLECTIONS).forEach(function (name) {
+    var cfg = COLLECTIONS[name];
     var since = props.getProperty('lastSeen_' + name) || new Date(0).toISOString();
-    var docs = querySince_(token, name, since);
+    var docs = querySince_(token, name, cfg.projectId, cfg.timestampField, since);
 
     docs.forEach(function (doc) {
-      found.push({ collection: name, label: COLLECTIONS[name],
+      found.push({ collection: name, label: cfg.label,
                    fields: doc.fields, created: doc.created });
     });
 
@@ -168,8 +189,8 @@ function getAccessToken_() {
 }
 
 /** Returns documents created after `since`, oldest first. */
-function querySince_(token, collection, since) {
-  var url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID +
+function querySince_(token, collection, projectId, timestampField, since) {
+  var url = 'https://firestore.googleapis.com/v1/projects/' + projectId +
             '/databases/(default)/documents:runQuery';
 
   var query = {
@@ -177,12 +198,12 @@ function querySince_(token, collection, since) {
       from: [{ collectionId: collection }],
       where: {
         fieldFilter: {
-          field: { fieldPath: 'timestamp' },
+          field: { fieldPath: timestampField },
           op: 'GREATER_THAN',
           value: { timestampValue: since },
         },
       },
-      orderBy: [{ field: { fieldPath: 'timestamp' }, direction: 'ASCENDING' }],
+      orderBy: [{ field: { fieldPath: timestampField }, direction: 'ASCENDING' }],
       limit: 50,
     },
   };
@@ -205,7 +226,7 @@ function querySince_(token, collection, since) {
     var f = row.document.fields || {};
     out.push({
       fields: flatten_(f),
-      created: (f.timestamp && f.timestamp.timestampValue) || row.document.createTime,
+      created: (f[timestampField] && f[timestampField].timestampValue) || row.document.createTime,
     });
   });
   return out;
@@ -233,15 +254,20 @@ function unwrap_(v) {
 
 // ── Notification ───────────────────────────────────────────────────────────
 
+/** A doc's display name, whichever field the source form used for it. */
+function personName_(fields) {
+  return fields.name || fields.displayName || fields.email || 'unknown';
+}
+
 function notify_(items) {
   var subject = items.length === 1
-    ? 'CIRE — new ' + items[0].label + ' from ' + (items[0].fields.name || 'unknown')
+    ? 'CIRE — new ' + items[0].label + ' from ' + personName_(items[0].fields)
     : 'CIRE — ' + items.length + ' new inquiries';
 
   /* The body stays short so it is readable on a lock screen; the PDF carries
      the detail. */
   var body = items.map(function (it) {
-    return '• ' + it.label + ' — ' + (it.fields.name || it.fields.email || 'unknown') +
+    return '• ' + it.label + ' — ' + personName_(it.fields) +
            '\n  ' + formatDate_(it.created);
   }).join('\n\n');
 
@@ -250,11 +276,20 @@ function notify_(items) {
                      .getAs('application/pdf')
                      .setName('CIRE-inquiries-' + stamp + '.pdf');
 
+  // One console link per distinct project represented in this batch.
+  var seenProjects = {};
+  var links = [];
+  items.forEach(function (it) {
+    var projectId = COLLECTIONS[it.collection].projectId;
+    if (seenProjects[projectId]) return;
+    seenProjects[projectId] = 1;
+    links.push('https://console.firebase.google.com/project/' + projectId + '/firestore');
+  });
+
   MailApp.sendEmail({
     to: RECIPIENT_EMAIL,
     subject: subject,
-    body: body + '\n\nFull detail is attached.\n\nFirestore console:\n' +
-          'https://console.firebase.google.com/project/' + PROJECT_ID + '/firestore',
+    body: body + '\n\nFull detail is attached.\n\nFirestore console:\n' + links.join('\n'),
     attachments: [pdf],
   });
 }
@@ -292,6 +327,23 @@ function buildHtml_(items) {
   items.forEach(function (it) {
     html.push('<div class="inq"><h2>', esc_(it.label), '</h2>');
     html.push('<div class="when">Received ', esc_(formatDate_(it.created)), '</div>');
+
+    // Cart line items (Sophisticated Ignorance acquisition requests) get their own
+    // table rather than going through the generic key/value rendering below, since
+    // each one is itself a small object (title, color, size, quantity, price).
+    var cartItems = it.fields.items;
+    if (Object.prototype.toString.call(cartItems) === '[object Array]' && cartItems.length) {
+      var itemRows = cartItems.map(function (line) {
+        var meta = [line.color, line.size, line.quantity ? ('Qty ' + line.quantity) : '']
+          .filter(Boolean).join(' · ');
+        var price = line.price !== undefined && line.price !== ''
+          ? '$' + (parseFloat(line.price) || 0).toFixed(2) : '';
+        return '<tr><td class="k">' + esc_(line.title || line.name || 'Item') +
+               (meta ? '<br><span style="color:#8e8e93;font-size:8.5pt">' + esc_(meta) + '</span>' : '') +
+               '</td><td class="v">' + esc_(price) + '</td></tr>';
+      });
+      html.push('<h3>Items</h3><table>', itemRows.join(''), '</table>');
+    }
 
     var rendered = {};
     SECTIONS.forEach(function (section) {

@@ -4109,11 +4109,35 @@
 
               // Implement infinite horizontal scroll (auto-pan)
               let scrollInterval;
+              /* The map drifts east forever and longitude is unbounded, but
+                 nodes are only painted across 21 worlds (+/-3600 degrees). Left
+                 alone the view eventually scrolls past the last copy and the
+                 map empties - roughly twelve minutes of idling at this pan
+                 rate, which is why nodes vanished after a few cycles or while
+                 a window sat open.
+
+                 Rather than paint more copies (which only moves the cliff),
+                 fold the centre back to the primary world whenever it passes a
+                 full rotation. Since a copy of every node sits at each 360
+                 degree offset, shifting by exactly one world lands on an
+                 identical view - the correction is invisible, and the supply of
+                 nodes never runs out. */
+              function wrapMapLongitude() {
+                if (!window.wwnMap) return;
+                const c = window.wwnMap.getCenter();
+                if (c.lng >= -180 && c.lng <= 180) return;
+                const wrapped = (((c.lng + 180) % 360) + 360) % 360 - 180;
+                window.wwnMap.setView([c.lat, wrapped], window.wwnMap.getZoom(), {
+                  animate: false,
+                });
+              }
+
               function startMapScroll() {
                 if (scrollInterval) return;
                 scrollInterval = setInterval(() => {
                   if (window.wwnMap) {
                     window.wwnMap.panBy([1, 0], {animate: false});
+                    wrapMapLongitude();
                   }
                 }, 40); // smooth slow pan
               }
@@ -4125,7 +4149,7 @@
               }
               
               window.wwnMap.on('dragstart', stopMapScroll);
-              window.wwnMap.on('dragend', () => { setTimeout(startMapScroll, 2000); });
+              window.wwnMap.on('dragend', () => { wrapMapLongitude(); setTimeout(startMapScroll, 2000); });
               
               startMapScroll();
 
@@ -4310,17 +4334,24 @@
                       ? window.firebaseServerTimestamp()
                       : new Date();
 
-                    // Coordinates come from the chosen place; a typed-but-
-                    // unconfirmed location leaves these null and plots nothing.
-                    const lat = pickedLat ? parseFloat(pickedLat) : null;
-                    const lon = pickedLon ? parseFloat(pickedLon) : null;
+                    /* Coordinates come from the chosen place when there is
+                       one. Left blank, fall back to the city the IP lookup
+                       resolved, so someone who skips the field still lands on
+                       the map near where they are rather than nowhere at all.
+                       Only if both are missing does the node go unplotted. */
+                    const ipLat = typeof locationData.latitude === "number"
+                      ? locationData.latitude : null;
+                    const ipLon = typeof locationData.longitude === "number"
+                      ? locationData.longitude : null;
+                    const lat = pickedLat ? parseFloat(pickedLat) : ipLat;
+                    const lon = pickedLon ? parseFloat(pickedLon) : ipLon;
 
                     const publicNode = {
                       name: name,
                       color_preference: color,
                       color: color, // For map rendering
-                      city: pickedCity || "Unknown",
-                      country: pickedCountry || "Unknown",
+                      city: pickedCity || locationData.city || "Unknown",
+                      country: pickedCountry || locationData.country || "Unknown",
                       lat: lat,
                       lon: lon,
                       lng: lon, // Map fallback
