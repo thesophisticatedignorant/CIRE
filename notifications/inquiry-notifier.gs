@@ -45,7 +45,6 @@ var COLLECTIONS = {
   concierge_inquiry: { label: 'Concierge Inquiry', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
   brilliance_inquiry: { label: 'Brilliance Inquiry', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
   acquisitionRequests: { label: 'Sophisticated Ignorance Inquiry', projectId: 'sophisticated-ignorance-adec4', timestampField: 'createdAt' },
-  join_network_private: { label: 'Network Signup', projectId: 'cire-conglomerate', timestampField: 'timestamp' },
 };
 
 /**
@@ -61,7 +60,6 @@ var SECTIONS = [
       name: 'Name', displayName: 'Name', email: 'Email', phone: 'Phone',
       company: 'Company', referral: 'Referred by', instagram: 'Instagram',
       socials: 'Social Media',
-      instagramPublic: 'Handle shown publicly', location_input: 'Location given',
   }},
   { title: 'Request', fields: {
       interest: 'Interested in', message: 'Message',
