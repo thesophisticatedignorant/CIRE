@@ -60,7 +60,17 @@ service cloud.firestore {
     //    line below back to `allow read: if true;` and redeploy to restore the
     //    map pins.
     match /join_network/{docId} {
-      allow read: if false;
+      //  Readable only where the document says so. Everything written since
+      //  the public/private split carries visibility: "public" and holds
+      //  nothing but map data - name, colour, city, coordinates. Documents
+      //  written before it still carry email, Instagram handle and raw IP
+      //  geolocation inline, carry no visibility field, and so stay closed.
+      //
+      //  This is why the map queries where("visibility", "==", "public")
+      //  rather than reading the collection: Firestore evaluates a list
+      //  against the query, not document by document, so an unfiltered read
+      //  is rejected whole. The two have to agree.
+      allow read: if resource.data.visibility == 'public';
       allow create: if request.resource.data.name is string;
       allow update, delete: if false;
 

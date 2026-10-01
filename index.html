@@ -4073,7 +4073,17 @@
               async function renderEntries() {
                 try {
                   if (window.firebaseDB && window.firebaseCollection && window.firebaseGetDocs) {
-                    const querySnapshot = await window.firebaseGetDocs(window.firebaseCollection(window.firebaseDB, "join_network"));
+                    /* Filtered to match the read rule. An unfiltered read of
+                       the collection is rejected outright, because Firestore
+                       evaluates a list against the query rather than per
+                       document. */
+                    const nodesQuery = window.firebaseQuery
+                      ? window.firebaseQuery(
+                          window.firebaseCollection(window.firebaseDB, "join_network"),
+                          window.firebaseWhere("visibility", "==", "public"),
+                        )
+                      : window.firebaseCollection(window.firebaseDB, "join_network");
+                    const querySnapshot = await window.firebaseGetDocs(nodesQuery);
                     querySnapshot.forEach((doc) => {
                       const data = doc.data();
                       const lat = data.lat !== undefined ? data.lat : data.locationData?.lat;
@@ -4347,6 +4357,13 @@
                     const lon = pickedLon ? parseFloat(pickedLon) : ipLon;
 
                     const publicNode = {
+                      /* Marks this document as one the map may read. Rules
+                         grant reads only on `visibility == "public"`, and the
+                         map queries for exactly that, so documents written
+                         before the public/private split - which still carry
+                         email and raw IP data inline - stay unreadable without
+                         having to be deleted or altered. */
+                      visibility: "public",
                       name: name,
                       color_preference: color,
                       color: color, // For map rendering
