@@ -110,6 +110,63 @@ function setUp() {
   Logger.log('Watermark set to %s for: %s', now, Object.keys(COLLECTIONS).join(', '));
 }
 
+/**
+ * Run by hand to check every collection is actually wired up. Reports, per
+ * collection: whether it can be read at all, how many documents are there,
+ * and - the one that bites quietly - whether they carry the timestampField
+ * this script filters and orders on.
+ *
+ * A wrong timestampField is invisible in normal operation. Firestore excludes
+ * documents that lack the field being ordered on, so the query succeeds,
+ * returns nothing, and no email is ever sent. Nothing errors; the collection
+ * simply never notifies. This is the check for that.
+ */
+function diagnose() {
+  var token = getAccessToken_();
+
+  Object.keys(COLLECTIONS).forEach(function (name) {
+    var cfg = COLLECTIONS[name];
+    var url = 'https://firestore.googleapis.com/v1/projects/' + cfg.projectId +
+              '/databases/(default)/documents:runQuery';
+
+    var res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + token },
+      // No filter, no ordering: show what is really there.
+      payload: JSON.stringify({
+        structuredQuery: { from: [{ collectionId: name }], limit: 5 },
+      }),
+      muteHttpExceptions: true,
+    });
+
+    if (res.getResponseCode() !== 200) {
+      Logger.log('%s [%s]  UNREADABLE: %s', name, cfg.projectId,
+                 res.getContentText().slice(0, 200));
+      return;
+    }
+
+    var rows = (JSON.parse(res.getContentText()) || []).filter(function (r) {
+      return r.document;
+    });
+
+    if (!rows.length) {
+      Logger.log('%s [%s]  readable, but EMPTY - nothing has been written here',
+                 name, cfg.projectId);
+      return;
+    }
+
+    var withStamp = rows.filter(function (r) {
+      return (r.document.fields || {})[cfg.timestampField] !== undefined;
+    }).length;
+
+    Logger.log('%s [%s]  %s doc(s) sampled, %s carry "%s"%s\n      fields: %s',
+      name, cfg.projectId, rows.length, withStamp, cfg.timestampField,
+      withStamp === rows.length ? '  OK' : '  <-- MISMATCH, these will never notify',
+      Object.keys(rows[0].document.fields || {}).join(', '));
+  });
+}
+
 /** The function the time-driven trigger calls. */
 function poll() {
   var token = getAccessToken_();
