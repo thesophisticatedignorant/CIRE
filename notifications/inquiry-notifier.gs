@@ -116,10 +116,25 @@ function poll() {
   var props = PropertiesService.getScriptProperties();
   var found = [];
 
+  var failures = [];
+
   Object.keys(COLLECTIONS).forEach(function (name) {
     var cfg = COLLECTIONS[name];
     var since = props.getProperty('lastSeen_' + name) || new Date(0).toISOString();
-    var docs = querySince_(token, name, cfg.projectId, cfg.timestampField, since);
+
+    /* One collection must not be able to silence the rest. These live in
+       different Firebase projects, and a role missing on one of them used to
+       throw straight out of poll() - so a permissions gap on a single site
+       stopped notifications for every other collection too, and the only
+       symptom was Google's failure digest. Collect the problem, carry on, and
+       report it at the end. */
+    var docs;
+    try {
+      docs = querySince_(token, name, cfg.projectId, cfg.timestampField, since);
+    } catch (err) {
+      failures.push(name + ' (' + cfg.projectId + '): ' + err.message);
+      return;
+    }
 
     docs.forEach(function (doc) {
       found.push({ collection: name, label: cfg.label,
@@ -133,7 +148,15 @@ function poll() {
     }
   });
 
-  if (!found.length) return;
+  if (failures.length) {
+    Logger.log('Could not read: %s', failures.join(' | '));
+  }
+
+  if (!found.length) {
+    // Still surface the fault, so a broken collection is not silent.
+    if (failures.length) throw new Error('Unreadable: ' + failures.join(' | '));
+    return;
+  }
 
   notify_(found);
   Logger.log('Notified about %s new inquir%s', found.length,
