@@ -1,4 +1,4 @@
-/* Pad product imagery onto a common 4:5 canvas.
+/* Pad product imagery onto a common canvas, per collection.
    Colorways of the same garment were shot at different aspect ratios (the
    Cornerstone alone had three), and `object-fit: contain` preserves aspect —
    so cycling colorways resized and repositioned the garment. No CSS can fix
@@ -14,8 +14,24 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 
-const ROOTS = ["public/Foundations", "public/Fortifications", "public/Relics"];
-const TARGET = 4 / 5;      // width / height
+/* Each collection is padded to whichever ratio most of its own imagery was
+   already shot at, so normalising costs the fewest pixels.
+
+   Garments are 4:5. Sophisticated Brilliance is square: 42 of its 78 frames
+   already are, and the gallery container is wide (718x400 on desktop), so a
+   square canvas renders every frame at the same 400x400 and leaves each
+   subject exactly the size it is today. Padding those to 4:5 instead would
+   have shrunk every Celestial Scars and Nails frame by a fifth. */
+const ROOTS = [
+  { dir: "public/Foundations", target: 4 / 5 },
+  { dir: "public/Fortifications", target: 4 / 5 },
+  { dir: "public/Relics", target: 4 / 5 },
+  { dir: "public/Beast Studio Photography", target: 1 },
+  { dir: "public/Celestial Scars Studio Photography", target: 1 },
+  { dir: "public/Humble Studio Photography", target: 1 },
+  { dir: "public/Metamorphosis Studio Photography", target: 1 },
+  { dir: "public/The Nails Studio Photography", target: 1 },
+];
 const TOLERANCE = 0.005;
 const QUALITY = 88;
 
@@ -31,10 +47,10 @@ function walk(dir, out = []) {
 
 (async () => {
   const dryRun = process.argv.includes("--dry-run");
-  const files = ROOTS.flatMap((r) => walk(r));
+  const files = ROOTS.flatMap((r) => walk(r.dir).map((f) => ({ png: f, target: r.target })));
   let padded = 0, already = 0;
 
-  for (const png of files) {
+  for (const { png, target: TARGET } of files) {
     const meta = await sharp(png).metadata();
     const ratio = meta.width / meta.height;
     if (Math.abs(ratio - TARGET) < TOLERANCE) { already++; continue; }
@@ -65,5 +81,5 @@ function walk(dir, out = []) {
     padded++;
   }
 
-  console.log(`\n${dryRun ? "would pad" : "padded"}: ${padded}   already 4:5: ${already}`);
+  console.log(`\n${dryRun ? "would pad" : "padded"}: ${padded}   already on target: ${already}`);
 })().catch((e) => { console.error(e); process.exit(1); });
