@@ -18,6 +18,13 @@
    between thresholds of 4 and 40 the measured box moves about six pixels in
    1265, so the exact value is not delicate.
 
+   Crucially this is solved ONCE PER SHOT, from the rose frame, and the same
+   transform is applied to all three metals. Solving each frame separately is
+   what broke metal consistency before: where a render's box differs slightly
+   the limiting dimension flips, and the piece lands at a different size. The
+   metals are aligned to each other first (align_metals), so one transform
+   keeps them aligned.
+
    Idempotent - a frame already at the target is left alone. */
 const fs = require("fs");
 const path = require("path");
@@ -69,53 +76,61 @@ async function subjectBox(file) {
 
 (async () => {
   const dryRun = process.argv.includes("--dry-run");
-  const files = ROOTS.flatMap((r) => walk(r));
   let changed = 0, already = 0, skipped = 0;
 
-  for (const png of files) {
-    const box = await subjectBox(png);
-    if (!box) { skipped++; continue; }
-
-    const scale = Math.min((TARGET * CANVAS) / box.width, (TARGET * CANVAS) / box.height);
+  // Apply one solved transform to a frame, keeping the canvas square.
+  async function apply(file, box, scale) {
     const nw = Math.max(1, Math.round(box.width * scale));
     const nh = Math.max(1, Math.round(box.height * scale));
+    const subject = await sharp(file).extract(box)
+      .resize(nw, nh, { fit: "fill", kernel: "lanczos3" }).png().toBuffer();
+    const out = await sharp({ create: { width: CANVAS, height: CANVAS, channels: 4,
+                                        background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite([{ input: subject, gravity: "centre" }]).png().toBuffer();
+    fs.writeFileSync(file, out);
+    await sharp(out).webp({ quality: 88 }).toFile(file.replace(/\.png$/i, ".webp"));
+  }
 
-    const meta = await sharp(png).metadata();
-    const occupied = Math.max(box.width / meta.width, box.height / meta.height);
-    const centred =
-      Math.abs((box.left + box.width / 2) / meta.width - 0.5) < TOLERANCE &&
-      Math.abs((box.top + box.height / 2) / meta.height - 0.5) < TOLERANCE;
-    if (Math.abs(occupied - TARGET) < TOLERANCE && centred && meta.width === CANVAS) {
-      already++;
-      continue;
+  for (const root of ROOTS) {
+    for (const png of walk(root)) {
+      const base = path.basename(png);
+      // Metal variants are driven by their rose sibling, never on their own.
+      if (/^(WG|YG) /.test(base)) continue;
+
+      const box = await subjectBox(png);
+      if (!box) { skipped++; continue; }
+
+      const meta = await sharp(png).metadata();
+      const scale = Math.min((TARGET * CANVAS) / box.width, (TARGET * CANVAS) / box.height);
+      const occupied = Math.max(box.width / meta.width, box.height / meta.height);
+      const centred =
+        Math.abs((box.left + box.width / 2) / meta.width - 0.5) < TOLERANCE &&
+        Math.abs((box.top + box.height / 2) / meta.height - 0.5) < TOLERANCE;
+
+      // Siblings share the rose frame's box and scale, so they stay aligned.
+      const siblings = /^RG /.test(base)
+        ? ["White/" + base.replace(/^RG /, "WG "), "Yellow/" + base.replace(/^RG /, "YG ")]
+            .map((rel) => path.join(root, rel))
+            .filter((f) => fs.existsSync(f))
+        : [];
+
+      if (Math.abs(occupied - TARGET) < TOLERANCE && centred && meta.width === CANVAS) {
+        already += 1 + siblings.length;
+        continue;
+      }
+
+      console.log(
+        `${dryRun ? "[dry-run] " : ""}${path.relative("public", png)}  ` +
+        `box ${box.width}x${box.height} (${(occupied * 100).toFixed(1)}%) -> ${(TARGET * 100).toFixed(0)}%` +
+        (siblings.length ? `  + ${siblings.length} metal sibling(s)` : ""),
+      );
+
+      if (!dryRun) {
+        await apply(png, box, scale);
+        for (const sib of siblings) await apply(sib, box, scale);
+      }
+      changed += 1 + siblings.length;
     }
-
-    console.log(
-      `${dryRun ? "[dry-run] " : ""}${path.relative("public", png)}  ` +
-      `box ${box.width}x${box.height} (${(occupied * 100).toFixed(1)}% of frame) -> ${nw}x${nh} (${(TARGET * 100).toFixed(0)}%)`,
-    );
-
-    if (!dryRun) {
-      const subject = await sharp(png)
-        .extract(box)
-        .resize(nw, nh, { fit: "fill", kernel: "lanczos3" })
-        .png()
-        .toBuffer();
-
-      const out = await sharp({
-        create: { width: CANVAS, height: CANVAS, channels: 4,
-                  background: { r: 0, g: 0, b: 0, alpha: 0 } },
-      })
-        .composite([{ input: subject, gravity: "centre" }])
-        .png()
-        .toBuffer();
-
-      fs.writeFileSync(png, out);
-      // Keep the WebP twin in step so assets:webp stays consistent.
-      const webp = png.replace(/\.png$/i, ".webp");
-      await sharp(out).webp({ quality: 88 }).toFile(webp);
-    }
-    changed++;
   }
 
   console.log(`\n${dryRun ? "would normalise" : "normalised"}: ${changed}   already on target: ${already}   no subject found: ${skipped}`);
