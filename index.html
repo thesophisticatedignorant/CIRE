@@ -10708,7 +10708,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             carouselContainer.id = "custom-gallery-carousel";
             carouselContainer.style.width = "100%";
             carouselContainer.style.height = "65vh";
-            carouselContainer.style.minHeight = "400px";
+            /* The piece is the point, so the image holds its full 400px and
+               the card takes the extra height instead (see its max-height).
+               Only below roughly 760px of window, where no arrangement fits
+               both, does the image start giving ground. */
+            carouselContainer.style.minHeight =
+              "clamp(300px, calc(100vh - 360px), 400px)";
             carouselContainer.style.position = "relative";
             carouselContainer.style.display = "flex";
             carouselContainer.style.alignItems = "center";
@@ -11717,7 +11722,12 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           background: #1c1c1e;
           width: 90%;
           max-width: 800px;
-          max-height: 90vh;
+          /* 90vh alone meant a bookmarks bar cost the card ~60px and pushed the
+             description and metal treatment past its bottom edge. Take the
+             window that is actually there, capped at 810px - the height 90vh
+             already gave on a 900px screen - so a full-height window is
+             unchanged and a shorter one keeps those sections in view. */
+          max-height: min(calc(100vh - 32px), 810px);
           border-radius: 24px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
           overflow: hidden;
