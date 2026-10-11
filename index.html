@@ -11723,11 +11723,14 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           width: 90%;
           max-width: 800px;
           /* 90vh alone meant a bookmarks bar cost the card ~60px and pushed the
-             description and metal treatment past its bottom edge. Take the
-             window that is actually there, capped at 810px - the height 90vh
-             already gave on a 900px screen - so a full-height window is
-             unchanged and a shorter one keeps those sections in view. */
-          max-height: min(calc(100vh - 32px), 810px);
+             description and metal treatment past its bottom edge.
+
+             So allow more than 90vh on a short window - but never less, and
+             never less than the 810px that 90vh already gave at 900px tall.
+             The max() is what keeps tall screens alone: a 1366px-tall tablet
+             still gets its 1229px card rather than being capped to a desktop
+             figure. This only ever grows the card, never shrinks it. */
+          max-height: min(calc(100vh - 32px), max(810px, 90vh));
           border-radius: 24px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
           overflow: hidden;
