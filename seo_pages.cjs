@@ -41,7 +41,7 @@ const PAGES = [
       "Sophisticated Brilliance is a luxury fine-jewelry maison and art house, distinguished by its signature king and queen chess piece insignia. Luxury in its final form. Timelessness over ostentation. Discover Transcendence of Man, our debut collection of wearable art. Presented by CIRE Conglomerate.",
     cardTitle: "Sophisticated Brilliance | CIRE Conglomerate",
     cardDescription: "Luxury in its final form. Discover Transcendence of Man, our debut collection of wearable art.",
-    image: "https://sophisticatedbrilliance.com/collections/transcendence-of-man/og-cover.png?v=4",
+    image: "https://sophisticatedbrilliance.com/collections/transcendence-of-man/og-cover.jpg?v=4",
     imageSize: 1200,
     about: { "@id": "https://sophisticatedbrilliance.com/#org" },
     body: `<h1>Sophisticated Brilliance</h1>
