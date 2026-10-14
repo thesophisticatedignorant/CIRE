@@ -42,6 +42,7 @@ const PAGES = [
     cardTitle: "Sophisticated Brilliance | CIRE Conglomerate",
     cardDescription: "Luxury in its final form. Discover Transcendence of Man, our debut collection of wearable art.",
     image: "https://sophisticatedbrilliance.com/collections/transcendence-of-man/og-cover.png?v=4",
+    imageSize: 1200,
     about: { "@id": "https://sophisticatedbrilliance.com/#org" },
     body: `<h1>Sophisticated Brilliance</h1>
       <p><strong>Sophisticated Brilliance</strong> is a luxury fine-jewelry maison and art house, distinguished by its signature king and queen chess piece insignia. <em>Luxury in its final form.</em> Timelessness over ostentation. Every creation doubles as wearable art and a financial asset, merging the intricacies of traditional fine jewelry with the progressive nature of hip-hop jewelry.</p>
@@ -57,6 +58,7 @@ const PAGES = [
     cardTitle: "Sophisticated Ignorance | CIRE Conglomerate",
     cardDescription: "From Pawn to King. Power Perfected in Position.",
     image: "https://sophisticatedignorance.co/og-cover.png?v=4",
+    imageSize: 1200,
     about: { "@id": "https://sophisticatedignorance.co/#org" },
     body: `<h1>Sophisticated Ignorance</h1>
       <p><strong>Sophisticated Ignorance</strong> is a high-fashion menswear and lifestyle maison, blurring the boundaries between streetwear and refined tailoring. <em>New-Vieux Riche luxury</em> distinguished by its signature chess piece insignia, from Pawn to King, inviting clients to ascend the ranks of distinction.</p>
@@ -78,6 +80,7 @@ const PAGES = [
     cardTitle: "CIRE Concierge | Automotive",
     cardDescription: "Exotic and luxury car rentals, arranged for private clients.",
     image: `${ORIGIN}/og-cover.png?v=3`,
+    imageSize: 1024,
     about: { "@id": `${ORIGIN}/#concierge` },
     body: `<h1>CIRE Concierge: Automotive</h1>
       <p>CIRE Concierge &amp; Hospitality, the private client services division of CIRE Conglomerate, arranges exotic and luxury car rentals, with hospitality add-ons including hotel pickup, multiple-car arrivals, security, photography and event coordination.</p>
@@ -94,6 +97,7 @@ const PAGES = [
     cardTitle: "CIRE Concierge | Maritime",
     cardDescription: "Private yacht charters, arranged for private clients.",
     image: `${ORIGIN}/og-cover.png?v=3`,
+    imageSize: 1024,
     about: { "@id": `${ORIGIN}/#concierge` },
     body: `<h1>CIRE Concierge: Maritime</h1>
       <p>CIRE Concierge &amp; Hospitality, the private client services division of CIRE Conglomerate, arranges private yacht charters for private events, weekend getaways and sunset cruises.</p>
@@ -145,6 +149,9 @@ for (const p of PAGES) {
   for (const k of ["og:image", "twitter:image"]) {
     const attr = k.startsWith("og") ? "property" : "name";
     html = setTag(html, new RegExp(`<meta ${attr}="${k}" content="[^"]*" \\/>`), `<meta ${attr}="${k}" content="${p.image}" />`, k, file);
+  }
+  for (const k of ["og:image:width", "og:image:height"]) {
+    html = setTag(html, new RegExp(`<meta property="${k}" content="[^"]*" \\/>`), `<meta property="${k}" content="${p.imageSize}" />`, k, file);
   }
 
   const ld = {
