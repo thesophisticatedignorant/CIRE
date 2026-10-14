@@ -1,4 +1,10 @@
-/* Post-build: give each division its own address, so Google can list it as a sub-link
+/* Post-build: everything about the photos - their pages, alt text, sizes, sitemap entries and
+   the copyright embedded in the files (tools/embed_xmp.py --dist, the last build step) - is
+   derived from CAROUSEL_PRODUCTS in index.html and the image files, at build time. To swap a
+   photo, replace the file (same path) or change its path in CAROUSEL_PRODUCTS, then build and
+   deploy. Nothing else.
+
+   Post-build: give each division its own address, so Google can list it as a sub-link
    under cireconglomerate.com the way it lists "Jewelry" and "Watches" under a jeweller.
 
    The site is one page and every division lives behind ?folder=, which Google treats as
@@ -266,6 +272,11 @@ const BRANDS = {
   "sophisticated-ignorance": { name: "Sophisticated Ignorance", site: "https://sophisticatedignorance.co/", org: "https://sophisticatedignorance.co/#org" },
 };
 const SB_PIECE = { Beast: "Pendant I", Metamorphosis: "Pendant II", Humble: "Pendant III", "The Nails": "Earrings", "Celestial Scars": "Cuban chain" };
+const METALS = [
+  { name: "Rose", abbrev: "RG", metal: "Rose Gold", prefix: "" },
+  { name: "Yellow", abbrev: "YG", metal: "Yellow Gold", prefix: "yellow-gold" },
+  { name: "White", abbrev: "WG", metal: "White Gold", prefix: "white-gold" },
+];
 const SI_TIERS = ["Foundations", "Fortifications", "Relics", "Dominion", "Adornments", "Crownworks"];
 const SI_PIECES = ["Pawn", "Rook", "Bishop", "Knight", "Queen", "King"];
 const LOWER_WORDS = new Set(["on", "n"]);
@@ -356,20 +367,40 @@ const products = readProducts().map((raw) => {
   const slug = slugify(raw.name);
   const url = `${ORIGIN}/${raw.collection}/${slug}`;
   const used = new Set();
-  const images = paths.map((p, n) => {
-    let view = viewLabelOf(p, raw) || `View ${n + 1}`;
-    const baseView = view;
-    for (let k = 2; used.has(slugify(view)); k++) view = `${baseView} ${k}`;
-    used.add(slugify(view));
+  const read = (p) => {
+    const file = path.join(DIST, p);
+    if (!fs.existsSync(file)) throw new Error(`seo_pages: image file missing for ${raw.name}: ${p}`);
+    return imageInfo(file);
+  };
+  const make = (p, view, metal, n) => {
     const alt = sb
-      ? `${raw.name} ${pieceType}, ${view}: Transcendence of Man, the debut wearable art collection of Sophisticated Brilliance, the luxury fine-jewelry maison of CIRE Conglomerate`
+      ? `${raw.name} ${pieceType} in ${metal.toLowerCase()}, ${view}: Transcendence of Man, the debut wearable art collection of Sophisticated Brilliance, the luxury fine-jewelry maison of CIRE Conglomerate`
       : `${display}, ${view}: ${tier.tier} (${tier.piece}) tier of Sophisticated Ignorance, the New-Vieux Riche high-fashion menswear maison of CIRE Conglomerate`;
     const caption = sb
       ? `${alt}. Luxury in its final form: fine jewelry and wearable art distinguished by the king and queen chess piece insignia. © 2026 CIRE Conglomerate.`
       : `${alt}. New-Vieux Riche luxury, from Pawn to King. Power Perfected in Position. © 2026 CIRE Conglomerate.`;
-    const size = imageInfo(path.join(DIST, p));
-    return { path: p, abs: absImage(p), view, alt, caption, slug: slugify(view), url: `${url}/${slugify(view)}`, ...size };
+    const slugOf = METALS.find((m) => m.metal === metal);
+    const imSlug = (slugOf && slugOf.prefix ? slugOf.prefix + "-" : "") + slugify(view);
+    if (used.has(imSlug)) throw new Error(`seo_pages: ${raw.name} has two photos at ${imSlug}`);
+    used.add(imSlug);
+    return { path: p, abs: absImage(p), view, metal, alt, caption, slug: imSlug, url: `${url}/${imSlug}`, ...read(p) };
+  };
+  const images = paths.map((p, n) => {
+    let view = viewLabelOf(p, raw) || `View ${n + 1}`;
+    const baseView = view;
+    for (let k = 2; used.has(slugify(view)); k++) view = `${baseView} ${k}`;
+    return make(p, view, "Rose Gold", n);
   });
+  if (sb) {
+    // The same swap the app's metal toggle makes; a metal only appears where the file exists.
+    const roseCount = images.length;
+    for (const m of METALS.slice(1)) {
+      for (let n = 0; n < roseCount; n++) {
+        const derived = images[n].path.replace(/Rose|Yellow|White/g, m.name).replace(/RG |YG |WG /g, m.abbrev + " ");
+        if (fs.existsSync(path.join(DIST, derived))) images.push(make(derived, images[n].view, m.metal, n));
+      }
+    }
+  }
   if (!images.length) throw new Error(`seo_pages: ${raw.name} has no plain images`);
   return { raw, brand, brandPath: raw.collection, sb, pieceType, tier, display, slug, url, images, desc: plainDescription(raw.description) };
 });
@@ -378,7 +409,7 @@ const productTitle = (p) =>
   p.sb ? `${p.raw.name} | ${p.pieceType} | Transcendence of Man | Sophisticated Brilliance` : `${p.display} | ${p.tier.tier} | Sophisticated Ignorance`;
 const imageTitle = (p, im) =>
   p.sb
-    ? `${p.raw.name} ${p.pieceType}, ${im.view} | Transcendence of Man | Sophisticated Brilliance`
+    ? `${p.raw.name} ${p.pieceType}, ${im.metal}, ${im.view} | Transcendence of Man | Sophisticated Brilliance`
     : `${p.display}, ${im.view} | ${p.tier.tier} | Sophisticated Ignorance`;
 
 // Reuses the same tag-by-tag rewrite as the division pages. `img` is optional: the
@@ -436,6 +467,7 @@ const itemEntity = (p) =>
         artform: "Fine jewelry",
         description: p.desc,
         creator: { "@id": p.brand.org },
+        material: METALS.filter((m) => p.images.some((im) => im.metal === m.metal)).map((m) => m.metal.replace("Gold", "gold")),
         image: p.images.map((im) => im.abs),
       }
     : {
@@ -516,7 +548,7 @@ for (const p of products) {
       <img src="${im.abs}" alt="${esc(im.alt)}" width="${im.width}" height="${im.height}">
       <p>${escHtml(im.alt)}.</p>
       <p><a href="${p.url}">${escHtml(pFirst)}</a></p>
-      <ul>${p.images.filter((o) => o !== im).map((o) => `<li><a href="${o.url}">${escHtml(o.view)}</a></li>`).join("")}</ul>
+      <ul>${p.images.filter((o) => o !== im).map((o) => `<li><a href="${o.url}">${escHtml(o.metal ? `${o.metal}, ${o.view}` : o.view)}</a></li>`).join("")}</ul>
       ${footerLinks(p)}`,
     });
     urls.push(imageUrl);

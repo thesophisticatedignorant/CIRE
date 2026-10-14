@@ -11206,7 +11206,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 });
                 
                 const initialColorMatch = item.name.match(/-\s*(.+)\s*Gold$/i);
-                const initialMetal = initialColorMatch ? document.querySelector(`.metal-toggle[data-metal='${initialColorMatch[1].toLowerCase()}']`) : document.querySelector(".metal-toggle[data-metal='rose']");
+                const deepLinkMetal = !window.CIRE_takeDeepLinkImage.taken && CIRE_DEEP_LINK_IMAGE ? (/\/Yellow\//.test(CIRE_DEEP_LINK_IMAGE) ? "yellow" : /\/White\//.test(CIRE_DEEP_LINK_IMAGE) ? "white" : null) : null;
+                const initialMetal = deepLinkMetal ? document.querySelector(`.metal-toggle[data-metal='${deepLinkMetal}']`) : initialColorMatch ? document.querySelector(`.metal-toggle[data-metal='${initialColorMatch[1].toLowerCase()}']`) : document.querySelector(".metal-toggle[data-metal='rose']");
                 if (initialMetal) initialMetal.click();
                 
               } else {

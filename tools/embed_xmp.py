@@ -12,6 +12,10 @@ and rights holder, pointing at the licensing page:
 Idempotent: a file whose XMP already says "CIRE Conglomerate" is skipped. Every file is
 decoded before and after and the pixels must match; on any failure the original bytes are
 put back. Run from the repo root:  python3 tools/embed_xmp.py [scope.json]
+
+--dist is the build step: it tags the copies in dist/ instead of public/, and always writes
+the current XMP, replacing any that is already there, so the embedded title and description
+follow whatever CAROUSEL_PRODUCTS says now. Any failure exits non-zero naming the file.
 """
 import io
 import json
@@ -23,8 +27,10 @@ from xml.sax.saxutils import escape
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-PUBLIC = ROOT / "public"
-SCOPE = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / ".image-scope.json"
+ARGS = [a for a in sys.argv[1:] if a != "--dist"]
+DIST_MODE = "--dist" in sys.argv[1:]
+TARGET = ROOT / ("dist" if DIST_MODE else "public")
+SCOPE = Path(ARGS[0]) if ARGS else ROOT / "dist" / ".image-scope.json"
 MARK = "CIRE Conglomerate"
 LICENSING = "https://cireconglomerate.com/licensing"
 XMP_NS_APP1 = b"http://ns.adobe.com/xap/1.0/\x00"
@@ -105,10 +111,23 @@ def embed_webp(data, xmp):
 
 
 # ---- PNG ----
+def strip_png_xmp(data):
+    """Drop any existing XMP iTXt chunk so a new one replaces it."""
+    out, pos = [data[:8]], 8
+    while pos + 8 <= len(data):
+        size = struct.unpack(">I", data[pos:pos + 4])[0]
+        end = pos + 12 + size
+        if not (data[pos + 4:pos + 8] == b"iTXt" and data[pos + 8:pos + 8 + 17] == b"XML:com.adobe.xmp"):
+            out.append(data[pos:end])
+        pos = end
+    return b"".join(out)
+
+
 def embed_png(data, xmp):
     import zlib
     if data[:8] != b"\x89PNG\r\n\x1a\n":
         raise ValueError("not a PNG")
+    data = strip_png_xmp(data)
     payload = b"XML:com.adobe.xmp\0\0\0\0\0" + xmp
     chunk = struct.pack(">I", len(payload)) + b"iTXt" + payload
     chunk += struct.pack(">I", zlib.crc32(b"iTXt" + payload) & 0xFFFFFFFF)
@@ -117,9 +136,23 @@ def embed_png(data, xmp):
 
 
 # ---- JPEG ----
+def strip_jpeg_xmp(data):
+    """Drop any existing XMP APP1 segment (they sit before the scan data) so a new one replaces it."""
+    out, pos = [data[:2]], 2
+    while pos + 4 <= len(data) and data[pos] == 0xFF and data[pos + 1] != 0xDA:
+        size = struct.unpack(">H", data[pos + 2:pos + 4])[0]
+        seg = data[pos:pos + 2 + size]
+        if not (data[pos + 1] == 0xE1 and seg[4:4 + len(XMP_NS_APP1)] == XMP_NS_APP1):
+            out.append(seg)
+        pos += 2 + size
+    out.append(data[pos:])
+    return b"".join(out)
+
+
 def embed_jpeg(data, xmp):
     if data[:2] != b"\xff\xd8":
         raise ValueError("not a JPEG")
+    data = strip_jpeg_xmp(data)
     payload = XMP_NS_APP1 + xmp
     if len(payload) + 2 > 0xFFFF:
         raise ValueError("XMP too large for one APP1 segment")
@@ -137,7 +170,7 @@ def pixels(data):
 
 def process(path, title, description):
     original = path.read_bytes()
-    if has_mark(original):
+    if has_mark(original) and not DIST_MODE:
         return "skipped", 0
     try:
         before = pixels(original)
@@ -150,6 +183,7 @@ def process(path, title, description):
         if isinstance(xmp, bytes):
             xmp = xmp.decode("utf-8", "replace")
         assert MARK in xmp, "XMP not readable back through Pillow"
+        assert f"<rdf:li xml:lang=\"x-default\">{escape(title)}</rdf:li>" in xmp, "XMP title does not match"
         return "tagged", len(out) - len(original)
     except Exception as err:
         path.write_bytes(original)
@@ -166,7 +200,7 @@ def main():
             continue
         seen.add(item["path"])
         try:
-            status, grew = process(PUBLIC / item["path"], item["title"], item["description"])
+            status, grew = process(TARGET / item["path"], item["title"], item["description"])
         except Exception as err:
             failures.append(str(err))
             continue
@@ -175,7 +209,10 @@ def main():
             growth += grew
         else:
             skipped += 1
-    print(f"embed_xmp: tagged {tagged}, skipped {skipped}, failed {len(failures)}, byte growth {growth}")
+    if DIST_MODE:
+        print(f"embed_xmp --dist: tagged {tagged}, failed {len(failures)}, bytes {growth:+d}")
+    else:
+        print(f"embed_xmp: tagged {tagged}, skipped {skipped}, failed {len(failures)}, byte growth {growth}")
     for f in failures:
         print("  FAILED", f)
     sys.exit(1 if failures else 0)
