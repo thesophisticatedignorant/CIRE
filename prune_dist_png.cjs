@@ -18,6 +18,13 @@ const path = require("path");
 const DIST = path.join(__dirname, "dist");
 const ALWAYS_KEEP = new Set([
   "favicon-192x192.png",
+  "favicon-48.png",
+  "favicon-96.png",
+  "favicon-192.png",
+  "favicon-512.png",
+  "apple-touch-icon.png",
+  "og-cover.png",
+  "cire-logo-light.png",
   "blackscale CIRE logo.png",
   "blackscale_logo_white.png",
 ]);

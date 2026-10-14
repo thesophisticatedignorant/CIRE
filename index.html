@@ -172,45 +172,150 @@
 
     <title>CIRE Conglomerate | The Pinnacle of Luxury</title>
 
-    <!-- Google Site Verification -->
-    <meta name="google-site-verification" content="1e8bdcab3c438db1" />
+    <!-- Search Console ownership is verified by a DNS TXT record on the domain, so no tag is needed here. -->
 
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="CIRE is an ultra-exclusive, invite-only digital luxury conglomerate. Experience the epitome of opulence through our curated collection of high-end real estate, automotive, aviation, and marine assets. Accessible only to verified connoisseurs of the Sophisticated Ignorance lifestyle." />
-    <meta name="keywords" content="CIRE, CIRE Conglomerate, luxury, exclusive, invite-only, real estate, automotive, aviation, marine, Sophisticated Ignorance" />
+    <!-- SEO. The copy is the Maison Overview's own, and names every division, because search
+         engines and AI overviews build their picture of a business from what the site says.
+         It never says "real estate": that is CIRE Equity (San Diego), and the
+         disambiguatingDescription below says so outright so answer engines stop merging the two. -->
+    <meta name="description" content="CIRE Conglomerate is a multidisciplinary luxury house: Sophisticated Brilliance (fine jewelry and art), Sophisticated Ignorance (fashion) and CIRE Concierge &amp; Hospitality (private client services)." />
     <meta name="author" content="CIRE Conglomerate" />
+    <link rel="canonical" href="https://cireconglomerate.com/" />
 
-    <!-- Open Graph Meta Tags (for social sharing & AI overview) -->
-    <meta property="og:title" content="CIRE | The Pinnacle of Exclusive Digital Luxury" />
-    <meta property="og:description" content="CIRE is an ultra-exclusive, invite-only digital luxury conglomerate. Experience the epitome of opulence through our curated collection." />
+    <!-- Open Graph: the card WhatsApp, iMessage, Instagram, Slack, Discord, LinkedIn, Facebook
+         and Telegram draw when the link is shared. ?v= forces those apps to fetch the image
+         again instead of reusing a cached card; bump it whenever og-cover.png changes. -->
+    <meta property="og:title" content="CIRE Conglomerate | The Pinnacle of Luxury" />
+    <meta property="og:description" content="The luxury house behind Sophisticated Brilliance, Sophisticated Ignorance and CIRE Concierge &amp; Hospitality." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://cireconglomerate.com" />
-    <meta property="og:image" content="https://cireconglomerate.com/blackscale%20CIRE%20logo.png" />
+    <meta property="og:url" content="https://cireconglomerate.com/" />
+    <meta property="og:image" content="https://cireconglomerate.com/og-cover.png?v=3" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:alt" content="CIRE Conglomerate" />
     <meta property="og:site_name" content="CIRE Conglomerate" />
 
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="CIRE | The Pinnacle of Exclusive Digital Luxury" />
-    <meta name="twitter:description" content="CIRE is an ultra-exclusive, invite-only digital luxury conglomerate. Experience the epitome of opulence through our curated collection." />
-    <meta name="twitter:image" content="https://cireconglomerate.com/blackscale%20CIRE%20logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="CIRE Conglomerate | The Pinnacle of Luxury" />
+    <meta name="twitter:description" content="The luxury house behind Sophisticated Brilliance, Sophisticated Ignorance and CIRE Concierge &amp; Hospitality." />
+    <meta name="twitter:image" content="https://cireconglomerate.com/og-cover.png?v=3" />
 
-    <!-- Structured Data (JSON-LD) for Google Search and AI Overview -->
+    <!-- Structured data. alternateName is what tells Google "cireconglomerate" and "CIRE" are
+         this business and not a misspelling of "core". Every division is declared, and each
+         sameAs names only the Instagram account that belongs to it. The @id values are shared
+         with sophisticatedbrilliance.com and sophisticatedignorance.co. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "CIRE Conglomerate",
-      "url": "https://cireconglomerate.com",
-      "logo": "https://cireconglomerate.com/blackscale%20CIRE%20logo.png",
-      "description": "An ultra-exclusive, invite-only digital luxury conglomerate encompassing real estate, automotive, aviation, and marine assets.",
-      "sameAs": [
-        "https://www.instagram.com/thesophisticatedignorant"
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://cireconglomerate.com/#org",
+          "name": "CIRE Conglomerate",
+          "alternateName": [
+            "CIRE",
+            "cireconglomerate",
+            "cireconglomerate.com"
+          ],
+          "url": "https://cireconglomerate.com/",
+          "logo": "https://cireconglomerate.com/favicon-512.png",
+          "image": "https://cireconglomerate.com/og-cover.png",
+          "slogan": "The Pinnacle of Luxury",
+          "description": "CIRE Conglomerate is a visionary, multidisciplinary luxury house bridging fine jewelry, art, fashion and private client services into a cohesive expression of contemporary sophistication. Built on the philosophy of cultivating influence, refinement and excellence, CIRE operates as both a creative institution and an intellectual holding company where craftsmanship, culture and aspiration converge. Its divisions are Sophisticated Brilliance, a luxury fine-jewelry maison and art house; Sophisticated Ignorance, a high-fashion menswear and lifestyle maison; and CIRE Concierge & Hospitality, private client services offering luxury automotive rentals, maritime chartering and private aviation.",
+          "disambiguatingDescription": "CIRE Conglomerate is a luxury house for jewelry, art, fashion and private client services. It is not CIRE Equity, the San Diego real estate private equity firm, and is not a real estate business.",
+          "knowsAbout": [
+            "Fine jewelry",
+            "Wearable art",
+            "Luxury fashion",
+            "Menswear",
+            "Luxury car rental",
+            "Yacht charter",
+            "Private aviation",
+            "Watch sourcing",
+            "Bespoke jewelry"
+          ],
+          "sameAs": [
+            "https://www.instagram.com/cireconglomerate"
+          ],
+          "subOrganization": [
+            {
+              "@id": "https://sophisticatedbrilliance.com/#org"
+            },
+            {
+              "@id": "https://sophisticatedignorance.co/#org"
+            },
+            {
+              "@id": "https://cireconglomerate.com/#concierge"
+            }
+          ]
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://cireconglomerate.com/#concierge",
+          "name": "CIRE Concierge & Hospitality",
+          "alternateName": [
+            "CIRE Concierge",
+            "CIRE Hospitality"
+          ],
+          "url": "https://cireconglomerate.com/",
+          "description": "The private client services division of CIRE Conglomerate, arranging luxury automotive rentals, maritime chartering and private aviation, with hospitality add-ons including event coordination, security, hotel pickup and private dining.",
+          "sameAs": [
+            "https://www.instagram.com/cireconglomerate"
+          ],
+          "parentOrganization": {
+            "@id": "https://cireconglomerate.com/#org"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://sophisticatedbrilliance.com/#org",
+          "name": "Sophisticated Brilliance",
+          "url": "https://sophisticatedbrilliance.com/",
+          "description": "Sophisticated Brilliance is a luxury fine-jewelry maison and art house, distinguished by its signature king and queen chess piece insignia. Luxury in its final form. Timelessness over ostentation. Discover Transcendence of Man, our debut collection of wearable art. Presented by CIRE Conglomerate.",
+          "sameAs": [
+            "https://www.instagram.com/sophisticatedbrilliance"
+          ],
+          "parentOrganization": {
+            "@id": "https://cireconglomerate.com/#org"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://sophisticatedignorance.co/#org",
+          "name": "Sophisticated Ignorance",
+          "url": "https://sophisticatedignorance.co/",
+          "description": "Sophisticated Ignorance is a high-fashion menswear and lifestyle maison, blurring the boundaries between streetwear and refined tailoring. New-Vieux Riche luxury distinguished by its signature chess piece insignia, from Pawn to King, inviting clients to ascend the ranks of distinction. Presented by CIRE Conglomerate.",
+          "sameAs": [
+            "https://www.instagram.com/sophisticatedignorance.co"
+          ],
+          "parentOrganization": {
+            "@id": "https://cireconglomerate.com/#org"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://cireconglomerate.com/#website",
+          "name": "CIRE Conglomerate",
+          "alternateName": "CIRE",
+          "url": "https://cireconglomerate.com/",
+          "publisher": {
+            "@id": "https://cireconglomerate.com/#org"
+          }
+        }
       ]
     }
     </script>
 
-
-    <link rel="icon" type="image/png" href="/favicon-192x192.png" sizes="192x192" />
+    <!-- Favicon: the light-mode mark (the background logo as it appears with light mode on),
+         on black so it reads in both Google themes. Google wants a square multiple of 48px;
+         /favicon.ico is what browsers and older crawlers request when they ignore these links.
+         Bump ?v= when the mark changes, or iOS keeps the old one. -->
+    <link rel="icon" href="/favicon.ico?v=3" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=3" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=3" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png?v=3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
