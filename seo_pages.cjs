@@ -278,7 +278,10 @@ function viewLabelOf(imgPath, product) {
   if (colour) strip.push(colour);
   for (const w of strip) label = label.replace(new RegExp(`(^|[^A-Za-z0-9])${escRe(w)}(?![A-Za-z0-9])`, "gi"), "$1 ");
   label = label.replace(/(^|\s)-+(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
-  return titleCase(label);
+  // A bare number ("Intersect 3" once the name is gone) says nothing about the shot.
+  if (/^\d+$/.test(label)) label = `View ${label}`;
+  // "on" is lowercase mid-phrase ("on Celestial Scars") but not in "Head On".
+  return titleCase(label).replace(/^Head on$/, "Head On");
 }
 
 const decodeEntities = (s) =>

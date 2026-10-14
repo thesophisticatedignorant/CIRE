@@ -11193,6 +11193,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     );
                     currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselImages.length - 1);
                     if (currentCarouselIndex < 0) currentCarouselIndex = 0;
+                    /* Jewellery opens through this toggle's programmatic first click, not the
+                       clickedSrc branches below, so a per-photo link is honoured here too. */
+                    if (!e.isTrusted && window.CIRE_takeDeepLinkImage) {
+                      const wanted = window.CIRE_takeDeepLinkImage();
+                      const at = wanted ? currentCarouselImages.indexOf(wanted.replace(/^\//, '')) : -1;
+                      if (at !== -1) currentCarouselIndex = at;
+                    }
                     renderDots();
                     updateCarouselImage();
                   };
@@ -12040,10 +12047,13 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
       /* A per-photo page (see seo_pages.cjs) lands on /?file=...&image=... . The first product
          opened asks for that image once, so every later product opens on its own first photo. */
+      /* Read now, while the address still carries it: the boot rewrites the URL to plain
+         ?file=... before the product opens, which would drop &image= by then. */
+      const CIRE_DEEP_LINK_IMAGE = new URLSearchParams(window.location.search).get('image');
       window.CIRE_takeDeepLinkImage = function () {
         if (window.CIRE_takeDeepLinkImage.taken) return null;
         window.CIRE_takeDeepLinkImage.taken = true;
-        return new URLSearchParams(window.location.search).get('image');
+        return CIRE_DEEP_LINK_IMAGE;
       };
 
       window.addEventListener('DOMContentLoaded', () => {
@@ -12051,7 +12061,6 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         const windowToOpen = params.get('window');
         if (windowToOpen) {
           setTimeout(() => {
-             openPopup(windowToOpen, false);
              openPopup(windowToOpen, false);
              const topic = params.get('topic');
              const interest = document.getElementById('inquiry-interest');
