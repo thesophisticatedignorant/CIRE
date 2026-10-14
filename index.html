@@ -5951,6 +5951,17 @@
                   &nbsp;&nbsp;Media & Press
                 </option>
                 <option
+                  value="Image Licensing"
+                  style="
+                    color: #fff;
+                    font-family: Helvetica, Arial, sans-serif;
+                    font-size: 0.8rem;
+                    text-transform: uppercase;
+                  "
+                >
+                  &nbsp;&nbsp;Image Licensing
+                </option>
+                <option
                   value="Partnership Opportunity"
                   style="
                     color: #fff;
@@ -10997,6 +11008,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                         const cleanPath = srcPath.replace(/^\//, '').replace(/^public\//, '');
                         const fixedPath = cleanPath.replace(/^Ghost Mannequins\//i, '');
                         carouselImgEl.src = fixedPath;
+                        carouselImgEl.alt = (window.CIRE_IMAGE_ALT || {})[cleanPath] || String((origProduct && origProduct.name) || item.name || "").split(" - ")[0];
                     }
                     
                     Array.from(dotsContainer.children).forEach((dot, i) => {
@@ -11259,7 +11271,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                                currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselImages.length - 1);
                                if (currentCarouselIndex < 0) currentCarouselIndex = 0;
                            } else {
-                               let clickedSrc = item.src || item.image;
+                               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
                                let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                                if (rawSrc) {
                                    const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -11299,7 +11311,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     infoContainer.previousElementSibling.innerText = "Information";
                     togglesContainer.style.display = "none";
                     currentCarouselImages = origProduct.images || [item.image];
-                    let clickedSrc = item.src || item.image;
+                    let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
                     let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                     if (rawSrc) {
                         const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -11317,7 +11329,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               }
             } else {
                currentCarouselImages = origProduct.images || [item.image];
-               let clickedSrc = item.src || item.image;
+               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
                let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                if (rawSrc) {
                    const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -12026,12 +12038,27 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         }
       });
 
+      /* A per-photo page (see seo_pages.cjs) lands on /?file=...&image=... . The first product
+         opened asks for that image once, so every later product opens on its own first photo. */
+      window.CIRE_takeDeepLinkImage = function () {
+        if (window.CIRE_takeDeepLinkImage.taken) return null;
+        window.CIRE_takeDeepLinkImage.taken = true;
+        return new URLSearchParams(window.location.search).get('image');
+      };
+
       window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const windowToOpen = params.get('window');
         if (windowToOpen) {
           setTimeout(() => {
              openPopup(windowToOpen, false);
+             openPopup(windowToOpen, false);
+             const topic = params.get('topic');
+             const interest = document.getElementById('inquiry-interest');
+             if (topic && interest && Array.from(interest.options).some(o => o.value === topic)) {
+               interest.value = topic;
+               interest.dispatchEvent(new Event('change', { bubbles: true }));
+             }
           }, 500); // Wait for desktop shell to render
         }
       });
