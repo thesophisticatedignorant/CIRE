@@ -153,6 +153,11 @@ for (const p of PAGES) {
   for (const k of ["og:image:width", "og:image:height"]) {
     html = setTag(html, new RegExp(`<meta property="${k}" content="[^"]*" \\/>`), `<meta property="${k}" content="${p.imageSize}" />`, k, file);
   }
+  // Taken from the image's own extension, so a card that changes format cannot be
+  // announced as the wrong one (the base page says image/png).
+  const imageType = /\.jpe?g(\?|$)/i.test(p.image) ? "image/jpeg" : "image/png";
+  html = setTag(html, /<meta property="og:image:type" content="[^"]*" \/>/, `<meta property="og:image:type" content="${imageType}" />`, "og:image:type", file);
+  html = setTag(html, /<meta property="og:image:alt" content="[^"]*" \/>/, `<meta property="og:image:alt" content="${esc(p.title.split(" | ")[0])}" />`, "og:image:alt", file);
 
   const ld = {
     "@context": "https://schema.org",
