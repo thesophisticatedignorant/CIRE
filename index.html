@@ -2999,6 +2999,17 @@
   </head>
 
   <body>
+    <!-- Crawlable links to each division's own page (built by seo_pages.cjs). The desktop
+         opens divisions through ?folder= in script, which a crawler cannot follow, so
+         without these Google has no link to the pages it should list as sub-links. -->
+    <noscript>
+      <nav>
+        <a href="https://cireconglomerate.com/sophisticated-brilliance">Sophisticated Brilliance</a> ·
+        <a href="https://cireconglomerate.com/sophisticated-ignorance">Sophisticated Ignorance</a> ·
+        <a href="https://cireconglomerate.com/concierge/automotive">CIRE Concierge: Automotive</a> ·
+        <a href="https://cireconglomerate.com/concierge/maritime">CIRE Concierge: Maritime</a>
+      </nav>
+    </noscript>
     <!-- Portrait Lock Removed -->
 
     <div class="macos-desktop" id="desktop">
