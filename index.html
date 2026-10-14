@@ -2887,6 +2887,33 @@
         }
       }
 
+      /* Product image watermark: the Sophisticated Ignorance shop's treatment
+         (white, 15% opacity, bottom-right corner of the image box, never
+         catching a click), enlarged so the chess-piece tiers can be told apart. */
+      .pd-watermark {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        width: 80px;
+        height: auto;
+        opacity: 0.15;
+        filter: brightness(0) invert(1);
+        pointer-events: none;
+        user-select: none;
+      }
+      /* Every mark is cropped tight to its art and shares one footprint, so the
+         four brands read alike: the wide marks (CIRE, the tier marks) are 80px
+         across, and the Brilliance mark, which is taller than it is wide, is the
+         same 72px height as the tier marks. */
+      .pd-watermark[data-mark="brilliance"] {
+        width: auto;
+        height: 72px;
+      }
+      /* The CIRE mark is the busiest of the four, so it is half the size. */
+      .pd-watermark[data-mark="cire"] {
+        width: 40px;
+      }
+
       /* Modals Light Mode Support */
       body.light-mode #inquiry-form-modal > div,
       body.light-mode #brilliance-inquiry-form-modal > div,
@@ -2955,6 +2982,14 @@
       body.light-mode #product-detail-modal .gallery-thumbnail-image-container img {
         mix-blend-mode: normal !important;
         filter: none !important;
+      }
+      /* Light card: the watermark goes dark so it still shows. The brilliance
+         carousel keeps its black ground in either mode, so it stays white. */
+      body.light-mode #product-detail-modal img.pd-watermark {
+        filter: brightness(0) !important;
+      }
+      body.light-mode #product-detail-modal img.pd-watermark[data-on-black] {
+        filter: brightness(0) invert(1) !important;
       }
       body.light-mode #popup-restricted {
         background: rgba(240, 240, 240, 0.95) !important;
@@ -10684,6 +10719,42 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       }
 
       
+                  /* Which insignia a product image carries: CIRE for the concierge
+                     listings, the Brilliance mark for Brilliance, and the tier's own
+                     for Ignorance (the tier is on the product, else the first folder
+                     of its image path). A tier without a mark gets none rather than a
+                     guess. */
+                  const PD_WATERMARK_TIERS = ["foundations", "fortifications", "relics"];
+                  function productWatermarkSrc(item, origProduct) {
+                    const collection = (origProduct && origProduct.collection) || item.collection;
+                    if (collection === "sophisticated-brilliance") return "/watermarks/brilliance.webp";
+                    if (collection === "sophisticated-ignorance") {
+                      let tier = origProduct && origProduct.tier;
+                      if (!tier) {
+                        const first = origProduct && origProduct.images && origProduct.images[0];
+                        const path = (first && typeof first === "object" ? first.src : first) || "";
+                        tier = path.replace(/^\//, "").split("/")[0];
+                      }
+                      tier = String(tier || "").toLowerCase();
+                      return PD_WATERMARK_TIERS.includes(tier) ? "/watermarks/" + tier + ".svg" : "";
+                    }
+                    return "/watermarks/cire.webp";
+                  }
+                  function addProductWatermark(host, src, onBlack) {
+                    host.querySelectorAll(".pd-watermark").forEach(el => el.remove());
+                    if (!src) return;
+                    const wm = document.createElement("img");
+                    wm.className = "pd-watermark";
+                    wm.dataset.mark = src.split("/").pop().replace(/\.\w+$/, "");
+                    wm.src = src;
+                    wm.alt = "";
+                    wm.setAttribute("aria-hidden", "true");
+                    wm.draggable = false;
+                    if (onBlack) wm.setAttribute("data-on-black", "");
+                    wm.onerror = () => wm.remove();
+                    host.appendChild(wm);
+                  }
+
                   function openProductDetail(index, category, updateHistory = true) {
         const item = window.currentShowroomData[index];
         if (item && updateHistory) {
@@ -10714,9 +10785,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           }
 
           const mainImage = document.getElementById("pd-image");
+          const imageBox = document.getElementById("pd-image-box");
           
           let existingGallery = document.getElementById("custom-gallery-carousel");
           if (existingGallery) existingGallery.remove();
+          modal.querySelectorAll(".pd-watermark").forEach(el => el.remove());
           
           let existingToggles = document.getElementById("pd-toggles");
           if (existingToggles) existingToggles.remove();
@@ -10748,8 +10821,10 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             // ==========================================
             // AUTOMOTIVE / MARITIME LAYOUT (LIVE SITE MATCH)
             // ==========================================
+            imageBox.style.display = "block";
             mainImage.style.display = "block";
             mainImage.src = item.image;
+            addProductWatermark(imageBox, productWatermarkSrc(item, origProduct), false);
             mainImage.style.mixBlendMode = "plus-lighter";
             mainImage.style.filter = "contrast(1.1) brightness(1.1)";
             mainImage.style.objectFit = "contain";
@@ -10820,6 +10895,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             // JEWELRY / CLOTHING LAYOUT (CUSTOM CAROUSEL)
             // ==========================================
             mainImage.style.display = "none";
+            imageBox.style.display = "none";
             
             let carouselContainer = document.createElement("div");
             carouselContainer.id = "custom-gallery-carousel";
@@ -10901,7 +10977,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             carouselContainer.appendChild(prevBtn);
             carouselContainer.appendChild(nextBtn);
             
-            mainImage.parentNode.insertBefore(carouselContainer, mainImage);
+            imageBox.parentNode.insertBefore(carouselContainer, imageBox);
+            addProductWatermark(carouselContainer, productWatermarkSrc(item, origProduct), item.collection === "sophisticated-brilliance");
 
             const updateCarouselImage = () => {
                 if (currentCarouselImages.length > 0) {
@@ -12058,18 +12135,28 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
             overflow-y: auto;
           "
         >
-          <img
-            id="pd-image"
-            src=""
+          <div
+            id="pd-image-box"
             style="
+              position: relative;
               width: 100%;
-              max-width: 500px;
-              height: 240px;
-              object-fit: contain;
               margin-bottom: 20px;
-              filter: contrast(1.1) brightness(1.1);
             "
-          />
+          >
+            <img
+              id="pd-image"
+              src=""
+              style="
+                display: block;
+                width: 100%;
+                max-width: 500px;
+                margin: 0 auto;
+                height: 240px;
+                object-fit: contain;
+                filter: contrast(1.1) brightness(1.1);
+              "
+            />
+          </div>
           <div
             class="product-detail-body"
             style="
