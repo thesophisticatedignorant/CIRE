@@ -160,6 +160,18 @@ new question on a form can never go missing from a notification.
   actually read. If a run throws, the next one picks them up again instead of
   losing them. The trade-off is that a crash *after* sending mail could
   re-notify you; duplicates beat silence.
+- **Retries and fallback** — the PDF conversion, the send and both network calls
+  retry up to three times with a short backoff. If the PDF still will not build,
+  the same report is sent in the body of the email with `[no PDF]` in the
+  subject, so an alert is never lost to the converter. A retried send can very
+  rarely deliver twice; that is intentional.
+- **No overlapping runs** — each run takes the script lock. If a previous run is
+  still going (for instance hung on a Google-side fault) the new tick skips
+  instead of piling on, and a run that has used 4.5 minutes reading hands the
+  work to the next one without committing anything.
+- **Reading a failure** — every step is timed in the execution log
+  (`Timing: read …ms, notify …ms`), so the next "server error" email can be
+  matched to the step that caused it.
 - **Ordering** — queries sort on each collection's `timestampField` (see
   COLLECTIONS in the script — `timestamp` for the three CIRE Conglomerate
   collections, `createdAt` for Sophisticated Ignorance's). Firestore may ask

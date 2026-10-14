@@ -92,6 +92,10 @@ var SECTIONS = [
 /** Never rendered as ordinary rows — handled separately (items, locationData) or not useful (internal ids). */
 var SKIP_FIELDS = { timestamp: 1, createdAt: 1, locationData: 1, items: 1, userId: 1, taxRate: 1 };
 
+/** Stop reading and try again next run once a poll has used this long. Apps Script
+ *  kills a run at 6 minutes; stopping well before leaves room to send and commit. */
+var MAX_RUN_MS = 4.5 * 60 * 1000;
+
 // ── Entry points ───────────────────────────────────────────────────────────
 
 /**
@@ -167,6 +171,23 @@ function diagnose() {
 
 /** The function the time-driven trigger calls. */
 function poll() {
+  /* Never let two runs overlap. A run that hangs on a Google-side fault used to
+     leave the next trigger firing on top of it, so a retry could double-send or
+     race the watermark. If the lock is not free within 20s this tick is skipped;
+     the next one picks the work up. */
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) {
+    Logger.log('Another poll is still running; skipping this tick.');
+    return;
+  }
+  try {
+    pollLocked_(Date.now());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function pollLocked_(started) {
   var token = getAccessToken_();
   var props = PropertiesService.getScriptProperties();
   var found = [];
@@ -217,7 +238,17 @@ function poll() {
     return;
   }
 
+  /* Reading already ate the budget: stop here, commit nothing, and let the next
+     run start fresh. Nothing is lost - the watermarks have not moved. */
+  if (Date.now() - started > MAX_RUN_MS) {
+    Logger.log('Run budget used up after %sms while reading; deferring %s inquir%s to the next run.',
+               Date.now() - started, found.length, found.length === 1 ? 'y' : 'ies');
+    return;
+  }
+
+  var readMs = Date.now() - started;
   notify_(found);
+  Logger.log('Timing: read %sms, notify %sms', readMs, Date.now() - started - readMs);
 
   /* Only now is it safe to forget them. If notify_ threw, nothing above was
      committed and the next run reads the same documents again - a duplicate
@@ -228,6 +259,42 @@ function poll() {
 
   Logger.log('Notified about %s new inquir%s', found.length,
              found.length === 1 ? 'y' : 'ies');
+}
+
+// ── Resilience ─────────────────────────────────────────────────────────────
+
+/**
+ * Runs fn up to `tries` times, sleeping `backoffMs * attempt` between attempts,
+ * and returns its value. Rethrows the last error if every attempt fails.
+ *
+ * Google's own services (the HTML-to-PDF converter, MailApp, UrlFetch) fail
+ * transiently with a bare "server error occurred" - twice so far, each after a
+ * run that sat for exactly eight minutes. A retry inside the run turns most of
+ * those into a short delay instead of a failed run and an alert email.
+ */
+function withRetry_(label, fn, tries, backoffMs) {
+  var lastErr;
+  for (var attempt = 1; attempt <= tries; attempt++) {
+    try {
+      return fn();
+    } catch (err) {
+      lastErr = err;
+      Logger.log('%s failed (attempt %s of %s): %s', label, attempt, tries,
+                 err && err.message ? err.message : err);
+      if (attempt < tries) Utilities.sleep(backoffMs * attempt);
+    }
+  }
+  throw lastErr;
+}
+
+/** UrlFetchApp.fetch that also retries 429 and 5xx responses, not just thrown errors. */
+function fetchWithRetry_(label, url, options) {
+  return withRetry_(label, function () {
+    var res = UrlFetchApp.fetch(url, options);
+    var code = res.getResponseCode();
+    if (code === 429 || code >= 500) throw new Error('HTTP ' + code);
+    return res;
+  }, 3, 1500);
 }
 
 // ── Firestore ──────────────────────────────────────────────────────────────
@@ -263,7 +330,7 @@ function getAccessToken_() {
   var signature = Utilities.computeRsaSha256Signature(unsigned, key.private_key);
   var jwt = unsigned + '.' + Utilities.base64EncodeWebSafe(signature).replace(/=+$/, '');
 
-  var res = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {
+  var res = fetchWithRetry_('OAuth token', 'https://oauth2.googleapis.com/token', {
     method: 'post',
     payload: {
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -300,7 +367,7 @@ function querySince_(token, collection, projectId, timestampField, since) {
     },
   };
 
-  var res = UrlFetchApp.fetch(url, {
+  var res = fetchWithRetry_('Firestore ' + collection, url, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: 'Bearer ' + token },
@@ -364,9 +431,21 @@ function notify_(items) {
   }).join('\n\n');
 
   var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd-HHmm');
-  var pdf = Utilities.newBlob(buildHtml_(items), 'text/html')
-                     .getAs('application/pdf')
-                     .setName('CIRE-inquiries-' + stamp + '.pdf');
+  var html = buildHtml_(items);
+
+  /* The PDF is the nicety; the notification is the point. If the converter
+     keeps failing, send the same report in the body of the email instead of
+     failing the whole run and losing the alert. */
+  var pdf = null;
+  try {
+    pdf = withRetry_('PDF conversion', function () {
+      return Utilities.newBlob(html, 'text/html')
+                      .getAs('application/pdf')
+                      .setName('CIRE-inquiries-' + stamp + '.pdf');
+    }, 3, 2000);
+  } catch (err) {
+    Logger.log('PDF unavailable after retries; sending the report inline instead: %s', err.message);
+  }
 
   // One console link per distinct project represented in this batch.
   var seenProjects = {};
@@ -378,12 +457,18 @@ function notify_(items) {
     links.push('https://console.firebase.google.com/project/' + projectId + '/firestore');
   });
 
-  MailApp.sendEmail({
+  var message = {
     to: RECIPIENT_EMAIL,
-    subject: subject,
-    body: body + '\n\nFull detail is attached.\n\nFirestore console:\n' + links.join('\n'),
-    attachments: [pdf],
-  });
+    subject: pdf ? subject : '[no PDF] ' + subject,
+    body: body + (pdf ? '\n\nFull detail is attached.' : '\n\nFull detail is below.') +
+          '\n\nFirestore console:\n' + links.join('\n'),
+  };
+  if (pdf) message.attachments = [pdf];
+  else message.htmlBody = html;
+
+  /* A retry can, rarely, send twice if the first attempt got through before it
+     errored. That is deliberate: a duplicate is better than a missing inquiry. */
+  withRetry_('MailApp.sendEmail', function () { MailApp.sendEmail(message); }, 3, 2000);
 }
 
 /**
