@@ -11206,7 +11206,14 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                 });
                 
                 const initialColorMatch = item.name.match(/-\s*(.+)\s*Gold$/i);
-                const deepLinkMetal = !window.CIRE_takeDeepLinkImage.taken && CIRE_DEEP_LINK_IMAGE ? (/\/Yellow\//.test(CIRE_DEEP_LINK_IMAGE) ? "yellow" : /\/White\//.test(CIRE_DEEP_LINK_IMAGE) ? "white" : null) : null;
+                /* A per-photo link to a Yellow or White Gold shot opens on that metal, but only
+                   when the photo belongs to this product's gallery in that metal. A stale or
+                   foreign link leaves every product on its own metal. */
+                const dlWanted = !window.CIRE_takeDeepLinkImage.taken && CIRE_DEEP_LINK_IMAGE ? CIRE_DEEP_LINK_IMAGE.replace(/^\//, '') : null;
+                const dlBase = origProduct.images || [item.image];
+                const deepLinkMetal = dlWanted ? ([["yellow", "Yellow", "YG"], ["white", "White", "WG"]].find(([, c, a]) =>
+                    dlBase.some(img => String(typeof img === "object" ? img.src : img).replace(/^\//, '')
+                        .replace(/Rose|Yellow|White/g, c).replace(/RG |YG |WG /g, a + " ") === dlWanted)) || [null])[0] : null;
                 const initialMetal = deepLinkMetal ? document.querySelector(`.metal-toggle[data-metal='${deepLinkMetal}']`) : initialColorMatch ? document.querySelector(`.metal-toggle[data-metal='${initialColorMatch[1].toLowerCase()}']`) : document.querySelector(".metal-toggle[data-metal='rose']");
                 if (initialMetal) initialMetal.click();
                 

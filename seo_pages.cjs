@@ -398,6 +398,9 @@ const products = readProducts().map((raw) => {
       for (let n = 0; n < roseCount; n++) {
         const derived = images[n].path.replace(/Rose|Yellow|White/g, m.name).replace(/RG |YG |WG /g, m.abbrev + " ");
         if (fs.existsSync(path.join(DIST, derived))) images.push(make(derived, images[n].view, m.metal, n));
+        // The app's metal toggle builds this path regardless, so a missing file is a broken
+        // photo there: say so on every build rather than dropping its page quietly.
+        else console.warn(`seo_pages: WARNING no ${m.metal} file for ${raw.name}: ${derived}`);
       }
     }
   }
