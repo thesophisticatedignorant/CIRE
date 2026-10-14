@@ -114,11 +114,34 @@ const PAGES = [
   },
 ];
 
+/* The first thing in <head> on every generated page: swap the address to the app's deep
+   link before anything else parses, so relative asset paths resolve against / as always
+   and the app's own boot opens the folder, product or photo. Any query string the visit
+   arrived with (fbclid, utm_*, gclid from a share card or an ad) is carried over rather
+   than treated as a deep link of its own; a link that already names a folder, file or
+   window is left exactly as it is. */
+function shimScript(target) {
+  const query = target.replace(/^\/\?/, "");
+  return `<head>
+    <script>
+      (function () {
+        var q = new URLSearchParams(location.search);
+        if (q.has("file") || q.has("folder") || q.has("window")) return;
+        var s = new URLSearchParams("${query}");
+        q.forEach(function (v, k) { if (!s.has(k)) s.append(k, v); });
+        history.replaceState(null, "", "/?" + s + location.hash);
+      })();
+    </script>`;
+}
+
+// JSON inside <script> must not be able to close the element.
+const ldJson = (value) => JSON.stringify(value, null, 2).replace(/</g, "\\u003c");
+
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 function setTag(html, re, replacement, label, file) {
   if (!re.test(html)) throw new Error(`seo_pages: ${label} not found while building ${file}`);
-  return html.replace(re, replacement);
+  return html.replace(re, () => replacement);
 }
 
 // The app reads its gallery alt text from this; the script has to be on every page that boots it.
@@ -139,16 +162,7 @@ for (const p of PAGES) {
   const file = `${p.path}.html`;
   let html = base;
 
-  html = html.replace(
-    /<head>/,
-    `<head>
-    <script>
-      /* Open this division's folder. Swaps the address to the /?folder= deep link before
-         anything else parses (see seo_pages.cjs); a link that already carries its own
-         query string is left alone. */
-      if (!location.search) history.replaceState(null, "", "/?folder=${p.folder}" + location.hash);
-    </script>`
-  );
+  html = html.replace(/<head>/, () => shimScript(`/?folder=${p.folder}`));
   html = setTag(html, /<title>[^<]*<\/title>/, `<title>${p.title.replace(/&/g, "&amp;")}</title>`, "title", file);
   html = setTag(html, /<meta name="description" content="[^"]*" \/>/, `<meta name="description" content="${esc(p.description)}" />`, "description", file);
   html = setTag(html, /<link rel="canonical" href="[^"]*" \/>/, `<link rel="canonical" href="${url}" />`, "canonical", file);
@@ -196,14 +210,13 @@ for (const p of PAGES) {
       },
     ],
   };
-  html = html.replace(
-    "</head>",
-    `  <script type="application/ld+json">\n${JSON.stringify(ld, null, 2)}\n    </script>\n  </head>`
+  html = html.replace("</head>", () =>
+    `  <script type="application/ld+json">\n${ldJson(ld)}\n    </script>\n  </head>`
   );
 
   html = html.replace(
     /<body([^>]*)>/,
-    `<body$1>
+    (_, attrs) => `<body${attrs}>
     <noscript>
       ${p.body}
       <p>A house of <a href="${ORIGIN}/">CIRE Conglomerate</a>: ${siblings.join(" · ")}</p>
@@ -291,7 +304,7 @@ const decodeEntities = (s) =>
     .replace(/&(nbsp|mdash|ndash|hellip|rsquo|lsquo|rdquo|ldquo|copy|reg|lt|gt|quot|apos|amp);/g, (_, n) =>
       ({ nbsp: " ", mdash: "—", ndash: "–", hellip: "…", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“", copy: "©", reg: "®", lt: "<", gt: ">", quot: '"', apos: "'", amp: "&" })[n]);
 function plainDescription(htmlText) {
-  const text = decodeEntities(String(htmlText).replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+  const text = decodeEntities(String(htmlText).replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").replace(/\s+([,.;:!?])/g, "$1").trim();
   if (text.length <= 220) return text;
   const cut = text.slice(0, 220);
   return cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,;:.\-–—]+$/, "") + "…";
@@ -372,16 +385,7 @@ const imageTitle = (p, im) =>
 // licensing page keeps the site's own share card.
 function writePage({ file, shim, title, description, cardTitle, cardDescription, img, ld, body }) {
   const url = `${ORIGIN}/${file.replace(/\.html$/, "")}`;
-  let html = base.replace(
-    /<head>/,
-    `<head>
-    <script>
-      /* Open this page's content. Swaps the address to the matching deep link before
-         anything else parses (see seo_pages.cjs); a link that already carries its own
-         query string is left alone. */
-      if (!location.search) history.replaceState(null, "", "${shim}" + location.hash);
-    </script>`
-  );
+  let html = base.replace(/<head>/, () => shimScript(shim));
   html = setTag(html, /<title>[^<]*<\/title>/, `<title>${title.replace(/&/g, "&amp;")}</title>`, "title", file);
   html = setTag(html, /<meta name="description" content="[^"]*" \/>/, `<meta name="description" content="${esc(description)}" />`, "description", file);
   html = setTag(html, /<link rel="canonical" href="[^"]*" \/>/, `<link rel="canonical" href="${url}" />`, "canonical", file);
@@ -404,11 +408,10 @@ function writePage({ file, shim, title, description, cardTitle, cardDescription,
     html = setTag(html, /<meta property="og:image:type" content="[^"]*" \/>/, `<meta property="og:image:type" content="${img.type}" />`, "og:image:type", file);
     html = setTag(html, /<meta property="og:image:alt" content="[^"]*" \/>/, `<meta property="og:image:alt" content="${esc(img.alt)}" />`, "og:image:alt", file);
   }
-  html = html.replace(
-    "</head>",
-    `  <script type="application/ld+json">\n${JSON.stringify({ "@context": "https://schema.org", "@graph": ld }, null, 2)}\n    </script>\n  </head>`
+  html = html.replace("</head>", () =>
+    `  <script type="application/ld+json">\n${ldJson({ "@context": "https://schema.org", "@graph": ld })}\n    </script>\n  </head>`
   );
-  html = html.replace(/<body([^>]*)>/, `<body$1>\n    <noscript>\n      ${body}\n    </noscript>`);
+  html = html.replace(/<body([^>]*)>/, (_, attrs) => `<body${attrs}>\n    <noscript>\n      ${body}\n    </noscript>`);
   const out = path.join(DIST, file);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, html);
@@ -549,7 +552,7 @@ for (const p of products) {
 /* ---------- Image sitemap ---------- */
 {
   const existing = fs.readFileSync(path.join(__dirname, "public/sitemap.xml"), "utf8");
-  const blocks = [...existing.matchAll(/<url>[\s\S]*?<\/url>/g)].map((m) => m[0].replace(/<lastmod>[^<]*<\/lastmod>/, `<lastmod>${buildDate}</lastmod>`));
+  const blocks = [...existing.matchAll(/<url>[\s\S]*?<\/url>/g)].map((m) => m[0]);
   if (!blocks.length) throw new Error("seo_pages: public/sitemap.xml has no <url> entries");
   const own = (loc, images) =>
     `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${buildDate}</lastmod>\n` +

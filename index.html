@@ -11196,8 +11196,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     /* Jewellery opens through this toggle's programmatic first click, not the
                        clickedSrc branches below, so a per-photo link is honoured here too. */
                     if (!e.isTrusted && window.CIRE_takeDeepLinkImage) {
-                      const wanted = window.CIRE_takeDeepLinkImage();
-                      const at = wanted ? currentCarouselImages.indexOf(wanted.replace(/^\//, '')) : -1;
+                      const wanted = window.CIRE_takeDeepLinkImage(currentCarouselImages);
+                      const at = wanted ? currentCarouselImages.indexOf(wanted) : -1;
                       if (at !== -1) currentCarouselIndex = at;
                     }
                     renderDots();
@@ -11278,7 +11278,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                                currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselImages.length - 1);
                                if (currentCarouselIndex < 0) currentCarouselIndex = 0;
                            } else {
-                               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
+                               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage(currentCarouselImages)) || item.src || item.image;
                                let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                                if (rawSrc) {
                                    const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -11318,7 +11318,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
                     infoContainer.previousElementSibling.innerText = "Information";
                     togglesContainer.style.display = "none";
                     currentCarouselImages = origProduct.images || [item.image];
-                    let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
+                    let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage(currentCarouselImages)) || item.src || item.image;
                     let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                     if (rawSrc) {
                         const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -11336,7 +11336,7 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
               }
             } else {
                currentCarouselImages = origProduct.images || [item.image];
-               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage()) || item.src || item.image;
+               let clickedSrc = (window.CIRE_takeDeepLinkImage && window.CIRE_takeDeepLinkImage(currentCarouselImages)) || item.src || item.image;
                let rawSrc = typeof clickedSrc === "object" ? clickedSrc.src : clickedSrc;
                if (rawSrc) {
                    const cleanClicked = rawSrc.replace(/^\//, '').replace(/^public\//, '');
@@ -12050,10 +12050,15 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       /* Read now, while the address still carries it: the boot rewrites the URL to plain
          ?file=... before the product opens, which would drop &image= by then. */
       const CIRE_DEEP_LINK_IMAGE = new URLSearchParams(window.location.search).get('image');
-      window.CIRE_takeDeepLinkImage = function () {
-        if (window.CIRE_takeDeepLinkImage.taken) return null;
+      /* Spent only by the product the photo belongs to: a gallery that does not contain it
+         leaves it alone, and once spent it never steers a later product's first photo. */
+      window.CIRE_takeDeepLinkImage = function (images) {
+        if (window.CIRE_takeDeepLinkImage.taken || !CIRE_DEEP_LINK_IMAGE) return null;
+        const wanted = CIRE_DEEP_LINK_IMAGE.replace(/^\//, '');
+        const listed = (images || []).some(img => String(typeof img === "object" ? img.src : img).replace(/^\//, '') === wanted);
+        if (!listed) return null;
         window.CIRE_takeDeepLinkImage.taken = true;
-        return CIRE_DEEP_LINK_IMAGE;
+        return wanted;
       };
 
       window.addEventListener('DOMContentLoaded', () => {
