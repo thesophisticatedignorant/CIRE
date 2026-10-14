@@ -11285,6 +11285,147 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         modal.style.display = "none";
       }
 
+      /* ── CAPTCHA gate ────────────────────────────────────────────────────────
+         Request Access, Concierge and Brilliance inquiries ask for a reCAPTCHA
+         checkbox when Submit is pressed. Only once it is solved does the form's
+         existing submit run; cancelling saves and sends nothing.
+
+         This is a page-only gate. Nothing verifies the answer server-side and
+         Firestore's key is public, so it stops bots that fill in these forms,
+         not someone writing to Firestore directly. Enforcing it would need a
+         Cloud Function to verify the token.
+
+         Google's script is loaded only when Submit is pressed, so no third-party
+         code runs on page load. If it cannot load (offline, blocked) the
+         submission goes through: a lead is never lost to a CAPTCHA outage.
+
+         CIRE_RECAPTCHA_SITE_KEY is public by design. While it is empty the gate
+         is off in production. Local, LAN and private-IP hosts use Google's
+         published v2 test key, which always passes and shows a test banner. */
+      const CIRE_RECAPTCHA_SITE_KEY = "";
+      const CIRE_RECAPTCHA_TEST_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+      let cireCaptchaPending = false;
+      let cireCaptchaLoad = null;
+
+      function captchaSiteKey() {
+        const h = location.hostname;
+        const local =
+          h === "localhost" || h === "127.0.0.1" || h === "[::1]" ||
+          /^192\.168\./.test(h) || /^10\./.test(h) ||
+          /^172\.(1[6-9]|2\d|3[01])\./.test(h) || /\.local$/.test(h);
+        return local ? CIRE_RECAPTCHA_TEST_KEY : CIRE_RECAPTCHA_SITE_KEY;
+      }
+
+      function loadRecaptcha() {
+        if (window.grecaptcha && window.grecaptcha.render) return Promise.resolve(true);
+        if (cireCaptchaLoad) return cireCaptchaLoad;
+        cireCaptchaLoad = new Promise((resolve) => {
+          const giveUp = setTimeout(() => resolve(false), 8000);
+          window.cireRecaptchaReady = () => { clearTimeout(giveUp); resolve(true); };
+          const tag = document.createElement("script");
+          tag.src = "https://www.google.com/recaptcha/api.js?onload=cireRecaptchaReady&render=explicit";
+          tag.async = true;
+          tag.defer = true;
+          tag.onerror = () => { clearTimeout(giveUp); resolve(false); };
+          document.head.appendChild(tag);
+        }).then((ok) => {
+          if (!ok) cireCaptchaLoad = null; // let a later submit try again
+          return ok;
+        });
+        return cireCaptchaLoad;
+      }
+
+      function buildCaptchaOverlay() {
+        let overlay = document.getElementById("cire-captcha-overlay");
+        if (overlay) return overlay;
+
+        const style = document.createElement("style");
+        style.textContent =
+          "#cire-captcha-overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:none;" +
+          "align-items:center;justify-content:center;background:rgba(0,0,0,.62);" +
+          /* above the inquiry modals (999999), below Google's challenge layer */
+          "z-index:1000000000;padding:12px;box-sizing:border-box}" +
+          "#cire-captcha-overlay .cc-card{background:#1c1c1e;color:#f5f5f7;max-width:100%;" +
+          "border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px 22px 14px;" +
+          "box-shadow:0 20px 50px rgba(0,0,0,.5);text-align:center;box-sizing:border-box;outline:none;" +
+          "font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif}" +
+          "#cire-captcha-overlay .cc-title{margin:0 0 4px;font-size:13px;letter-spacing:.1em;text-transform:uppercase}" +
+          "#cire-captcha-overlay .cc-sub{margin:0 0 14px;font-size:12px;color:rgba(245,245,247,.55)}" +
+          "#cire-captcha-overlay .cc-mount{display:flex;justify-content:center;min-height:78px}" +
+          "#cire-captcha-overlay .cc-cancel{margin-top:10px;background:none;border:none;cursor:pointer;" +
+          "color:rgba(245,245,247,.55);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px}" +
+          "body.light-mode #cire-captcha-overlay .cc-card{background:#fff;color:#1d1d1f;border-color:rgba(0,0,0,.1)}" +
+          "body.light-mode #cire-captcha-overlay .cc-sub,body.light-mode #cire-captcha-overlay .cc-cancel{color:rgba(0,0,0,.5)}";
+        document.head.appendChild(style);
+
+        overlay = document.createElement("div");
+        overlay.id = "cire-captcha-overlay";
+        overlay.innerHTML =
+          '<div class="cc-card" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="cire-captcha-title">' +
+          '<p class="cc-title" id="cire-captcha-title">Verify you are human</p>' +
+          '<p class="cc-sub">One quick check before your request is sent.</p>' +
+          '<div class="cc-mount"></div>' +
+          '<button type="button" class="cc-cancel">Cancel</button></div>';
+        document.body.appendChild(overlay);
+        return overlay;
+      }
+
+      /* Resolves true to carry on with the submission, false if the person
+         cancelled (or a gate is already open). */
+      function requireCaptcha() {
+        const key = captchaSiteKey();
+        if (!key) return Promise.resolve(true);
+        if (cireCaptchaPending) return Promise.resolve(false);
+        cireCaptchaPending = true;
+
+        return loadRecaptcha().then((ready) => {
+          if (!ready) {
+            console.warn("reCAPTCHA could not load; letting the submission through.");
+            cireCaptchaPending = false;
+            return true;
+          }
+          return new Promise((resolve) => {
+            const overlay = buildCaptchaOverlay();
+            const holder = overlay.querySelector(".cc-mount");
+            holder.innerHTML = "";
+            const mount = document.createElement("div");
+            holder.appendChild(mount); // a fresh element per open: render() refuses a used one
+
+            let finished = false;
+            const onKey = (ev) => { if (ev.key === "Escape") finish(false); };
+            const finish = (ok) => {
+              if (finished) return;
+              finished = true;
+              overlay.style.display = "none";
+              document.removeEventListener("keydown", onKey, true);
+              cireCaptchaPending = false;
+              resolve(ok);
+            };
+            document.addEventListener("keydown", onKey, true);
+            overlay.querySelector(".cc-cancel").onclick = () => finish(false);
+
+            try {
+              window.grecaptcha.render(mount, {
+                sitekey: key,
+                theme: document.body.classList.contains("light-mode") ? "light" : "dark",
+                size: window.innerWidth < 360 ? "compact" : "normal",
+                callback: () => finish(true),
+                "error-callback": () => {
+                  console.warn("reCAPTCHA reported an error; letting the submission through.");
+                  finish(true);
+                },
+              });
+            } catch (err) {
+              console.warn("reCAPTCHA could not render; letting the submission through.", err);
+              finish(true);
+              return;
+            }
+            overlay.style.display = "flex";
+            overlay.querySelector(".cc-card").focus(); // the dialog, not Cancel: no ring that reads as the primary action
+          });
+        });
+      }
+
       /* Sophisticated Brilliance (jewellery) is a separate business line from
          CIRE Concierge (vehicles); the two must never share storage.
 
@@ -11299,6 +11440,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
       async function submitBrillianceInquiry(e) {
         e.preventDefault();
         const form = e.target;
+        // CAPTCHA first: nothing below runs, and nothing is saved, until it is solved.
+        if (!(await requireCaptcha())) return;
         const btn = document.querySelector(
           'button[form="brilliance-inquiry-form"]',
         );
@@ -11391,6 +11534,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
 
       async function submitInquiry(e) {
         e.preventDefault();
+        // CAPTCHA first: nothing below runs, and nothing is saved, until it is solved.
+        if (!(await requireCaptcha())) return;
         const btn = document.getElementById("inq-submit-btn");
         const originalText = btn.innerText;
         btn.innerText = "Submitting...";
@@ -13157,6 +13302,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           e.preventDefault();
           const form = e.target;
           const btn = form.querySelector('button[type="submit"]');
+          // CAPTCHA first: nothing below runs, and nothing is saved, until it is solved.
+          if (!(await requireCaptcha())) return;
 
           const name = document.getElementById("inquiry-name").value.trim();
           const email = document.getElementById("inquiry-email").value.trim();
