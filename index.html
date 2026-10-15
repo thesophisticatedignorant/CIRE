@@ -10136,6 +10136,11 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
         const refParam = urlParams.get('ref');
         const hasFolderLink = folderParam !== null;
         const hasFileLink = fileParam !== null || listingParam !== null || refParam !== null;
+        /* The Request Access link (?window=popup-inquiry) is a deep link like the
+           folder and file ones, so it takes the second boot sequence: Join Network
+           on top, the linked window behind it. Other ?window= links, including the
+           one the address bar rewrites itself to, keep the full boot. */
+        const hasWindowLink = urlParams.get('window') === 'popup-inquiry';
 
         const forceTutorial = new URLSearchParams(window.location.search).has('tutorial');
         
@@ -10148,8 +10153,8 @@ window.CAROUSEL_PRODUCTS.forEach(p => {
           localStorage.setItem("cire_last_boot_time", now.toString());
         }
 
-        let isNormalBoot = !hasFolderLink && !hasFileLink;
-        let isDeepLinkFirstVisit = (hasFolderLink || hasFileLink) && isFirstVisit24h;
+        let isNormalBoot = !hasFolderLink && !hasFileLink && !hasWindowLink;
+        let isDeepLinkFirstVisit = (hasFolderLink || hasFileLink || hasWindowLink) && isFirstVisit24h;
 
         let shouldDelay = isNormalBoot || isDeepLinkFirstVisit;
 
