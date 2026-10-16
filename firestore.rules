@@ -2,22 +2,98 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Shared checks ───────────────────────────────────────────────────────
+    //
+    // Every collection a visitor can write to is create-only and public by
+    // necessity: the Firebase config ships in the page, so anything a form can
+    // do a script can do. These checks cannot prove a write came from the form
+    // (that is App Check's job); they keep what a script CAN write to the exact
+    // shape the form writes.
+    //
+    //  - keys().hasOnly(...)  an allowlist. An unknown field is refused, so a
+    //    script cannot park arbitrary data in the project or bloat a document.
+    //  - timestamp == request.time  the form writes serverTimestamp(); anything
+    //    else is a forged clock. This matters beyond tidiness: the inquiry
+    //    notifier's high-water mark is the newest `timestamp` it has seen, so a
+    //    single document dated years ahead would put every later real inquiry
+    //    "in the past" and silence its email.
+    //  - size caps on the text fields the notifier and the map print.
+    //
+    // When a form gains or loses a field, change its allowlist below in the
+    // same commit - a field missing from here is a submission that is refused
+    // and, because the page's catch block only logs, silently lost.
+
+    function stamped() {
+      return request.resource.data.timestamp == request.time;
+    }
+
+    // Present and a string no longer than `max`.
+    function str(field, max) {
+      return request.resource.data[field] is string
+          && request.resource.data[field].size() <= max;
+    }
+
+    // Absent, or a string no longer than `max`.
+    function optStr(field, max) {
+      return !(field in request.resource.data)
+          || (request.resource.data[field] is string
+              && request.resource.data[field].size() <= max);
+    }
+
+    // The two fields every inquiry guarantees.
+    function person() {
+      return str('name', 200)
+          && request.resource.data.name.size() > 0
+          && str('email', 320)
+          && request.resource.data.email.matches('.+@.+');
+    }
+
+    // A coordinate may be missing (null) or a number inside its range. A NaN
+    // passes: it compares false both ways, and the form can produce one when a
+    // picked place has no usable coordinates - refusing it would drop the whole
+    // signup, private record included.
+    function degrees(field, limit) {
+      return request.resource.data.get(field, null) == null
+          || (request.resource.data[field] is number
+              && !(request.resource.data[field] < -limit)
+              && !(request.resource.data[field] > limit));
+    }
+
     // 1. Analytics & Visitor Metadata Logging
     match /analytics_metadata/{docId} {
-      allow create: if request.resource.data.keys().hasAny(['timestamp', 'userAgent', 'language', 'referrer']);
+      allow create: if request.resource.data.keys().hasOnly([
+                         'userAgent', 'language', 'languages', 'screenResolution',
+                         'windowSize', 'platform', 'vendor', 'hardwareConcurrency',
+                         'deviceMemory', 'connectionType', 'cookiesEnabled',
+                         'doNotTrack', 'currentURL', 'referrer', 'timeZone',
+                         'pageLoadTimeMs', 'ipAddress', 'city', 'region',
+                         'country', 'isp', 'timestamp', 'type'
+                       ])
+                    && stamped()
+                    && request.resource.data.type == 'page_view_metadata_max'
+                    && optStr('userAgent', 1000)
+                    && optStr('currentURL', 2000)
+                    && optStr('referrer', 2000);
       allow read, update, delete: if false;
     }
 
     // 2. Cookie Consent Choices
     match /cookie_consents/{docId} {
-      allow create: if request.resource.data.consent in ['granted', 'declined'];
+      allow create: if request.resource.data.keys().hasOnly(['consent', 'timestamp'])
+                    && request.resource.data.consent in ['granted', 'declined']
+                    && stamped();
       allow read, update, delete: if false;
     }
 
     // 3. Access Requests Submissions
     match /request_access/{docId} {
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.email is string;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'name', 'email', 'phone', 'interest', 'message',
+                         'locationData', 'timestamp'
+                       ])
+                    && person()
+                    && stamped()
+                    && optStr('message', 10000);
       allow read, update, delete: if false;
     }
 
@@ -28,57 +104,81 @@ service cloud.firestore {
     //    The old shared `private_inquiry` rule required `vehicle is string`,
     //    but the form writes `category` / `model` / `vehicleCount` and never a
     //    `vehicle` key, so every submission was rejected and the error was
-    //    swallowed by the caller's catch block. Validated on name + email, the
-    //    same pair request_access uses and the same pair the form guarantees.
+    //    swallowed by the caller's catch block. The allowlist below is the
+    //    form's actual payload, key for key.
     match /concierge_inquiry/{docId} {
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.email is string;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'name', 'email', 'phone', 'company', 'referral',
+                         'experience', 'category', 'model', 'color',
+                         'vehicleCount', 'budget', 'dateStart', 'dateEnd',
+                         'timeStart', 'timeEnd', 'timingFlexible', 'twentyFourHour',
+                         'delivery', 'location', 'outOfState', 'driverAge',
+                         'licenseType', 'fullCoverage', 'insuranceState',
+                         'insuranceCountry', 'addDriverName', 'addDriverAge',
+                         'deliveryLocation', 'addons', 'locationData', 'timestamp'
+                       ])
+                    && person()
+                    && stamped();
       allow read, update, delete: if false;
     }
 
     // 5. Sophisticated Brilliance Inquiries (jewellery)
     match /brilliance_inquiry/{docId} {
-      allow create: if request.resource.data.name is string
-                    && request.resource.data.email is string;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'name', 'email', 'phone', 'company', 'goldTone',
+                         'products', 'locationData', 'timestamp'
+                       ])
+                    && person()
+                    && stamped();
       allow read, update, delete: if false;
     }
 
-    // 6. Join Network Submissions
+    // 6. Join Network - the public half
     //    The document itself is the map node: name, colour and coordinates.
-    //    Reads are open because the map plots these in every visitor's browser
-    //    - anything it can read is public by definition, so there is nothing
-    //    here that is not meant to be seen.
+    //    Anything the map can read is public by definition, so nothing in here
+    //    is meant to be private. Contact details live in join_network_private.
     //
-    //    Contact details are NOT in this document. Firestore rules are
-    //    per-document and cannot expose one field while hiding another, so
-    //    email, Instagram handle and the raw IP geolocation live in the
-    //    private subcollection below, which nothing grants read access to.
-    //    READS ARE CLOSED PENDING MIGRATION. Documents written before the
-    //    split still carry `email`, `ig` and `locationData` at the top level,
-    //    so opening reads exposed them. Run scripts/migrate-join-network.cjs
-    //    to move those fields into the private subcollection, then change the
-    //    line below back to `allow read: if true;` and redeploy to restore the
-    //    map pins.
+    //    Reads are granted per document, on `visibility == "public"`. Every node
+    //    written since the public/private split carries that flag and nothing
+    //    but map data. Documents from before the split still hold email,
+    //    Instagram handle and raw IP geolocation inline, carry no flag, and so
+    //    stay closed without having to be deleted or altered.
+    //
+    //    The map therefore queries where("visibility", "==", "public") rather
+    //    than reading the collection: Firestore checks a list against the
+    //    query, not document by document, so an unfiltered read is rejected
+    //    whole. The two have to agree.
+    //
+    //    Create is as tight as read is open, because `visibility` is chosen by
+    //    the writer: whatever passes here is published to every visitor. The
+    //    page prints `name` into a map tooltip, so it is capped and the page
+    //    escapes it - but the rule must not be the only thing keeping a stranger's
+    //    text off the map, so the shape is pinned down as well.
     match /join_network/{docId} {
-      //  Readable only where the document says so. Everything written since
-      //  the public/private split carries visibility: "public" and holds
-      //  nothing but map data - name, colour, city, coordinates. Documents
-      //  written before it still carry email, Instagram handle and raw IP
-      //  geolocation inline, carry no visibility field, and so stay closed.
-      //
-      //  This is why the map queries where("visibility", "==", "public")
-      //  rather than reading the collection: Firestore evaluates a list
-      //  against the query, not document by document, so an unfiltered read
-      //  is rejected whole. The two have to agree.
       allow read: if resource.data.visibility == 'public';
-      allow create: if request.resource.data.name is string;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'visibility', 'name', 'color_preference', 'color',
+                         'city', 'country', 'lat', 'lon', 'lng', 'instagram',
+                         'timestamp'
+                       ])
+                    && request.resource.data.visibility == 'public'
+                    && str('name', 200)
+                    && request.resource.data.name.size() > 0
+                    && stamped()
+                    && optStr('color', 64)
+                    && optStr('color_preference', 64)
+                    && optStr('city', 200)
+                    && optStr('country', 200)
+                    && optStr('instagram', 100)
+                    && degrees('lat', 90)
+                    && degrees('lon', 180)
+                    && degrees('lng', 180);
       allow update, delete: if false;
 
       // Legacy. Documents written during the subcollection era keep their
-      // contact record here; nothing writes to it any more.
+      // contact record here; nothing writes to it any more, so nothing may.
       match /private/{privateDoc} {
-        allow create: if request.resource.data.email is string;
-        allow read, update, delete: if false;
+        allow read, create, update, delete: if false;
       }
     }
 
@@ -90,8 +190,14 @@ service cloud.firestore {
     //     subcollection so the public/private split is one rule each and the
     //     private side can be read as a single collection by admin tooling.
     match /join_network_private/{docId} {
-      allow create: if request.resource.data.email is string
-                    && request.resource.data.nodeId is string;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'nodeId', 'name', 'email', 'instagram', 'instagramPublic',
+                         'location_input', 'locationData', 'timestamp'
+                       ])
+                    && person()
+                    && str('nodeId', 128)
+                    && stamped()
+                    && optStr('instagram', 100);
       allow read, update, delete: if false;
     }
 
