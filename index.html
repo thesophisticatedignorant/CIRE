@@ -4213,7 +4213,12 @@
                     opacity: 1,
                     fillOpacity: 0.95,
                   }).addTo(window.wwnMap);
-                  marker.bindTooltip(name, {
+                  /* Leaflet prints a string tooltip as HTML, and `name` comes
+                     from a document anyone can write, so hand it a text node
+                     instead: a name is only ever text. */
+                  const tip = document.createElement("span");
+                  tip.textContent = name == null ? "" : String(name);
+                  marker.bindTooltip(tip, {
                     permanent: false,
                     direction: "top",
                     className: "wwn-tooltip",
